@@ -1,96 +1,898 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, LogIn, LayoutDashboard, CheckCircle2, Box, Sparkles } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  FileCheck2,
+  GraduationCap,
+  Headphones,
+  Heart,
+  Laptop,
+  LockKeyhole,
+  Monitor,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Star,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/common/Button';
-import { Card, CardContent } from '@/components/common/Card';
-import { Badge } from '@/components/common/Badge';
-import { Container } from '@/components/common/Container';
+import { Modal } from '@/components/feedback/Modal';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ROUTES } from '@/constants/routes';
+import heroImage from '@/assets/tutoring-hero.webp';
+import heroImageMobile from '@/assets/tutoring-hero-720.webp';
+import { subjects, tutors, testimonials } from './homeData';
+import './home.css';
+
+const initialFilters = { subject: '', mode: '', price: '', rating: '' };
+const currency = (value) => new Intl.NumberFormat('vi-VN').format(value);
+const normalize = (text) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase();
+const scrollTo = (element, block = 'start') =>
+  element?.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    block,
+  });
+
+function SectionHeading({ title, description, children }) {
+  return (
+    <div className="section-heading">
+      <div>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FilterField({ label, icon: Icon, name, value, onChange, children }) {
+  return (
+    <label className="filter-field">
+      <span>{label}</span>
+      <div className="filter-input">
+        <Icon size={19} aria-hidden="true" />
+        <select id={`${name}-filter`} name={name} value={value} onChange={onChange}>
+          {children}
+        </select>
+        <ChevronDown size={16} aria-hidden="true" />
+      </div>
+    </label>
+  );
+}
+
+function TutorCard({ tutor, saved, onSave, onOpen }) {
+  return (
+    <article className="tutor-card">
+      <div className="tutor-top">
+        <img src={tutor.image} alt={tutor.name} width="68" height="76" loading="lazy" />
+        <div className="tutor-identity">
+          <h3>
+            {tutor.title} {tutor.name}
+          </h3>
+          <div className="tutor-rating">
+            <Star size={13} fill="currentColor" />
+            <strong>{tutor.rating.toFixed(1)}</strong>
+            <span>({tutor.reviews} đánh giá)</span>
+          </div>
+          <span className="subject-tag">{tutor.subject}</span>
+        </div>
+        <button
+          className={`save-button ${saved ? 'is-saved' : ''}`}
+          onClick={onSave}
+          aria-label={`${saved ? 'Bỏ lưu' : 'Lưu'} ${tutor.name}`}
+          aria-pressed={saved}
+        >
+          <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+      <p className="tutor-meta">
+        <GraduationCap size={15} />
+        {tutor.experience} năm kinh nghiệm
+        <span className="mode-tag">{tutor.mode === 'online' ? 'Online' : 'Online & tại nhà'}</span>
+      </p>
+      <p className="tutor-description">{tutor.description}</p>
+      <div className="tutor-bottom">
+        <div>
+          <strong>{currency(tutor.price)}đ</strong>
+          <span> / giờ</span>
+        </div>
+        <Button className="edu-button profile-button" size="sm" onClick={onOpen}>
+          Xem hồ sơ <ArrowRight size={14} />
+        </Button>
+      </div>
+    </article>
+  );
+}
 
 export const Home = () => {
-  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const query = params.get('q') || '';
+  const dialog = params.get('dialog');
+  const [filters, setFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
+  const [savedIds, setSavedIds] = useLocalStorage('edumatch:saved-tutors', []);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [showAllSubjects, setShowAllSubjects] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [consultationComplete, setConsultationComplete] = useState(false);
+  const [consultation, setConsultation] = useState({ name: '', phone: '', subject: 'Tiếng Anh' });
+  const resultsRef = useRef(null);
+  const filterRef = useRef(null);
+
+  const filteredTutors = useMemo(
+    () =>
+      tutors.filter((tutor) => {
+        const matchesQuery =
+          !query ||
+          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description}`).includes(
+            normalize(query)
+          );
+        return (
+          matchesQuery &&
+          (!appliedFilters.subject || tutor.subject === appliedFilters.subject) &&
+          (!appliedFilters.mode || tutor.mode === appliedFilters.mode || tutor.mode === 'both') &&
+          (!appliedFilters.price || tutor.price <= Number(appliedFilters.price)) &&
+          (!appliedFilters.rating || tutor.rating >= Number(appliedFilters.rating)) &&
+          (!savedOnly || savedIds.includes(tutor.id))
+        );
+      }),
+    [query, appliedFilters, savedOnly, savedIds]
+  );
+
+  const isFiltered = Boolean(query || savedOnly || Object.values(appliedFilters).some(Boolean));
+  const visibleTutors = showAll || isFiltered ? filteredTutors : filteredTutors.slice(0, 4);
+  const updateFilter = (event) =>
+    setFilters((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const closeDialog = () => {
+    setConsultationComplete(false);
+    setParams(
+      (current) => {
+        current.delete('dialog');
+        return current;
+      },
+      { replace: true }
+    );
+  };
+  const openDialog = (name) => {
+    setConsultationComplete(false);
+    setParams((current) => {
+      current.set('dialog', name);
+      return current;
+    });
+  };
+  const resetSearch = () => {
+    setFilters(initialFilters);
+    setAppliedFilters(initialFilters);
+    setSavedOnly(false);
+    setParams(
+      (current) => {
+        current.delete('q');
+        return current;
+      },
+      { replace: true }
+    );
+  };
+  const chooseSubject = (subject) => {
+    const next = { ...initialFilters, subject };
+    setFilters(next);
+    setAppliedFilters(next);
+    setSavedOnly(false);
+    setParams(
+      (current) => {
+        current.delete('q');
+        return current;
+      },
+      { replace: true }
+    );
+    scrollTo(resultsRef.current);
+  };
 
   return (
-    <div className="py-12 sm:py-16">
-      <Container size="lg" className="space-y-12">
-        {/* Hero Section */}
-        <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <Badge variant="primary" dot size="md" className="shadow-sm">
-            Starter Template
-          </Badge>
-
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-            React Base Template
-          </h1>
-
-          <p className="text-lg text-slate-600 leading-relaxed">
-            Reusable React + Vite starter chuẩn hóa với Tailwind CSS, React Router, Axios, Layouts
-            và Reusable Components.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <Button
-              variant="primary"
-              size="lg"
-              leftIcon={<LayoutDashboard className="w-5 h-5" />}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-              onClick={() => navigate(ROUTES.DASHBOARD)}
-            >
-              Dashboard
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              leftIcon={<LogIn className="w-5 h-5" />}
-              onClick={() => navigate(ROUTES.LOGIN)}
-            >
-              Login
-            </Button>
+    <div className="edu-home">
+      <section className="home-hero" aria-labelledby="hero-title">
+        <div className="edu-container hero-grid">
+          <div className="hero-copy">
+            <span className="hero-eyebrow">
+              <GraduationCap size={15} /> HỌC ĐÚNG THẦY, VỮNG TƯƠNG LAI
+            </span>
+            <h1 id="hero-title">
+              Kết nối Học viên với
+              <br />
+              <span>Giáo viên Giỏi & Uy tín</span>
+            </h1>
+            <p>
+              Học theo cách của bạn, tiến bộ cùng người thầy phù hợp.
+              <br className="desktop-break" /> Kết nối hôm nay, mở ra những khả năng mới.
+            </p>
+            <div className="hero-actions">
+              <Button
+                className="edu-button"
+                size="lg"
+                onClick={() => {
+                  scrollTo(filterRef.current, 'center');
+                  document.getElementById('subject-filter')?.focus({ preventScroll: true });
+                }}
+              >
+                <Search size={19} />
+                Tìm gia sư phù hợp
+                <ArrowRight size={17} />
+              </Button>
+              <Button
+                className="edu-button edu-button-outline"
+                variant="outline"
+                size="lg"
+                onClick={() => openDialog('teacher')}
+              >
+                <GraduationCap size={20} />
+                Đăng ký dạy ngay
+              </Button>
+            </div>
+            <div className="hero-assurances">
+              <span>
+                <ShieldCheck size={18} />
+                Giáo viên đã xác minh
+              </span>
+              <span>
+                <LockKeyhole size={17} />
+                Thanh toán an toàn
+              </span>
+              <span>
+                <Headphones size={18} />
+                Hỗ trợ tận tâm
+              </span>
+            </div>
+          </div>
+          <div className="hero-visual">
+            <img
+              className="hero-photo"
+              src={heroImage}
+              srcSet={`${heroImageMobile} 720w, ${heroImage} 1448w`}
+              sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1023px) 55vw, 650px"
+              alt="Cô giáo và học viên cùng học bên máy tính"
+              width="1448"
+              height="1086"
+              fetchPriority="high"
+            />
+            <div className="community-note">
+              <div className="avatar-stack">
+                {tutors.slice(0, 3).map((tutor) => (
+                  <img key={tutor.id} src={tutor.image} alt="" width="34" height="34" />
+                ))}
+              </div>
+              <div>
+                <strong>Cùng nhau tiến bộ</strong>
+                <span>Mỗi ngày, một bước xa hơn</span>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Features Checklist */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6 space-y-2">
-              <div className="p-2.5 w-fit rounded-lg bg-blue-50 text-blue-600 mb-3">
-                <Box className="w-5 h-5" />
-              </div>
-              <h3 className="font-semibold text-slate-900 text-base">Cấu trúc Chuẩn hóa</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Tổ chức thư mục Clean Architecture: layouts, components, services, routes, hooks,
-                utils.
-              </p>
-            </CardContent>
-          </Card>
+      <div className="edu-container home-content">
+        <section
+          id="tim-gia-su"
+          className="tutor-search"
+          ref={filterRef}
+          aria-labelledby="search-title"
+        >
+          <div className="search-panel-heading">
+            <h2 id="search-title">
+              <SlidersHorizontal size={21} />
+              Tìm kiếm gia sư phù hợp với bạn
+            </h2>
+            <span>Người thầy phù hợp. Hành trình khác biệt.</span>
+          </div>
+          <form
+            className="filter-grid"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setAppliedFilters(filters);
+              scrollTo(resultsRef.current);
+            }}
+          >
+            <FilterField
+              label="Môn học / Lĩnh vực"
+              icon={BookOpen}
+              name="subject"
+              value={filters.subject}
+              onChange={updateFilter}
+            >
+              <option value="">Tất cả môn học</option>
+              {subjects.map((subject) => (
+                <option key={subject.name} value={subject.name}>
+                  {subject.name}
+                </option>
+              ))}
+            </FilterField>
+            <FilterField
+              label="Hình thức giảng dạy"
+              icon={Monitor}
+              name="mode"
+              value={filters.mode}
+              onChange={updateFilter}
+            >
+              <option value="">Tất cả hình thức</option>
+              <option value="online">Trực tuyến</option>
+              <option value="offline">Tại nhà</option>
+            </FilterField>
+            <FilterField
+              label="Mức học phí (1 giờ)"
+              icon={GraduationCap}
+              name="price"
+              value={filters.price}
+              onChange={updateFilter}
+            >
+              <option value="">Tất cả mức giá</option>
+              <option value="250000">Đến 250.000đ</option>
+              <option value="350000">Đến 350.000đ</option>
+              <option value="500000">Đến 500.000đ</option>
+            </FilterField>
+            <FilterField
+              label="Đánh giá tối thiểu"
+              icon={Star}
+              name="rating"
+              value={filters.rating}
+              onChange={updateFilter}
+            >
+              <option value="">Tất cả đánh giá</option>
+              <option value="4.5">Từ 4.5 sao</option>
+              <option value="4.8">Từ 4.8 sao</option>
+              <option value="5">5.0 sao</option>
+            </FilterField>
+            <Button type="submit" className="edu-button search-submit">
+              <Search size={18} />
+              Tìm gia sư
+            </Button>
+          </form>
+        </section>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6 space-y-2">
-              <div className="p-2.5 w-fit rounded-lg bg-emerald-50 text-emerald-600 mb-3">
-                <CheckCircle2 className="w-5 h-5" />
+        <section
+          id="giao-vien"
+          className="home-section tutors-section"
+          ref={resultsRef}
+          aria-labelledby="tutors-heading"
+        >
+          <SectionHeading
+            title={
+              <span id="tutors-heading">
+                Gặp người thầy <span className="accent-text">truyền cảm hứng</span>
+              </span>
+            }
+            description="Chuyên môn vững vàng, tận tâm đồng hành trên từng bước tiến."
+          >
+            <button className="text-link" onClick={() => setShowAll((current) => !current)}>
+              {showAll ? 'Thu gọn danh sách' : 'Xem tất cả giáo viên'}
+              <ArrowRight size={16} />
+            </button>
+          </SectionHeading>
+          {(isFiltered || savedIds.length > 0) && (
+            <div className="results-toolbar">
+              <span role="status">
+                {isFiltered
+                  ? `${filteredTutors.length} gia sư phù hợp${query ? ` với “${query}”` : ''}`
+                  : 'Khám phá giáo viên nổi bật'}
+              </span>
+              <div>
+                <button
+                  className={`saved-filter ${savedOnly ? 'active' : ''}`}
+                  onClick={() => setSavedOnly((current) => !current)}
+                  aria-pressed={savedOnly}
+                >
+                  <Heart size={14} />
+                  Đã lưu ({savedIds.length})
+                </button>
+                {isFiltered && (
+                  <button className="text-link" onClick={resetSearch}>
+                    Xóa bộ lọc
+                    <X size={14} />
+                  </button>
+                )}
               </div>
-              <h3 className="font-semibold text-slate-900 text-base">Bộ UI Reusable</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Đầy đủ Button, Input, Modal, ConfirmDialog, Table, Pagination, Loading, EmptyState,
-                Toast.
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+          )}
+          <div className="tutors-grid">
+            {visibleTutors.map((tutor) => (
+              <TutorCard
+                key={tutor.id}
+                tutor={tutor}
+                saved={savedIds.includes(tutor.id)}
+                onSave={() =>
+                  setSavedIds((current) =>
+                    current.includes(tutor.id)
+                      ? current.filter((id) => id !== tutor.id)
+                      : [...current, tutor.id]
+                  )
+                }
+                onOpen={() => setProfile(tutor)}
+              />
+            ))}
+          </div>
+          {visibleTutors.length === 0 && (
+            <div className="search-empty">
+              <Search size={30} />
+              <h3>Chưa tìm thấy gia sư phù hợp</h3>
+              <p>Thử chọn môn học khác hoặc mở rộng mức học phí của bạn.</p>
+              <Button className="edu-button" onClick={resetSearch}>
+                Xóa bộ lọc
+              </Button>
+            </div>
+          )}
+          <p className="sample-note">Hồ sơ giáo viên minh hoạ cho giao diện.</p>
+        </section>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6 space-y-2">
-              <div className="p-2.5 w-fit rounded-lg bg-indigo-50 text-indigo-600 mb-3">
-                <Sparkles className="w-5 h-5" />
+        <section id="mon-hoc" className="home-section" aria-labelledby="subjects-heading">
+          <SectionHeading
+            title={
+              <span id="subjects-heading">
+                Mỗi đam mê, một <span className="accent-text">khởi đầu mới</span>
+              </span>
+            }
+            description="Từ kiến thức nền tảng đến kỹ năng bạn luôn muốn khám phá."
+          >
+            <button className="text-link" onClick={() => setShowAllSubjects((current) => !current)}>
+              {showAllSubjects ? 'Thu gọn môn học' : 'Khám phá các môn học'}
+              <ArrowRight size={16} />
+            </button>
+          </SectionHeading>
+          <div className="subjects-grid">
+            {subjects
+              .slice(0, showAllSubjects ? subjects.length : 9)
+              .map(({ name, icon: Icon, color }) => (
+                <button
+                  key={name}
+                  className={`subject-tile subject-${color} ${appliedFilters.subject === name ? 'selected' : ''}`}
+                  aria-pressed={appliedFilters.subject === name}
+                  onClick={() => chooseSubject(name)}
+                >
+                  <span className="subject-icon">
+                    <Icon size={26} strokeWidth={1.7} />
+                  </span>
+                  <span>{name}</span>
+                </button>
+              ))}
+          </div>
+        </section>
+
+        <section id="cach-hoat-dong" className="how-section" aria-labelledby="how-heading">
+          <SectionHeading
+            title={
+              <span id="how-heading">
+                Hành trình học tập, <span className="accent-text">thật đơn giản</span>
+              </span>
+            }
+            description="Bốn bước nhỏ để bắt đầu một thay đổi lớn."
+          />
+          <div className="steps-grid">
+            {[
+              {
+                icon: Search,
+                title: 'Tìm kiếm gia sư',
+                description: 'Chọn môn học, hình thức và mức học phí phù hợp.',
+              },
+              {
+                icon: FileCheck2,
+                title: 'Chọn người đồng hành',
+                description: 'Khám phá hồ sơ, kinh nghiệm và đánh giá thực tế.',
+              },
+              {
+                icon: CalendarDays,
+                title: 'Sắp xếp lịch học',
+                description: 'Kết nối với giáo viên và chọn thời gian thuận tiện.',
+              },
+              {
+                icon: TrendingUp,
+                title: 'Bắt đầu tiến bộ',
+                description: 'Học theo lộ trình riêng, phát triển mỗi ngày.',
+              },
+            ].map(({ icon: Icon, title, description }, index) => (
+              <div className="learning-step" key={title}>
+                <div className="step-top">
+                  <span className="step-icon">
+                    <Icon size={27} strokeWidth={1.7} />
+                  </span>
+                  <span className="step-number">0{index + 1}</span>
+                  {index < 3 && <ArrowRight size={19} className="step-arrow" />}
+                </div>
+                <h3>{title}</h3>
+                <p>{description}</p>
               </div>
-              <h3 className="font-semibold text-slate-900 text-base">Sẵn sàng Phát triển</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Chỉ cần clone base, đổi biến môi trường API là có thể code nghiệp vụ ngay lập tức.
-              </p>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+        </section>
+
+        <section
+          id="vi-sao-edumatch"
+          className="home-section why-section"
+          aria-labelledby="why-heading"
+        >
+          <div className="why-intro">
+            <span className="why-mark">
+              <GraduationCap size={29} strokeWidth={1.5} />
+            </span>
+            <h2 id="why-heading">
+              An tâm lựa chọn.
+              <br />
+              <span className="accent-text">Tự tin tiến bước.</span>
+            </h2>
+            <p>EduMatch giúp bạn tập trung vào điều quan trọng nhất: học tập và phát triển.</p>
+            <a href="#cach-hoat-dong" className="text-link">
+              Tìm hiểu cách EduMatch hoạt động
+              <ArrowRight size={16} />
+            </a>
+          </div>
+          <div className="benefits-grid">
+            {[
+              {
+                icon: Award,
+                title: 'Chuyên môn bạn có thể tin',
+                description: 'Hồ sơ rõ ràng, chuyên môn được xác minh và đánh giá từ học viên.',
+              },
+              {
+                icon: Laptop,
+                title: 'Học theo nhịp sống của bạn',
+                description: 'Trực tuyến hoặc tại nhà. Chủ động sắp xếp lịch học phù hợp.',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'Minh bạch trong từng buổi học',
+                description: 'Thông tin học phí rõ ràng, giúp bạn dễ dàng cân nhắc và lựa chọn.',
+              },
+              {
+                icon: Headphones,
+                title: 'Luôn có người đồng hành',
+                description: 'Đội ngũ hỗ trợ sẵn sàng lắng nghe trong suốt hành trình học tập.',
+              },
+            ].map(({ icon: Icon, title, description }) => (
+              <div className="benefit" key={title}>
+                <span className="benefit-icon">
+                  <Icon size={24} strokeWidth={1.7} />
+                </span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section
+          id="danh-gia"
+          className="home-section testimonials-section"
+          aria-labelledby="reviews-heading"
+        >
+          <SectionHeading
+            title={
+              <span id="reviews-heading">
+                Những câu chuyện <span className="accent-text">cùng EduMatch</span>
+              </span>
+            }
+            description="Một người thầy phù hợp có thể tạo nên rất nhiều khác biệt."
+          >
+            <span className="reviews-caption">
+              <Star size={16} fill="currentColor" />
+              Cảm hứng từ học viên
+            </span>
+          </SectionHeading>
+          <div className="testimonials-grid">
+            {testimonials.map((review) => (
+              <figure key={review.name} className="review-card">
+                <div className="review-stars" role="img" aria-label="5 trên 5 sao">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star size={14} key={i} fill="currentColor" />
+                  ))}
+                </div>
+                <blockquote>“{review.quote}”</blockquote>
+                <figcaption>
+                  <img src={review.image} alt="" width="42" height="42" loading="lazy" />
+                  <div>
+                    <strong>{review.name}</strong>
+                    <span>{review.role}</span>
+                  </div>
+                  <CheckCircle2 size={18} />
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="sample-note">Nội dung đánh giá minh hoạ theo mẫu thiết kế.</p>
+        </section>
+
+        <section className="bottom-cta">
+          <div className="cta-icon">
+            <BookOpen size={37} strokeWidth={1.4} />
+          </div>
+          <div className="cta-copy">
+            <h2>Bắt đầu hành trình của bạn hôm nay.</h2>
+            <p>Một người thầy phù hợp, những cơ hội mới đang chờ.</p>
+          </div>
+          <div className="cta-actions">
+            <a className="edu-button button-link" href="#tim-gia-su">
+              <Search size={18} />
+              Tìm gia sư ngay
+            </a>
+            <Button
+              variant="outline"
+              className="edu-button edu-button-outline"
+              onClick={() => openDialog('teacher')}
+            >
+              <GraduationCap size={19} />
+              Trở thành giáo viên
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <Modal
+        open={Boolean(profile)}
+        onClose={() => setProfile(null)}
+        title="Khám phá người đồng hành"
+        size="md"
+        className="edu-modal"
+      >
+        {profile && (
+          <div className="profile-detail">
+            <div className="profile-detail-heading">
+              <img src={profile.image} alt={profile.name} width="84" height="96" />
+              <div>
+                <span className="subject-tag">{profile.subject}</span>
+                <h3>
+                  {profile.title} {profile.name}
+                </h3>
+                <p>
+                  <Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)}{' '}
+                  <span>({profile.reviews} đánh giá)</span>
+                </p>
+              </div>
+            </div>
+            <div className="profile-facts">
+              <span>
+                <GraduationCap size={19} />
+                <strong>{profile.experience} năm</strong>Kinh nghiệm
+              </span>
+              <span>
+                <Monitor size={19} />
+                <strong>{profile.mode === 'online' ? 'Trực tuyến' : 'Linh hoạt'}</strong>Hình thức
+                học
+              </span>
+              <span>
+                <BookOpen size={19} />
+                <strong>{currency(profile.price)}đ</strong>Mỗi giờ học
+              </span>
+            </div>
+            <h4>Giới thiệu</h4>
+            <p>
+              {profile.description} {profile.bio}
+            </p>
+            <h4>Phương pháp giảng dạy</h4>
+            <ul>
+              {profile.methods.map((method) => (
+                <li key={method}>
+                  <Check size={16} />
+                  {method}
+                </li>
+              ))}
+            </ul>
+            <div className="profile-demo-note">
+              <ShieldCheck size={20} />
+              <span>
+                Đây là hồ sơ minh hoạ. Chức năng đặt lịch sẽ có khi kết nối hệ thống gia sư.
+              </span>
+            </div>
+            <Button
+              className="edu-button w-full"
+              onClick={() => {
+                setProfile(null);
+                openDialog('consultation');
+              }}
+            >
+              <Headphones size={18} />
+              Tìm hiểu nhu cầu học tập
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={dialog === 'teacher' || dialog === 'register'}
+        onClose={closeDialog}
+        title={dialog === 'teacher' ? 'Trở thành giáo viên EduMatch' : 'Bắt đầu cùng EduMatch'}
+        className="edu-modal"
+      >
+        <div className="join-content">
+          <span className="join-icon">
+            {dialog === 'teacher' ? <GraduationCap size={35} /> : <Users size={35} />}
+          </span>
+          <h3>
+            {dialog === 'teacher'
+              ? 'Chia sẻ kiến thức. Truyền cảm hứng.'
+              : 'Tìm người thầy phù hợp với bạn.'}
+          </h3>
+          <p>
+            {dialog === 'teacher'
+              ? 'Đồng hành cùng học viên, xây dựng lớp học của riêng bạn và giảng dạy theo lịch phù hợp.'
+              : 'Khám phá giáo viên, lưu những hồ sơ yêu thích và chọn cách học phù hợp với bạn.'}
+          </p>
+          <div className="join-benefits">
+            <span>
+              <CheckCircle2 size={17} />
+              Hồ sơ minh bạch
+            </span>
+            <span>
+              <CheckCircle2 size={17} />
+              Lịch học linh hoạt
+            </span>
+            <span>
+              <CheckCircle2 size={17} />
+              Hỗ trợ tận tâm
+            </span>
+          </div>
+          <p className="dialog-note">
+            Giao diện đăng ký đang được chuẩn bị. Bạn có thể tìm hiểu nhu cầu học tập hoặc sử dụng
+            trang đăng nhập hiện có.
+          </p>
+          <Button className="edu-button w-full" onClick={() => openDialog('consultation')}>
+            Tìm hiểu thêm
+            <ArrowRight size={16} />
+          </Button>
+          <Link to={ROUTES.LOGIN} className="text-link join-login">
+            Đã có tài khoản? Đăng nhập
+          </Link>
         </div>
-      </Container>
+      </Modal>
+
+      <Modal
+        open={dialog === 'consultation'}
+        onClose={closeDialog}
+        title="Tư vấn lộ trình học tập"
+        description="Cùng tìm ra cách học phù hợp với bạn."
+        className="edu-modal"
+      >
+        {consultationComplete ? (
+          <div className="consultation-success">
+            <span className="join-icon">
+              <CheckCircle2 size={36} />
+            </span>
+            <h3>Cảm ơn bạn, {consultation.name}!</h3>
+            <p>
+              Bạn đã hoàn tất trải nghiệm biểu mẫu. Thông tin chưa được gửi đi vì giao diện chưa kết
+              nối dịch vụ tư vấn.
+            </p>
+            <Button className="edu-button" onClick={closeDialog}>
+              Tiếp tục khám phá
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        ) : (
+          <form
+            className="consultation-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setConsultationComplete(true);
+            }}
+          >
+            <label>
+              Họ và tên
+              <input
+                name="name"
+                autoComplete="name"
+                required
+                maxLength={80}
+                placeholder="Tên của bạn"
+                value={consultation.name}
+                onChange={(event) =>
+                  setConsultation((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Số điện thoại
+              <input
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required
+                pattern="[+]?[0-9]{9,15}"
+                title="Nhập số điện thoại từ 9 đến 16 ký tự"
+                placeholder="Nhập số điện thoại"
+                value={consultation.phone}
+                onChange={(event) =>
+                  setConsultation((current) => ({ ...current, phone: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Bạn quan tâm môn học nào?
+              <select
+                name="subject"
+                value={consultation.subject}
+                onChange={(event) =>
+                  setConsultation((current) => ({ ...current, subject: event.target.value }))
+                }
+              >
+                {subjects.map((subject) => (
+                  <option key={subject.name}>{subject.name}</option>
+                ))}
+              </select>
+            </label>
+            <p className="dialog-note">
+              Biểu mẫu minh hoạ. Thông tin chỉ được sử dụng để xem trước giao diện, chưa được gửi
+              đến hệ thống.
+            </p>
+            <Button type="submit" className="edu-button w-full">
+              Hoàn tất biểu mẫu
+              <ArrowRight size={16} />
+            </Button>
+          </form>
+        )}
+      </Modal>
+      <Modal
+        open={['terms', 'privacy', 'faq', 'support'].includes(dialog)}
+        onClose={closeDialog}
+        title={
+          {
+            terms: 'Điều khoản sử dụng',
+            privacy: 'Chính sách bảo mật',
+            faq: 'Câu hỏi thường gặp',
+            support: 'Hỗ trợ từ EduMatch',
+          }[dialog]
+        }
+        className="edu-modal"
+      >
+        {dialog === 'faq' ? (
+          <div className="faq-list">
+            {[
+              {
+                q: 'Tôi có thể tìm giáo viên như thế nào?',
+                a: 'Chọn môn học, hình thức, học phí và đánh giá tại bộ lọc. Bạn cũng có thể tìm theo tên bằng ô tìm kiếm trên đầu trang.',
+              },
+              {
+                q: 'Có thể học trực tuyến không?',
+                a: 'Bạn có thể chọn hình thức Trực tuyến trong bộ lọc để tìm những hồ sơ phù hợp.',
+              },
+              {
+                q: 'Làm sao để lưu giáo viên yêu thích?',
+                a: 'Nhấn biểu tượng trái tim trên hồ sơ. Danh sách được lưu trong trình duyệt của bạn.',
+              },
+            ].map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        ) : (
+          <div className="info-content">
+            <ShieldCheck size={32} />
+            <p>
+              {dialog === 'support'
+                ? 'Bạn có thể khám phá câu hỏi thường gặp hoặc điền thử biểu mẫu tư vấn để tìm hiểu trải nghiệm học tập.'
+                : 'Nội dung chính sách chính thức sẽ được cập nhật khi EduMatch đi vào hoạt động. Giao diện hiện tại là bản thiết kế, với hồ sơ và đánh giá minh hoạ.'}
+            </p>
+            <Button
+              className="edu-button"
+              onClick={() => openDialog(dialog === 'support' ? 'faq' : 'consultation')}
+            >
+              {dialog === 'support' ? 'Xem câu hỏi thường gặp' : 'Tìm hiểu thêm'}
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

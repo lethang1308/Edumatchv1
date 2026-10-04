@@ -1,137 +1,175 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Layers, Menu, X, LogIn } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  ArrowRight,
+  GraduationCap,
+  Menu,
+  Moon,
+  Phone,
+  Search,
+  ShieldCheck,
+  Sun,
+  X,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
-import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/common/Button';
 
-export const Header = () => {
+export const Header = ({ theme, onToggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
   const { isAuthenticated, user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate(ROUTES.LOGIN);
+  const openDialog = (name) => {
+    setMobileMenuOpen(false);
+    setParams((current) => {
+      current.set('dialog', name);
+      return current;
+    });
+  };
+  const search = (event) => {
+    event.preventDefault();
+    const value = new FormData(event.currentTarget).get('q').trim();
+    setParams((current) => {
+      if (value) current.set('q', value);
+      else current.delete('q');
+      return current;
+    });
+    setMobileMenuOpen(false);
+    document.getElementById('giao-vien')?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    });
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo Brand */}
-          <Link to={ROUTES.HOME} className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-              <Layers className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-slate-900 text-lg tracking-tight">
-              {APP_CONFIG.name}
-            </span>
+    <header className="edu-header">
+      <a className="skip-link" href="#tim-gia-su">
+        Đi đến nội dung chính
+      </a>
+      <div className="edu-container header-inner">
+        <Link to={ROUTES.HOME} className="edu-brand" title="Trang chủ EduMatch">
+          <span className="brand-symbol">
+            E<span />
+          </span>
+          <span>
+            Edu<span className="accent-text">Match</span>
+          </span>
+        </Link>
+        <form className="header-search" role="search" onSubmit={search}>
+          <Search size={16} aria-hidden="true" />
+          <input
+            key={params.get('q') || ''}
+            name="q"
+            defaultValue={params.get('q') || ''}
+            aria-label="Tìm giáo viên hoặc môn học"
+            placeholder="Tìm giáo viên, môn học..."
+          />
+          <kbd>↵</kbd>
+        </form>
+        <nav className="desktop-nav" aria-label="Điều hướng chính">
+          <a href="#tim-gia-su">
+            <GraduationCap size={16} />
+            Tìm gia sư
+          </a>
+          <button onClick={() => openDialog('teacher')}>Đăng ký dạy</button>
+          <button className="consultation-nav" onClick={() => openDialog('consultation')}>
+            <Phone size={14} />
+            Tư vấn miễn phí
+          </button>
+          <Link to={ROUTES.DASHBOARD} className="admin-nav" title="Bảng điều khiển">
+            <ShieldCheck size={14} />
+            <span>Quản trị</span>
           </Link>
-
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-6">
-            <NavLink
-              to={ROUTES.HOME}
-              className={({ isActive }) =>
-                isActive
-                  ? 'text-sm font-semibold text-blue-600'
-                  : 'text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors'
-              }
-            >
-              Trang chủ
-            </NavLink>
-            <NavLink
-              to={ROUTES.DASHBOARD}
-              className={({ isActive }) =>
-                isActive
-                  ? 'text-sm font-semibold text-blue-600'
-                  : 'text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors'
-              }
-            >
-              Bảng điều khiển
-            </NavLink>
-          </nav>
-
-          {/* Right Action */}
-          <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-700">{user?.name || 'User'}</span>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  Đăng xuất
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                leftIcon={<LogIn className="w-4 h-4" />}
-                onClick={() => navigate(ROUTES.LOGIN)}
-              >
-                Đăng nhập
-              </Button>
-            )}
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="flex md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-              aria-label="Toggle mobile menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 bg-white px-4 pt-2 pb-4 space-y-2">
-          <Link
-            to={ROUTES.HOME}
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50"
+        </nav>
+        <div className="header-auth">
+          <button
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            aria-label={
+              theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'
+            }
           >
-            Trang chủ
-          </Link>
-          <Link
-            to={ROUTES.DASHBOARD}
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Bảng điều khiển
-          </Link>
-          <div className="pt-2 border-t border-slate-100">
-            {isAuthenticated ? (
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+          {isAuthenticated ? (
+            <>
+              <span className="user-name">{user?.name}</span>
               <Button
                 variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
+                className="edu-button edu-button-outline"
+                size="sm"
+                onClick={logout}
               >
-                Đăng xuất ({user?.name})
+                Đăng xuất
               </Button>
-            ) : (
-              <Button
-                variant="primary"
-                className="w-full"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate(ROUTES.LOGIN);
-                }}
-              >
+            </>
+          ) : (
+            <>
+              <Link to={ROUTES.LOGIN} className="login-link">
                 Đăng nhập
+              </Link>
+              <Button
+                size="sm"
+                className="edu-button register-button"
+                onClick={() => openDialog('register')}
+              >
+                Đăng ký
+                <ArrowRight size={14} />
               </Button>
-            )}
-          </div>
+            </>
+          )}
         </div>
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setMobileMenuOpen((current) => !current)}
+          aria-label={mobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+      {mobileMenuOpen && (
+        <nav
+          id="mobile-navigation"
+          className="mobile-navigation"
+          aria-label="Điều hướng trên điện thoại"
+        >
+          <form className="header-search" role="search" onSubmit={search}>
+            <Search size={18} />
+            <input
+              name="q"
+              aria-label="Tìm kiếm trên điện thoại"
+              placeholder="Tìm giáo viên, môn học..."
+            />
+            <button type="submit" aria-label="Tìm kiếm">
+              <ArrowRight size={19} />
+            </button>
+          </form>
+          <a href="#tim-gia-su" onClick={() => setMobileMenuOpen(false)}>
+            Tìm gia sư
+          </a>
+          <button onClick={() => openDialog('teacher')}>Đăng ký dạy</button>
+          <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
+          <Link to={ROUTES.DASHBOARD} onClick={() => setMobileMenuOpen(false)}>
+            Quản trị
+          </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={() => {
+                logout();
+                setMobileMenuOpen(false);
+              }}
+            >
+              Đăng xuất
+            </button>
+          ) : (
+            <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
+              Đăng nhập
+            </Link>
+          )}
+        </nav>
       )}
     </header>
   );
