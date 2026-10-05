@@ -169,11 +169,7 @@ export const tutors = [
   {
     id: 'duc-minh',
     title: 'Thầy',
-<<<<<<< HEAD
     name: 'Đỗ Đức Minh , Chuẩn Tiến sĩ',
-=======
-    name: 'Đỗ Quang',
->>>>>>> 7dbd8f4 (Đổi Tên)
     subject: 'Mỹ thuật',
     rating: 4.7,
     reviews: 35,
