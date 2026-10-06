@@ -273,6 +273,7 @@
   font-weight: 600;
   color: var(--edu-muted);
 }
+.user-profile-link:hover { color:var(--edu-green); }
 .header-auth .register-button {
   display: inline-flex;
   align-items: center;
@@ -1339,10 +1340,10 @@
   font-weight: 500;
 }
 .consultation-form input,
-.consultation-form select {
+.consultation-form select,
+.consultation-form textarea {
   width: 100%;
   display: block;
-  height: 44px;
   border: 1px solid var(--edu-line);
   border-radius: 10px;
   background: var(--edu-soft);
@@ -1353,9 +1354,15 @@
   font-size: 12px;
   color: var(--edu-ink);
 }
+.consultation-form input,
+.consultation-form select { height: 44px; }
+.consultation-form textarea { min-height:82px; padding-block:11px; line-height:1.6; resize:vertical; }
 .consultation-form input::placeholder {
   color: var(--edu-muted);
 }
+.consultation-form textarea::placeholder { color:var(--edu-muted); }
+.consultation-form label em { color:var(--edu-muted); font-size:10px; font-style:normal; font-weight:400; }
+.consultation-hotline { display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px solid #b8ddd0; border-radius:11px; background:#f1faf6; color:var(--edu-green); }.consultation-hotline:hover { border-color:var(--edu-green); background:#e7f6ef; }.consultation-hotline > span { display:grid; place-items:center; width:33px; height:33px; border-radius:9px; background:var(--edu-green); color:#fff; }.consultation-hotline > div { display:grid; gap:1px; }.consultation-hotline small { color:var(--edu-muted); font-size:10px; }.consultation-hotline strong { font-size:15px; letter-spacing:.02em; }.consultation-hotline > svg { margin-left:auto; }
 .consultation-form .dialog-note {
   margin-block: 0;
 }

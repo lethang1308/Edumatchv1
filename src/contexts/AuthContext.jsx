@@ -116,6 +116,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updates) => {
+    let nextUser;
+    setUser((current) => {
+      nextUser = { ...current, ...updates };
+      storage.set(STORAGE_KEYS.USER_INFO, nextUser);
+      return nextUser;
+    });
+    return nextUser;
+  };
+
   const value = {
     user,
     token,
@@ -123,6 +133,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    updateUser,
     logout,
   };
 

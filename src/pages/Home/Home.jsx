@@ -15,6 +15,7 @@ import {
   Laptop,
   LockKeyhole,
   Monitor,
+  Phone,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -130,7 +131,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
       <p className="tutor-meta">
         <GraduationCap size={15} />
         {tutor.experience} năm kinh nghiệm
-        <span className="mode-tag">{tutor.mode === 'online' ? 'Online' : 'Online & tại nhà'}</span>
+        <span className="mode-tag">{tutor.mode === 'online' ? 'Online' : tutor.mode === 'recorded' ? 'Video quay sẵn' : 'Online & tại nhà'}</span>
       </p>
       <p className="tutor-description">{tutor.description}</p>
       <div className="tutor-bottom">
@@ -162,7 +163,7 @@ export const Home = () => {
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
   const [profile, setProfile] = useState(null);
   const [consultationComplete, setConsultationComplete] = useState(false);
-  const [consultation, setConsultation] = useState({ name: '', phone: '', subject: 'Tiếng Anh' });
+  const [consultation, setConsultation] = useState({ name: '', phone: '', subject: '', note: '' });
   const resultsRef = useRef(null);
   const filterRef = useRef(null);
   const otherSubjectInputRef = useRef(null);
@@ -192,7 +193,7 @@ export const Home = () => {
       reviews: 0,
       subject: course.title,
       experience: course.teacher.experience || 'Đang cập nhật',
-      mode: course.learningMode === 'in-person' ? 'offline' : 'online',
+      mode: course.learningMode === 'in-person' ? 'offline' : course.learningMode === 'recorded' ? 'recorded' : 'online',
       price: course.price,
       description: course.description,
       bio: course.teacher.bio || '',
@@ -221,7 +222,9 @@ export const Home = () => {
           (!appliedFilters.mode ||
             (appliedFilters.mode === 'online'
               ? tutor.mode === 'online' || tutor.mode === 'both'
-              : tutor.mode === 'offline' || tutor.mode === 'both')) &&
+              : appliedFilters.mode === 'recorded'
+                ? tutor.mode === 'recorded'
+                : tutor.mode === 'offline' || tutor.mode === 'both')) &&
           (!appliedFilters.province || normalize(`${tutor.province || ''} ${tutor.location || ''}`).includes(normalize(appliedFilters.province))) &&
           (!appliedFilters.ward || normalize(`${tutor.ward || ''} ${tutor.location || ''}`).includes(normalize(appliedFilters.ward))) &&
           (!appliedFilters.rating || tutor.rating >= Number(appliedFilters.rating)) &&
@@ -430,6 +433,7 @@ export const Home = () => {
               <option value="">Tất cả hình thức</option>
               <option value="online">Trực tuyến</option>
               <option value="in-person">Học trực tiếp</option>
+              <option value="recorded">Video quay sẵn</option>
             </FilterField>
             {filters.mode === 'in-person' && <>
               <AdministrativePicker
@@ -804,7 +808,7 @@ export const Home = () => {
               </span>
               <span>
                 <Monitor size={19} />
-                <strong>{profile.mode === 'online' ? 'Trực tuyến' : 'Linh hoạt'}</strong>Hình thức
+                <strong>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : 'Linh hoạt'}</strong>Hình thức
                 học
               </span>
               <span>
@@ -924,6 +928,11 @@ export const Home = () => {
               setConsultationComplete(true);
             }}
           >
+            <a className="consultation-hotline" href="tel:19001345">
+              <span><Phone size={19} aria-hidden="true" /></span>
+              <div><small>Hotline tư vấn miễn phí</small><strong>1900 1345</strong></div>
+              <ArrowRight size={17} aria-hidden="true" />
+            </a>
             <label>
               Họ và tên
               <input
@@ -955,18 +964,36 @@ export const Home = () => {
               />
             </label>
             <label>
-              Bạn quan tâm môn học nào?
-              <select
+              Khóa học / môn học cần tư vấn
+              <input
                 name="subject"
+                type="text"
+                list="consultation-subject-suggestions"
+                maxLength={140}
+                placeholder="Ví dụ: Luyện thi IELTS, Toán lớp 12..."
                 value={consultation.subject}
                 onChange={(event) =>
                   setConsultation((current) => ({ ...current, subject: event.target.value }))
                 }
-              >
+              />
+              <datalist id="consultation-subject-suggestions">
                 {subjects.map((subject) => (
-                  <option key={subject.name}>{subject.name}</option>
+                  <option key={subject.name} value={subject.name} />
                 ))}
-              </select>
+              </datalist>
+            </label>
+            <label>
+              Ghi chú <em>(không bắt buộc)</em>
+              <textarea
+                name="note"
+                rows="3"
+                maxLength={600}
+                placeholder="Chia sẻ mục tiêu học, thời gian mong muốn hoặc điều bạn cần được tư vấn..."
+                value={consultation.note}
+                onChange={(event) =>
+                  setConsultation((current) => ({ ...current, note: event.target.value }))
+                }
+              />
             </label>
             <p className="dialog-note">
               Biểu mẫu minh hoạ. Thông tin chỉ được sử dụng để xem trước giao diện, chưa được gửi

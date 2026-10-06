@@ -12,6 +12,7 @@ const sampleCourses = [
     duration: 90,
     schedule: 'Thứ 3 và Thứ 6, 19:00 – 20:30',
     learningMode: 'online',
+    enrollmentStatus: 'open',
     createdAt: '2026-10-01T09:00:00.000Z',
     teacher: {
       id: 'teacher-mai-anh',
@@ -38,6 +39,17 @@ export const saveCourse = (course) => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   write(STORAGE_KEYS.COURSES, [course, ...saved]);
   return course;
+};
+
+export const updateCourse = (courseId, updates) => {
+  const saved = read(STORAGE_KEYS.COURSES, []);
+  const index = saved.findIndex((course) => course.id === courseId);
+  if (index === -1) return getCourse(courseId);
+
+  const next = [...saved];
+  next[index] = { ...next[index], ...updates };
+  write(STORAGE_KEYS.COURSES, next);
+  return next[index];
 };
 
 export const getCourseReviews = (courseId) =>
@@ -105,5 +117,9 @@ export const paymentLabel = (type) => ({
 
 export const modeLabel = (course) => {
   if (course.learningMode === 'online') return 'Trực tuyến';
+  if (course.learningMode === 'recorded') return 'Video quay sẵn';
   return course.inPersonType === 'home' ? 'Dạy tại nhà' : 'Dạy tại lớp';
 };
+
+export const enrollmentLabel = (course) =>
+  course.enrollmentStatus === 'closed' ? 'Đã đóng lớp' : 'Mở lớp';

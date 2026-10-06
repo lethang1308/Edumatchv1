@@ -9,7 +9,6 @@ import {
   Phone,
   Search,
   Sun,
-  UserRound,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -96,13 +95,6 @@ export const Header = ({ theme, onToggleTheme }) => {
               </button>
             </div>
           )}
-          {teacherView && (
-            <>
-              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="teacher-action-link">
-                <UserRound size={15} /> Trang cá nhân
-              </Link>
-            </>
-          )}
           {isAuthenticated && (
             <Link to={ROUTES.MESSAGES} className="teacher-action-link">
               <MessageCircle size={15} /> Tin nhắn
@@ -126,7 +118,9 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <span className="user-name">{user?.name}</span>
+              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+                {user?.name}
+              </Link>
               <Button
                 variant="outline"
                 className="edu-button edu-button-outline"
@@ -186,13 +180,9 @@ export const Header = ({ theme, onToggleTheme }) => {
               <button onClick={() => { setViewerMode('teacher'); setMobileMenuOpen(false); }}>
                 Xem với tư cách giáo viên & Gia sư
               </button>
-              {teacherView && (
-                <>
-                  <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>
-                </>
-              )}
             </>
           )}
+          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
           {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
           <Link to={teacherView ? ROUTES.CREATE_COURSE : ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>Đăng ký dạy</Link>
           <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>

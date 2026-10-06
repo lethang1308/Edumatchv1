@@ -1,7 +1,7 @@
 import { CalendarDays, Clock3, Monitor, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import { getCourseRating, modeLabel, paymentLabel } from '@/features/learning/marketplace';
+import { enrollmentLabel, getCourseRating, modeLabel, paymentLabel } from '@/features/learning/marketplace';
 
 const formatCurrency = (value) =>
   Number(value) > 0 ? `${new Intl.NumberFormat('vi-VN').format(value)}đ` : 'Liên hệ';
@@ -11,8 +11,11 @@ export function CourseCard({ course }) {
   return (
     <article className="course-card">
       <div className="course-card__top">
-        <span>{modeLabel(course)}</span>
-        <span><Star size={14} fill="currentColor" /> {rating.total ? `${rating.average.toFixed(1)} · ${rating.total} đánh giá` : 'Mới'}</span>
+        <div className="course-card__badges">
+          <span className="course-card__mode">{modeLabel(course)}</span>
+          <span className={`course-card__status ${course.enrollmentStatus === 'closed' ? 'is-closed' : ''}`}>{enrollmentLabel(course)}</span>
+        </div>
+        <span className="course-card__rating"><Star size={14} fill="currentColor" /> {rating.total ? `${rating.average.toFixed(1)} · ${rating.total} đánh giá` : 'Mới'}</span>
       </div>
       <h3>{course.title}</h3>
       <p className="course-card__teacher" title={`GV. ${course.teacher.name}`}>GV. {course.teacher.name}</p>
