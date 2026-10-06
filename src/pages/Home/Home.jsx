@@ -158,13 +158,30 @@ export const Home = () => {
   const [savedOnly, setSavedOnly] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [showAllSubjects, setShowAllSubjects] = useState(false);
+  const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
+  const [otherCourseQuery, setOtherCourseQuery] = useState('');
   const [profile, setProfile] = useState(null);
   const [consultationComplete, setConsultationComplete] = useState(false);
   const [consultation, setConsultation] = useState({ name: '', phone: '', subject: 'Tiếng Anh' });
   const resultsRef = useRef(null);
   const filterRef = useRef(null);
+  const otherSubjectInputRef = useRef(null);
   const isTeacherView = isAuthenticated && user?.role === 'teacher' && viewerMode === 'teacher';
   const visibleCourses = getCourses();
+  const otherCourseMatches = useMemo(() => {
+    const keyword = normalize(otherCourseQuery).trim();
+    if (!keyword) return [];
+
+    return visibleCourses
+      .filter((course) => normalize([
+        course.title,
+        course.description,
+        course.teacher?.name,
+        course.location,
+        course.schedule,
+      ].filter(Boolean).join(' ')).includes(keyword))
+      .slice(0, 6);
+  }, [otherCourseQuery, visibleCourses]);
 
   const searchableTutors = useMemo(() => {
     const courseTutors = getCourses().map((course) => ({
@@ -274,6 +291,10 @@ export const Home = () => {
       { replace: true }
     );
     scrollTo(resultsRef.current);
+  };
+  const openOtherSubjectSearch = () => {
+    setShowOtherSubjectSearch(true);
+    requestAnimationFrame(() => otherSubjectInputRef.current?.focus());
   };
 
   return (
@@ -553,7 +574,47 @@ export const Home = () => {
                   <span>{name}</span>
                 </button>
               ))}
+            <button
+              className={`subject-tile subject-other ${showOtherSubjectSearch ? 'selected' : ''}`}
+              aria-expanded={showOtherSubjectSearch}
+              onClick={openOtherSubjectSearch}
+            >
+              <span className="subject-icon"><Search size={26} strokeWidth={1.8} /></span>
+              <span>Khác</span>
+            </button>
           </div>
+          {showOtherSubjectSearch && (
+            <div className="other-course-search" role="search" aria-label="Tìm khóa học khác">
+              <div className="other-course-search__top">
+                <div>
+                  <strong>Tìm khóa học khác</strong>
+                  <span>Nhập môn học, chủ đề hoặc tên khóa học bạn muốn tìm.</span>
+                </div>
+                <button type="button" onClick={() => { setShowOtherSubjectSearch(false); setOtherCourseQuery(''); }} aria-label="Đóng tìm kiếm khóa học"><X size={17} /></button>
+              </div>
+              <div className="other-course-search__input">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  ref={otherSubjectInputRef}
+                  value={otherCourseQuery}
+                  onChange={(event) => setOtherCourseQuery(event.target.value)}
+                  placeholder="Ví dụ: IELTS, đàn guitar, luyện thi đại học..."
+                  aria-label="Từ khóa tìm khóa học"
+                />
+              </div>
+              {otherCourseQuery.trim() && (
+                <div className="other-course-search__results">
+                  <p>{otherCourseMatches.length ? `${otherCourseMatches.length} khóa học liên quan` : 'Chưa có khóa học phù hợp'}</p>
+                  {otherCourseMatches.map((course) => (
+                    <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} className="other-course-result">
+                      <span><strong>{course.title}</strong><small>{course.teacher?.name || 'Giáo viên EduMatch'} · {course.description}</small></span>
+                      <ArrowRight size={17} aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section id="cach-hoat-dong" className="how-section" aria-labelledby="how-heading">

@@ -141,14 +141,10 @@ export const Header = ({ theme, onToggleTheme }) => {
               <Link to={ROUTES.LOGIN} className="login-link">
                 Đăng nhập
               </Link>
-              <Button
-                size="sm"
-                className="edu-button register-button"
-                onClick={() => openDialog('register')}
-              >
+              <Link to={ROUTES.REGISTER} className="edu-button register-button">
                 Đăng ký
                 <ArrowRight size={14} />
-              </Button>
+              </Link>
             </>
           )}
         </div>
@@ -210,9 +206,10 @@ export const Header = ({ theme, onToggleTheme }) => {
               Đăng xuất
             </button>
           ) : (
-            <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
-              Đăng nhập
-            </Link>
+            <>
+              <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>Đăng nhập</Link>
+              <Link to={ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>Đăng ký</Link>
+            </>
           )}
         </nav>
       )}

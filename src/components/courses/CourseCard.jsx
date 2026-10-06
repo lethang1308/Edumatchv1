@@ -15,7 +15,7 @@ export function CourseCard({ course }) {
         <span><Star size={14} fill="currentColor" /> {rating.total ? `${rating.average.toFixed(1)} · ${rating.total} đánh giá` : 'Mới'}</span>
       </div>
       <h3>{course.title}</h3>
-      <p className="course-card__teacher">Giáo viên đồng hành <strong>{course.teacher.name}</strong></p>
+      <p className="course-card__teacher" title={`GV. ${course.teacher.name}`}>GV. {course.teacher.name}</p>
       <p className="course-card__description">{course.description}</p>
       <div className="course-card__facts">
         <span><CalendarDays size={15} /> {paymentLabel(course.paymentType)}</span>

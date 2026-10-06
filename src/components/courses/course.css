@@ -6,8 +6,7 @@
 .course-card__top span:first-child { padding:4px 9px; border-radius:999px; background:var(--edu-tag); }
 .course-card__top span:last-child { display:inline-flex; align-items:center; gap:4px; color:#a66812; }
 .course-card h3 { color:var(--edu-green); margin-top:21px; font-size:20px; font-weight:800; line-height:1.42; letter-spacing:-.55px; }
-.course-card__teacher { margin:12px 0 0; color:var(--edu-muted); font-size:12px; line-height:1.65; }
-.course-card__teacher strong { display:block; margin-top:2px; color:#40535a; font-weight:700; }
+.course-card__teacher { overflow:hidden; margin:12px 0 0; color:#40535a; font-size:12px; font-weight:700; line-height:1.65; text-overflow:ellipsis; white-space:nowrap; }
 .course-card__description { min-height:44px; margin:16px 0 22px; color:var(--edu-muted); font-size:12px; line-height:1.85; }
 .course-card__facts { flex-wrap:wrap; gap:10px 14px; padding-top:18px; border-top:1px solid var(--edu-line); color:var(--edu-muted); font-size:11px; line-height:1.5; }
 .course-card__facts span { display:inline-flex; align-items:center; gap:5px; }
