@@ -27,7 +27,7 @@ export function CreateCoursePage() {
   const [errors, setErrors] = useState({});
   const summary = useMemo(() => ({
     name: user?.name || 'Giáo viên EduMatch', dob: user?.dob, qualifications: user?.qualifications || 'Đang cập nhật',
-    experience: user?.experience || 'Đang cập nhật', bio: user?.bio || 'Đang cập nhật',
+    experience: user?.experience || 'Đang cập nhật', bio: user?.bio || 'Đang cập nhật', avatar: user?.avatar || '',
   }), [user]);
   const update = (event) => {
     const { name, value } = event.target;

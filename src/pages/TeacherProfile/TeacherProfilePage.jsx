@@ -37,7 +37,12 @@ export function TeacherProfilePage() {
     if (!file.type.startsWith('image/')) { toast.error('Vui lòng chọn một tệp ảnh.'); return; }
     if (file.size > MAX_PROFILE_IMAGE_SIZE) { toast.error('Ảnh đại diện và ảnh bìa tối đa 2 MB.'); return; }
     const reader = new FileReader();
-    reader.onload = () => { updateUser({ [field]: String(reader.result) }); toast.success(field === 'avatar' ? 'Đã cập nhật ảnh đại diện.' : 'Đã cập nhật ảnh bìa.'); };
+    reader.onload = () => {
+      const image = String(reader.result);
+      updateUser({ [field]: image });
+      if (field === 'avatar' && user?.role === 'teacher') syncTeacherCourseProfile(user.id, { avatar: image });
+      toast.success(field === 'avatar' ? 'Đã cập nhật ảnh đại diện.' : 'Đã cập nhật ảnh bìa.');
+    };
     reader.readAsDataURL(file);
   };
   const openProfileEditor = () => {

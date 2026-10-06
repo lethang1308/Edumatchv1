@@ -30,7 +30,13 @@ const write = (key, value) => storage.set(key, value);
 
 export const getCourses = () => {
   const saved = read(STORAGE_KEYS.COURSES, []);
-  return [...saved, ...sampleCourses];
+  const currentUser = read(STORAGE_KEYS.USER_INFO, null);
+  const hydratedSavedCourses = saved.map((course) =>
+    course.teacher?.id === currentUser?.id && currentUser?.avatar
+      ? { ...course, teacher: { ...course.teacher, avatar: currentUser.avatar } }
+      : course
+  );
+  return [...hydratedSavedCourses, ...sampleCourses];
 };
 
 export const getCourse = (id) => getCourses().find((course) => course.id === id);
