@@ -1,0 +1,19 @@
+.course-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px; }
+.course-card { display:flex; flex-direction:column; min-width:0; min-height:300px; padding:27px; border:1px solid var(--edu-line); border-radius:20px; background:var(--edu-surface); box-shadow:0 10px 30px rgb(35 89 72 / 6%); transition:border-color 160ms, box-shadow 160ms, transform 160ms; }
+.course-card:hover { border-color:#9fcfbe; box-shadow:0 16px 35px rgb(35 89 72 / 11%); transform:translateY(-2px); }
+.course-card__top,.course-card__facts,.course-card__bottom { display:flex; align-items:center; gap:9px; }
+.course-card__top { justify-content:space-between; font-size:11px; color:var(--edu-green); font-weight:700; }
+.course-card__top span:first-child { padding:4px 9px; border-radius:999px; background:var(--edu-tag); }
+.course-card__top span:last-child { display:inline-flex; align-items:center; gap:4px; color:#a66812; }
+.course-card h3 { color:var(--edu-green); margin-top:21px; font-size:20px; font-weight:800; line-height:1.42; letter-spacing:-.55px; }
+.course-card__teacher { margin:12px 0 0; color:var(--edu-muted); font-size:12px; line-height:1.65; }
+.course-card__teacher strong { display:block; margin-top:2px; color:#40535a; font-weight:700; }
+.course-card__description { min-height:44px; margin:16px 0 22px; color:var(--edu-muted); font-size:12px; line-height:1.85; }
+.course-card__facts { flex-wrap:wrap; gap:10px 14px; padding-top:18px; border-top:1px solid var(--edu-line); color:var(--edu-muted); font-size:11px; line-height:1.5; }
+.course-card__facts span { display:inline-flex; align-items:center; gap:5px; }
+.course-card__bottom { justify-content:space-between; margin-top:auto; padding-top:24px; }
+.course-card__bottom strong { color:var(--edu-green); font-size:19px; font-weight:800; letter-spacing:-.35px; }
+.course-card__bottom a { display:inline-flex; align-items:center; gap:7px; padding:9px 11px; border-radius:8px; background:#eaf7f1; color:var(--edu-green); font-size:11px; font-weight:800; }
+.course-card__bottom a:hover { background:var(--edu-green); color:#fff; }
+@media (max-width: 900px) { .course-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) { .course-grid { grid-template-columns:1fr; } }

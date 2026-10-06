@@ -64,7 +64,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await authService.register(userData);
-      return { success: true, data: res };
+      const authToken = res?.token || res?.access_token || 'mock_jwt_token_register';
+      const authUser = res?.user || {
+        id: `usr_${Date.now()}`,
+        name: userData.fullName || 'Người dùng mới',
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role || 'student',
+        dob: userData.dob || '',
+        qualifications: userData.qualifications || '',
+        experience: userData.experience || '',
+        bio: userData.bio || '',
+      };
+      storage.set(STORAGE_KEYS.ACCESS_TOKEN, authToken);
+      storage.set(STORAGE_KEYS.USER_INFO, authUser);
+      setToken(authToken);
+      setUser(authUser);
+      return { success: true, user: authUser, data: res };
     } catch {
       // Mock skeleton fallback khi backend chưa kết nối
       const mockToken = 'mock_jwt_token_register';
@@ -74,6 +90,10 @@ export const AuthProvider = ({ children }) => {
         email: userData.email,
         phone: userData.phone,
         role: userData.role || 'student',
+        dob: userData.dob || '',
+        qualifications: userData.qualifications || '',
+        experience: userData.experience || '',
+        bio: userData.bio || '',
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
       storage.set(STORAGE_KEYS.USER_INFO, mockUser);

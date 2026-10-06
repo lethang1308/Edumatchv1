@@ -144,7 +144,7 @@ export const Register = () => {
           ? 'Đăng ký tài khoản Giáo viên thành công!'
           : 'Đăng ký tài khoản Học viên thành công!'
       );
-      navigate(ROUTES.DASHBOARD, { replace: true });
+      navigate(ROUTES.HOME, { replace: true });
       return;
     }
 

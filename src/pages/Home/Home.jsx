@@ -23,16 +23,24 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { BookPlus, CircleUserRound } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/feedback/Modal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ROUTES } from '@/constants/routes';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
+import { useAuth } from '@/hooks/useAuth';
+import { CourseCard } from '@/components/courses/CourseCard';
+import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
+import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
+import { getCourses } from '@/features/learning/marketplace';
 import heroImage from '@/assets/tutoring-hero.webp';
 import heroImageMobile from '@/assets/tutoring-hero-720.webp';
 import { subjects, tutors, testimonials } from './homeData';
 import './home.css';
+import '@/components/courses/course.css';
 
-const initialFilters = { subject: '', mode: '', price: '', rating: '' };
+const initialFilters = { subject: '', mode: '', province: '', ward: '', rating: '' };
 const currency = (value) => new Intl.NumberFormat('vi-VN').format(value);
 const normalize = (text) =>
   text
@@ -73,20 +81,41 @@ function FilterField({ label, icon: Icon, name, value, onChange, children }) {
   );
 }
 
+function SubjectFilterField({ value, onChange }) {
+  return (
+    <label className="filter-field">
+      <span>Môn học / Lĩnh vực</span>
+      <div className="filter-input filter-input--search">
+        <BookOpen size={19} aria-hidden="true" />
+        <input
+          id="subject-filter"
+          name="subject"
+          type="search"
+          value={value}
+          onChange={onChange}
+          list="subject-suggestions"
+          placeholder="Nhập môn học hoặc từ khóa"
+          autoComplete="off"
+          aria-label="Tìm môn học hoặc lĩnh vực"
+        />
+        <datalist id="subject-suggestions">
+          {subjects.map((subject) => <option key={subject.name} value={subject.name} />)}
+        </datalist>
+      </div>
+    </label>
+  );
+}
+
 function TutorCard({ tutor, saved, onSave, onOpen }) {
   return (
     <article className="tutor-card">
       <div className="tutor-top">
-        <img src={tutor.image} alt={tutor.name} width="68" height="76" loading="lazy" />
+        {tutor.image ? <img src={tutor.image} alt={tutor.name} width="68" height="76" loading="lazy" /> : <span className="tutor-avatar-fallback" aria-hidden="true">{tutor.name.slice(0, 1)}</span>}
         <div className="tutor-identity">
           <h3>
             {tutor.title} {tutor.name}
           </h3>
-          <div className="tutor-rating">
-            <Star size={13} fill="currentColor" />
-            <strong>{tutor.rating.toFixed(1)}</strong>
-            <span>({tutor.reviews} đánh giá)</span>
-          </div>
+          <div className="tutor-rating">{tutor.reviews ? <><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></> : <span>Hồ sơ mới</span>}</div>
           <span className="subject-tag">{tutor.subject}</span>
         </div>
         <button
@@ -106,8 +135,8 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
       <p className="tutor-description">{tutor.description}</p>
       <div className="tutor-bottom">
         <div>
-          <strong>{currency(tutor.price)}đ</strong>
-          <span> / giờ</span>
+          <strong>{tutor.price ? `${currency(tutor.price)}đ` : 'Liên hệ'}</strong>
+          {tutor.price && <span> / giờ</span>}
         </div>
         <Button className="edu-button profile-button" size="sm" onClick={onOpen}>
           Xem hồ sơ <ArrowRight size={14} />
@@ -118,6 +147,8 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 }
 
 export const Home = () => {
+  const { user, isAuthenticated } = useAuth();
+  const [viewerMode] = useLocalStorage(STORAGE_KEYS.VIEW_MODE, 'teacher');
   const [params, setParams] = useSearchParams();
   const query = params.get('q') || '';
   const dialog = params.get('dialog');
@@ -132,10 +163,33 @@ export const Home = () => {
   const [consultation, setConsultation] = useState({ name: '', phone: '', subject: 'Tiếng Anh' });
   const resultsRef = useRef(null);
   const filterRef = useRef(null);
+  const isTeacherView = isAuthenticated && user?.role === 'teacher' && viewerMode === 'teacher';
+  const visibleCourses = getCourses();
+
+  const searchableTutors = useMemo(() => {
+    const courseTutors = getCourses().map((course) => ({
+      id: `course-tutor-${course.id}`,
+      name: course.teacher.name,
+      title: 'GV.',
+      rating: 0,
+      reviews: 0,
+      subject: course.title,
+      experience: course.teacher.experience || 'Đang cập nhật',
+      mode: course.learningMode === 'in-person' ? 'offline' : 'online',
+      price: course.price,
+      description: course.description,
+      bio: course.teacher.bio || '',
+      methods: ['Lộ trình học theo khóa', 'Chủ động trao đổi lịch học'],
+      province: course.province || '',
+      ward: course.ward || course.district || '',
+      location: course.location || '',
+    }));
+    return [...tutors, ...courseTutors];
+  }, []);
 
   const filteredTutors = useMemo(
     () =>
-      tutors.filter((tutor) => {
+      searchableTutors.filter((tutor) => {
         const matchesQuery =
           !query ||
           normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description}`).includes(
@@ -143,20 +197,41 @@ export const Home = () => {
           );
         return (
           matchesQuery &&
-          (!appliedFilters.subject || tutor.subject === appliedFilters.subject) &&
-          (!appliedFilters.mode || tutor.mode === appliedFilters.mode || tutor.mode === 'both') &&
-          (!appliedFilters.price || tutor.price <= Number(appliedFilters.price)) &&
+          (!appliedFilters.subject ||
+            normalize(`${tutor.subject} ${tutor.title} ${tutor.description}`).includes(
+              normalize(appliedFilters.subject)
+            )) &&
+          (!appliedFilters.mode ||
+            (appliedFilters.mode === 'online'
+              ? tutor.mode === 'online' || tutor.mode === 'both'
+              : tutor.mode === 'offline' || tutor.mode === 'both')) &&
+          (!appliedFilters.province || normalize(`${tutor.province || ''} ${tutor.location || ''}`).includes(normalize(appliedFilters.province))) &&
+          (!appliedFilters.ward || normalize(`${tutor.ward || ''} ${tutor.location || ''}`).includes(normalize(appliedFilters.ward))) &&
           (!appliedFilters.rating || tutor.rating >= Number(appliedFilters.rating)) &&
           (!savedOnly || savedIds.includes(tutor.id))
         );
       }),
-    [query, appliedFilters, savedOnly, savedIds]
+    [query, appliedFilters, savedOnly, savedIds, searchableTutors]
   );
 
   const isFiltered = Boolean(query || savedOnly || Object.values(appliedFilters).some(Boolean));
   const visibleTutors = showAll || isFiltered ? filteredTutors : filteredTutors.slice(0, 4);
-  const updateFilter = (event) =>
-    setFilters((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const wardOptions = useMemo(() => getAdministrativeWards(filters.province), [filters.province]);
+  const updateFilter = (event) => {
+    const { name, value } = event.target;
+    setFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'mode' && value !== 'in-person' ? { province: '', ward: '' } : {}),
+    }));
+  };
+  const selectLocation = (name) => (value) => {
+    setFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'province' ? { ward: '' } : {}),
+    }));
+  };
   const closeDialog = () => {
     setConsultationComplete(false);
     setParams(
@@ -231,15 +306,6 @@ export const Home = () => {
                 Tìm gia sư phù hợp
                 <ArrowRight size={17} />
               </Button>
-              <Button
-                className="edu-button edu-button-outline"
-                variant="outline"
-                size="lg"
-                onClick={() => openDialog('teacher')}
-              >
-                <GraduationCap size={20} />
-                Đăng ký dạy ngay
-              </Button>
             </div>
             <div className="hero-assurances">
               <span>
@@ -283,6 +349,34 @@ export const Home = () => {
       </section>
 
       <div className="edu-container home-content">
+        {isTeacherView && (
+          <section className="teacher-workspace" aria-label="Không gian giáo viên">
+            <div>
+              <span>KHÔNG GIAN GIÁO VIÊN</span>
+              <h2>Chia sẻ lớp học của bạn với học viên phù hợp.</h2>
+              <p>Tạo khóa học, cập nhật hồ sơ và xây dựng cộng đồng học tập của riêng bạn.</p>
+            </div>
+            <div className="teacher-workspace__actions">
+              <Link className="edu-button button-link" to={ROUTES.CREATE_COURSE}>
+                <BookPlus size={18} /> Thêm khóa học
+              </Link>
+              <Link className="edu-button edu-button-outline button-link" to={ROUTES.TEACHER_PROFILE(user.id)}>
+                <CircleUserRound size={18} /> Trang cá nhân
+              </Link>
+            </div>
+          </section>
+        )}
+        <section id="khoa-hoc" className="home-section course-section" aria-labelledby="courses-heading">
+          <SectionHeading
+            title={<span id="courses-heading">Khóa học <span className="accent-text">đang mở</span></span>}
+            description="Lộ trình rõ ràng từ các giáo viên trên EduMatch."
+          >
+            {isTeacherView && <Link className="text-link" to={ROUTES.CREATE_COURSE}>Tạo khóa học <ArrowRight size={16} /></Link>}
+          </SectionHeading>
+          <div className="course-grid">
+            {visibleCourses.map((course) => <CourseCard key={course.id} course={course} />)}
+          </div>
+        </section>
         <section
           id="tim-gia-su"
           className="tutor-search"
@@ -297,29 +391,16 @@ export const Home = () => {
             <span>Người thầy phù hợp. Hành trình khác biệt.</span>
           </div>
           <form
-            className="filter-grid"
+            className={`filter-grid ${filters.mode === 'in-person' ? 'filter-grid--location' : ''}`}
             onSubmit={(event) => {
               event.preventDefault();
               setAppliedFilters(filters);
               scrollTo(resultsRef.current);
             }}
           >
+            <SubjectFilterField value={filters.subject} onChange={updateFilter} />
             <FilterField
-              label="Môn học / Lĩnh vực"
-              icon={BookOpen}
-              name="subject"
-              value={filters.subject}
-              onChange={updateFilter}
-            >
-              <option value="">Tất cả môn học</option>
-              {subjects.map((subject) => (
-                <option key={subject.name} value={subject.name}>
-                  {subject.name}
-                </option>
-              ))}
-            </FilterField>
-            <FilterField
-              label="Hình thức giảng dạy"
+              label="Hình thức học"
               icon={Monitor}
               name="mode"
               value={filters.mode}
@@ -327,20 +408,28 @@ export const Home = () => {
             >
               <option value="">Tất cả hình thức</option>
               <option value="online">Trực tuyến</option>
-              <option value="offline">Tại nhà</option>
+              <option value="in-person">Học trực tiếp</option>
             </FilterField>
-            <FilterField
-              label="Mức học phí (1 giờ)"
-              icon={GraduationCap}
-              name="price"
-              value={filters.price}
-              onChange={updateFilter}
-            >
-              <option value="">Tất cả mức giá</option>
-              <option value="250000">Đến 250.000đ</option>
-              <option value="350000">Đến 350.000đ</option>
-              <option value="500000">Đến 500.000đ</option>
-            </FilterField>
+            {filters.mode === 'in-person' && <>
+              <AdministrativePicker
+                id="province-filter"
+                label="Tỉnh / Thành phố"
+                value={filters.province}
+                options={administrativeProvinces}
+                onSelect={selectLocation('province')}
+                placeholder="Gõ để tìm tỉnh/thành, rồi chọn"
+              />
+              <AdministrativePicker
+                id="ward-filter"
+                label="Xã / Phường / Đặc khu"
+                value={filters.ward}
+                options={wardOptions}
+                onSelect={selectLocation('ward')}
+                placeholder={filters.province ? 'Gõ để tìm xã/phường, rồi chọn' : 'Chọn tỉnh/thành trước'}
+                disabled={!filters.province}
+                emptyText="Không tìm thấy xã/phường trong tỉnh/thành đã chọn."
+              />
+            </>}
             <FilterField
               label="Đánh giá tối thiểu"
               icon={Star}
@@ -624,14 +713,6 @@ export const Home = () => {
               <Search size={18} />
               Tìm gia sư ngay
             </a>
-            <Button
-              variant="outline"
-              className="edu-button edu-button-outline"
-              onClick={() => openDialog('teacher')}
-            >
-              <GraduationCap size={19} />
-              Trở thành giáo viên
-            </Button>
           </div>
         </section>
       </div>
@@ -646,16 +727,13 @@ export const Home = () => {
         {profile && (
           <div className="profile-detail">
             <div className="profile-detail-heading">
-              <img src={profile.image} alt={profile.name} width="84" height="96" />
+              {profile.image ? <img src={profile.image} alt={profile.name} width="84" height="96" /> : <span className="profile-avatar-fallback" aria-hidden="true">{profile.name.slice(0, 1)}</span>}
               <div>
                 <span className="subject-tag">{profile.subject}</span>
                 <h3>
                   {profile.title} {profile.name}
                 </h3>
-                <p>
-                  <Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)}{' '}
-                  <span>({profile.reviews} đánh giá)</span>
-                </p>
+                {profile.reviews ? <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p> : <p>Hồ sơ giáo viên mới</p>}
               </div>
             </div>
             <div className="profile-facts">

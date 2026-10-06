@@ -17,11 +17,12 @@ export const authService = {
     } catch {
       // Mock skeleton fallback khi backend chưa chạy
       const mockToken = 'mock_jwt_token_sample';
-      const mockUser = {
+      const savedUser = storage.get(STORAGE_KEYS.USER_INFO, null);
+      const mockUser = savedUser || {
         id: 'usr_1',
-        name: 'Demo Admin',
+        name: 'Người dùng EduMatch',
         email: credentials.email || 'admin@example.com',
-        role: 'admin',
+        role: 'student',
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
       storage.set(STORAGE_KEYS.USER_INFO, mockUser);

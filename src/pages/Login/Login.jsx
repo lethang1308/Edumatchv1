@@ -64,7 +64,7 @@ export const Login = () => {
 
     if (result.success) {
       toast.success('Đăng nhập thành công');
-      navigate(location.state?.from?.pathname || ROUTES.DASHBOARD, { replace: true });
+      navigate(location.state?.from?.pathname || ROUTES.HOME, { replace: true });
       return;
     }
 

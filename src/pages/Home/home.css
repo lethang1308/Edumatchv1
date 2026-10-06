@@ -234,6 +234,33 @@
   border-radius: 8px;
   background: var(--edu-soft);
 }
+.teacher-view-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--edu-line);
+  border-radius: 9px;
+  background: var(--edu-soft);
+  gap: 2px;
+}
+.desktop-nav .teacher-view-switch button {
+  padding: 5px 7px;
+  border-radius: 6px;
+  color: var(--edu-muted);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.desktop-nav .teacher-view-switch button.is-active { background: #fff; color: var(--edu-green); box-shadow: 0 1px 4px rgb(20 61 49 / 10%); }
+.desktop-nav .teacher-action-link { color: var(--edu-green); font-size: 10px; }
+.teacher-workspace { display:flex; align-items:center; justify-content:space-between; gap:28px; margin:34px 0 4px; padding:25px 28px; border:1px solid #b8ddd0; border-radius:18px; background:linear-gradient(110deg,#eaf7f1,#f9fffc); }
+.teacher-workspace > div:first-child { max-width:650px; }
+.teacher-workspace span { display:block; margin-bottom:7px; color:var(--edu-green); font-size:10px; font-weight:800; letter-spacing:.08em; }
+.teacher-workspace h2 { font-size:20px; line-height:1.3; letter-spacing:-.4px; }
+.teacher-workspace p { margin-top:5px; color:var(--edu-muted); font-size:12px; }
+.teacher-workspace__actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+/* The search panel normally overlaps the hero. When courses are rendered before it,
+   keep it in normal flow so it cannot cover the last row of course cards. */
+.course-section + .tutor-search { margin-top: 43px; }
 .header-auth {
   display: flex;
   align-items: center;
@@ -442,10 +469,14 @@
 }
 .filter-grid {
   display: grid;
-  grid-template-columns: 1.3fr 1.16fr 1fr 1fr auto;
+  grid-template-columns: 1.3fr 1.16fr 1fr auto;
   gap: 14px;
   align-items: end;
 }
+.filter-grid--location { grid-template-columns:1.22fr 1fr 1fr 1fr .9fr auto; }
+.tutor-search .administrative-picker > label { margin-bottom:7px; color:var(--edu-muted); font-size:11px; font-weight:500; }
+.tutor-search .administrative-picker__control { min-height:44px; border-color:var(--edu-line); background:var(--edu-soft); }
+.tutor-search .administrative-picker__control input { min-height:42px; font-size:12px; }
 .filter-field > span {
   display: block;
   margin-bottom: 7px;
@@ -485,6 +516,20 @@
   font-size: 12px;
   color: var(--edu-muted);
 }
+.filter-input input {
+  width: 100%;
+  height: 100%;
+  padding: 0 13px 0 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--edu-ink);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.filter-input input::placeholder { color: var(--edu-muted); }
+.filter-input--search:focus-within { border-color: var(--edu-green); box-shadow: 0 0 0 3px rgb(8 117 99 / 10%); }
 .filter-input select option {
   background: var(--edu-surface);
   color: var(--edu-ink);
@@ -549,6 +594,8 @@
   object-fit: cover;
   flex-shrink: 0;
 }
+.tutor-avatar-fallback { display:grid; place-items:center; width:60px; height:71px; border-radius:10px; background:#d8eee5; color:var(--edu-green); font-size:22px; font-weight:800; flex-shrink:0; }
+.profile-avatar-fallback { display:grid; place-items:center; width:84px; height:96px; border-radius:12px; background:#d8eee5; color:var(--edu-green); font-size:28px; font-weight:800; flex-shrink:0; }
 .tutor-identity {
   min-width: 0;
   padding-top: 1px;
@@ -1833,6 +1880,12 @@
   }
   .filter-field > span {
     font-size: 9px;
+  }
+  .tutor-search .administrative-picker > label {
+    font-size: 9px;
+  }
+  .tutor-search .administrative-picker__control input {
+    font-size: 10px;
   }
   .filter-input select {
     font-size: 10px;
