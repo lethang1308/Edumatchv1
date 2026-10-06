@@ -14,16 +14,14 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { Button } from '@/components/common/Button';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 export const Header = ({ theme, onToggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const { isAuthenticated, user, logout } = useAuth();
-  const [viewerMode, setViewerMode] = useLocalStorage(STORAGE_KEYS.VIEW_MODE, 'teacher');
-  const isTeacher = isAuthenticated && user?.role === 'teacher';
-  const teacherView = isTeacher && viewerMode === 'teacher';
+  const isEducationProvider = isAuthenticated && ['teacher', 'center'].includes(user?.role);
+  const teachingDestination = isEducationProvider ? ROUTES.CREATE_COURSE : ROUTES.REGISTER;
+  const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
   const openDialog = (name) => {
     setMobileMenuOpen(false);
     setParams((current) => {
@@ -77,30 +75,12 @@ export const Header = ({ theme, onToggleTheme }) => {
             <GraduationCap size={16} />
             Tìm gia sư
           </a>
-          {isTeacher && (
-            <div className="teacher-view-switch" aria-label="Chọn góc nhìn">
-              <button
-                className={viewerMode === 'student' ? 'is-active' : ''}
-                onClick={() => setViewerMode('student')}
-                aria-pressed={viewerMode === 'student'}
-              >
-                Xem với tư cách học viên
-              </button>
-              <button
-                className={teacherView ? 'is-active' : ''}
-                onClick={() => setViewerMode('teacher')}
-                aria-pressed={teacherView}
-              >
-                Xem với tư cách giáo viên & Gia sư
-              </button>
-            </div>
-          )}
           {isAuthenticated && (
             <Link to={ROUTES.MESSAGES} className="teacher-action-link">
               <MessageCircle size={15} /> Tin nhắn
             </Link>
           )}
-          <Link to={teacherView ? ROUTES.CREATE_COURSE : ROUTES.REGISTER}>Đăng ký dạy</Link>
+          <Link to={teachingDestination}>{teachingLabel}</Link>
           <button className="consultation-nav" onClick={() => openDialog('consultation')}>
             <Phone size={14} />
             Tư vấn miễn phí
@@ -172,19 +152,9 @@ export const Header = ({ theme, onToggleTheme }) => {
           <a href="#tim-gia-su" onClick={() => setMobileMenuOpen(false)}>
             Tìm gia sư
           </a>
-          {isTeacher && (
-            <>
-              <button onClick={() => { setViewerMode('student'); setMobileMenuOpen(false); }}>
-                Xem với tư cách học viên
-              </button>
-              <button onClick={() => { setViewerMode('teacher'); setMobileMenuOpen(false); }}>
-                Xem với tư cách giáo viên & Gia sư
-              </button>
-            </>
-          )}
           {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
           {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
-          <Link to={teacherView ? ROUTES.CREATE_COURSE : ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>Đăng ký dạy</Link>
+          <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
           <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
           {isAuthenticated ? (
             <button

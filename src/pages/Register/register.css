@@ -250,10 +250,10 @@
   letter-spacing: -0.2px;
 }
 
-/* 2 Role Tabs */
+/* Role tabs */
 .register-role-tabs {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin: 22px 0 18px 0;
   width: 100%;
@@ -318,7 +318,7 @@
   font-weight: 700;
   letter-spacing: -0.2px;
   line-height: 1.25;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .register-role-tab__desc {
@@ -326,7 +326,7 @@
   color: #64748b;
   font-weight: 500;
   line-height: 1.2;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .register-role-tab.is-active .register-role-tab__desc {

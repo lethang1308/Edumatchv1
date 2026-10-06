@@ -25,10 +25,12 @@ export function CreateCoursePage() {
   const isEditing = Boolean(editingCourse);
   const [form, setForm] = useState(() => isEditing ? { ...emptyForm, ...editingCourse } : emptyForm);
   const [errors, setErrors] = useState({});
+  const isCenter = user?.role === 'center';
+  const isEducationProvider = ['teacher', 'center'].includes(user?.role);
   const summary = useMemo(() => ({
-    name: user?.name || 'Giáo viên EduMatch', dob: user?.dob, qualifications: user?.qualifications || 'Đang cập nhật',
+    name: user?.name || (isCenter ? 'Trung tâm EduMatch' : 'Giáo viên EduMatch'), role: user?.role, dob: user?.dob, qualifications: user?.qualifications || 'Đang cập nhật',
     experience: user?.experience || 'Đang cập nhật', bio: user?.bio || 'Đang cập nhật', avatar: user?.avatar || '',
-  }), [user]);
+  }), [isCenter, user]);
   const update = (event) => {
     const { name, value } = event.target;
     setForm((current) => {
@@ -64,8 +66,8 @@ export function CreateCoursePage() {
     toast.success(isEditing ? 'Thông tin khóa học đã được cập nhật.' : 'Khóa học đã được đăng và hiển thị trên trang chủ.');
     navigate(ROUTES.COURSE_DETAIL(course.id));
   };
-  if (user?.role !== 'teacher') return <section className="learning-page"><div className="learning-empty"><h1>Khu vực dành cho giáo viên</h1><p>Bạn cần đăng nhập bằng tài khoản giáo viên để tạo khóa học.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
-  if (isEditing && editingCourse.teacher?.id !== user?.id) return <section className="learning-page"><div className="learning-empty"><h1>Bạn không thể chỉnh sửa khóa học này</h1><p>Chỉ Giáo viên đã tạo khóa học mới có quyền cập nhật nội dung.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
+  if (!isEducationProvider) return <section className="learning-page"><div className="learning-empty"><h1>Khu vực dành cho Giáo viên và Trung tâm Đào tạo</h1><p>Bạn cần đăng nhập bằng tài khoản giáo viên hoặc trung tâm để tạo khóa học.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
+  if (isEditing && editingCourse.teacher?.id !== user?.id) return <section className="learning-page"><div className="learning-empty"><h1>Bạn không thể chỉnh sửa khóa học này</h1><p>Chỉ đơn vị đã tạo khóa học mới có quyền cập nhật nội dung.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
   return (
     <section className="learning-page">
       <div className="learning-container course-editor">
@@ -102,7 +104,7 @@ export function CreateCoursePage() {
                 <div className="form-location-field"><AdministrativePicker id="course-ward" label={form.inPersonType === 'classroom' ? 'Xã / Phường / Đặc khu có lớp' : 'Xã / Phường / Đặc khu nhận dạy'} value={form.ward} options={wardOptions} onSelect={selectLocation('ward')} placeholder={form.province ? 'Gõ để tìm xã/phường, rồi chọn' : 'Chọn tỉnh/thành trước'} disabled={!form.province} emptyText="Không tìm thấy xã/phường trong tỉnh/thành đã chọn." />{errors.ward && <small className="field-error">{errors.ward}</small>}</div>
               </div>
             </>}
-            <div className="teacher-summary"><CheckCircle2 size={19} /><div><strong>Hồ sơ hiển thị cùng khóa học</strong><span>{summary.name} · {getAge(summary.dob)} tuổi</span></div></div>
+            <div className="teacher-summary"><CheckCircle2 size={19} /><div><strong>Hồ sơ hiển thị cùng khóa học</strong><span>{isCenter ? summary.name : `${summary.name} · ${getAge(summary.dob)} tuổi`}</span></div></div>
             <button className="publish-course" type="submit">{isEditing ? 'Lưu thay đổi' : 'Đăng khóa học'}</button>
           </aside>
         </form>

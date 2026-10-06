@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
+  Building2,
   Handshake,
   Landmark,
   Lock,
@@ -38,7 +39,7 @@ export const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // Role: 'student' | 'teacher'
+  // Role: 'student' | 'teacher' | 'center'
   const [role, setRole] = useState('student');
 
   // Common Form State
@@ -67,16 +68,16 @@ export const Register = () => {
     const nextErrors = {};
 
     if (!fullName.trim()) {
-      nextErrors.fullName = 'Vui lòng nhập họ và tên';
+      nextErrors.fullName = role === 'center' ? 'Vui lòng nhập tên trung tâm' : 'Vui lòng nhập họ và tên';
     }
 
-    if (!dob) {
+    if (role !== 'center' && !dob) {
       nextErrors.dob = 'Vui lòng chọn ngày tháng năm sinh';
     }
 
-    if (!email.trim()) {
+    if (role !== 'center' && !email.trim()) {
       nextErrors.email = 'Vui lòng nhập email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    } else if (role !== 'center' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       nextErrors.email = 'Email chưa đúng định dạng';
     }
 
@@ -111,6 +112,10 @@ export const Register = () => {
       }
     }
 
+    if (role === 'center' && !bio.trim()) {
+      nextErrors.bio = 'Vui lòng mô tả chi tiết về trung tâm';
+    }
+
     if (!agreeTerms) {
       nextErrors.agreeTerms = 'Bạn cần đồng ý với điều khoản dịch vụ';
     }
@@ -124,17 +129,18 @@ export const Register = () => {
     const payload = {
       role,
       fullName: fullName.trim(),
-      dob,
-      email: email.trim(),
       phone: phone.trim(),
       password,
+      ...(role !== 'center' ? { dob, email: email.trim() } : {}),
       ...(role === 'teacher'
         ? {
             qualifications: qualifications.trim(),
             experience: experience.trim(),
             bio: bio.trim(),
           }
-        : {}),
+        : role === 'center'
+          ? { bio: bio.trim() }
+          : {}),
     };
 
     const result = await register(payload);
@@ -144,7 +150,9 @@ export const Register = () => {
       toast.success(
         role === 'teacher'
           ? 'Đăng ký tài khoản Giáo viên thành công!'
-          : 'Đăng ký tài khoản Học viên thành công!'
+          : role === 'center'
+            ? 'Đăng ký tài khoản Trung tâm Đào tạo thành công!'
+            : 'Đăng ký tài khoản Học viên thành công!'
       );
       navigate(ROUTES.HOME, { replace: true });
       return;
@@ -160,7 +168,7 @@ export const Register = () => {
     setFormError('');
     if (!validate()) return;
 
-    if (role === 'teacher') {
+    if (role === 'teacher' || role === 'center') {
       setTeacherTermsAccepted(false);
       setShowTeacherTerms(true);
       return;
@@ -236,7 +244,7 @@ export const Register = () => {
               <p>Tạo tài khoản để bắt đầu học tập và kết nối gia sư</p>
             </div>
 
-            {/* 2 Role Tabs: Tôi Là Học Viên / Tôi Là Giáo Viên */}
+            {/* Role tabs */}
             <div className="register-role-tabs" role="tablist" aria-label="Chọn vai trò">
               <button
                 type="button"
@@ -281,6 +289,28 @@ export const Register = () => {
                 <span className="register-role-tab__title">Tôi Là Giáo Viên</span>
                 <span className="register-role-tab__desc">Nhận lớp & dạy kèm</span>
               </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={role === 'center'}
+                className={`register-role-tab ${role === 'center' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setRole('center');
+                  setErrors({});
+                }}
+              >
+                {role === 'center' && (
+                  <span className="register-role-tab__badge" aria-hidden="true">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                )}
+                <div className="register-role-tab__icon">
+                  <Building2 size={22} />
+                </div>
+                <span className="register-role-tab__title">Trung Tâm Đào Tạo</span>
+                <span className="register-role-tab__desc">Tổ chức lớp học</span>
+              </button>
             </div>
 
             {formError && <p className="register-alert" role="alert">{formError}</p>}
@@ -289,7 +319,7 @@ export const Register = () => {
               {/* Họ Và Tên */}
               <div className="register-field">
                 <label htmlFor="reg-name" className="register-field__label">
-                  Họ và Tên <span className="is-required">*</span>
+                  {role === 'center' ? 'Tên Trung tâm' : 'Họ và Tên'} <span className="is-required">*</span>
                 </label>
                 <div className={errors.fullName ? 'register-control is-invalid' : 'register-control'}>
                   <User size={19} className="register-control__icon" aria-hidden="true" />
@@ -297,8 +327,8 @@ export const Register = () => {
                     id="reg-name"
                     name="fullName"
                     type="text"
-                    autoComplete="name"
-                    placeholder={role === 'teacher' ? 'VD: Nguyễn Văn A (Thầy/Cô)' : 'VD: Nguyễn Văn A'}
+                    autoComplete={role === 'center' ? 'organization' : 'name'}
+                    placeholder={role === 'center' ? 'VD: Trung tâm Ngoại ngữ EduMatch' : role === 'teacher' ? 'VD: Nguyễn Văn A (Thầy/Cô)' : 'VD: Nguyễn Văn A'}
                     value={fullName}
                     onChange={(e) => {
                       setFullName(e.target.value);
@@ -311,7 +341,7 @@ export const Register = () => {
               </div>
 
               {/* Row: Ngày sinh & Email */}
-              <div className="register-row">
+              {role !== 'center' && <div className="register-row">
                 {/* Ngày tháng năm sinh */}
                 <div className="register-field">
                   <label htmlFor="reg-dob" className="register-field__label">
@@ -358,7 +388,7 @@ export const Register = () => {
                   </div>
                   {errors.email && <p className="register-field__error">{errors.email}</p>}
                 </div>
-              </div>
+              </div>}
 
               {/* Số điện thoại (Cũng là tài khoản đăng nhập) */}
               <div className="register-field">
@@ -532,6 +562,34 @@ export const Register = () => {
                 </section>
               )}
 
+              {role === 'center' && (
+                <section className="register-role-section" aria-labelledby="center-details-title">
+                  <div className="register-role-section__heading">
+                    <h2 id="center-details-title">Thông tin Trung tâm Đào tạo</h2>
+                    <p>Giới thiệu ngắn gọn để học viên hiểu rõ hơn về đơn vị của bạn.</p>
+                  </div>
+                  <div className="register-field">
+                    <label htmlFor="reg-bio" className="register-field__label">
+                      Mô tả chi tiết về Trung tâm <span className="is-required">*</span>
+                    </label>
+                    <textarea
+                      id="reg-bio"
+                      name="bio"
+                      className="register-textarea"
+                      rows={4}
+                      placeholder="Chia sẻ về chương trình đào tạo, đội ngũ giảng dạy và giá trị mà trung tâm mang đến..."
+                      value={bio}
+                      onChange={(e) => {
+                        setBio(e.target.value);
+                        if (errors.bio) setErrors((prev) => ({ ...prev, bio: '' }));
+                      }}
+                      aria-invalid={Boolean(errors.bio)}
+                    />
+                    {errors.bio && <p className="register-field__error">{errors.bio}</p>}
+                  </div>
+                </section>
+              )}
+
               {/* Điều khoản dịch vụ */}
               <label className="register-terms">
                 <input
@@ -555,8 +613,10 @@ export const Register = () => {
                 {loading
                   ? 'Đang đăng ký...'
                   : role === 'teacher'
-                  ? 'Đăng ký tài khoản Giáo viên'
-                  : 'Đăng ký tài khoản Học viên'}
+                    ? 'Đăng ký tài khoản Giáo viên'
+                    : role === 'center'
+                      ? 'Đăng ký tài khoản Trung tâm'
+                      : 'Đăng ký tài khoản Học viên'}
               </button>
             </form>
 

@@ -2,17 +2,13 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
-  Award,
   BookOpen,
-  CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
-  FileCheck2,
   GraduationCap,
   Headphones,
   Heart,
-  Laptop,
   LockKeyhole,
   Monitor,
   Phone,
@@ -20,21 +16,17 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Star,
-  TrendingUp,
   Users,
   X,
 } from 'lucide-react';
-import { BookPlus, CircleUserRound } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/feedback/Modal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ROUTES } from '@/constants/routes';
-import { STORAGE_KEYS } from '@/constants/storageKeys';
-import { useAuth } from '@/hooks/useAuth';
 import { CourseCard } from '@/components/courses/CourseCard';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
 import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
-import { getCourses } from '@/features/learning/marketplace';
+import { getCourseRating, getCourses } from '@/features/learning/marketplace';
 import heroImage from '@/assets/tutoring-hero.webp';
 import heroImageMobile from '@/assets/tutoring-hero-720.webp';
 import { subjects, tutors, testimonials } from './homeData';
@@ -114,7 +106,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
         {tutor.image ? <img src={tutor.image} alt={tutor.name} width="68" height="76" loading="lazy" /> : <span className="tutor-avatar-fallback" aria-hidden="true">{tutor.name.slice(0, 1)}</span>}
         <div className="tutor-identity">
           <h3>
-            {tutor.title} {tutor.name}
+            {[tutor.title, tutor.name].filter(Boolean).join(' ')}
           </h3>
           <div className="tutor-rating">{tutor.reviews ? <><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></> : <span>Hồ sơ mới</span>}</div>
           <span className="subject-tag">{tutor.subject}</span>
@@ -148,8 +140,6 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 }
 
 export const Home = () => {
-  const { user, isAuthenticated } = useAuth();
-  const [viewerMode] = useLocalStorage(STORAGE_KEYS.VIEW_MODE, 'teacher');
   const [params, setParams] = useSearchParams();
   const query = params.get('q') || '';
   const dialog = params.get('dialog');
@@ -159,6 +149,9 @@ export const Home = () => {
   const [savedOnly, setSavedOnly] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [showAllSubjects, setShowAllSubjects] = useState(false);
+  const [courseSort, setCourseSort] = useState('newest');
+  const [showAllCourses, setShowAllCourses] = useState(false);
+  const [coursePage, setCoursePage] = useState(1);
   const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
   const [profile, setProfile] = useState(null);
@@ -167,13 +160,26 @@ export const Home = () => {
   const resultsRef = useRef(null);
   const filterRef = useRef(null);
   const otherSubjectInputRef = useRef(null);
-  const isTeacherView = isAuthenticated && user?.role === 'teacher' && viewerMode === 'teacher';
-  const visibleCourses = getCourses();
-  const otherCourseMatches = useMemo(() => {
+  const rankedCourses = getCourses()
+    .map((course) => ({ ...course, ranking: getCourseRating(course.id) }))
+    .sort((first, second) => {
+      if (courseSort === 'top-rated') {
+        return second.ranking.total - first.ranking.total
+          || second.ranking.average - first.ranking.average
+          || new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
+      }
+      return new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
+    });
+  const coursePageSize = 18;
+  const totalCoursePages = Math.max(1, Math.ceil(rankedCourses.length / coursePageSize));
+  const visibleCourses = showAllCourses
+    ? rankedCourses.slice((coursePage - 1) * coursePageSize, coursePage * coursePageSize)
+    : rankedCourses.slice(0, 6);
+  const otherCourseMatches = (() => {
     const keyword = normalize(otherCourseQuery).trim();
     if (!keyword) return [];
 
-    return visibleCourses
+    return rankedCourses
       .filter((course) => normalize([
         course.title,
         course.description,
@@ -182,13 +188,13 @@ export const Home = () => {
         course.schedule,
       ].filter(Boolean).join(' ')).includes(keyword))
       .slice(0, 6);
-  }, [otherCourseQuery, visibleCourses]);
+  })();
 
   const searchableTutors = useMemo(() => {
     const courseTutors = getCourses().map((course) => ({
       id: `course-tutor-${course.id}`,
       name: course.teacher.name,
-      title: 'GV.',
+      title: course.teacher.role === 'center' ? '' : 'GV.',
       rating: 0,
       reviews: 0,
       subject: course.title,
@@ -373,33 +379,59 @@ export const Home = () => {
       </section>
 
       <div className="edu-container home-content">
-        {isTeacherView && (
-          <section className="teacher-workspace" aria-label="Không gian giáo viên">
-            <div>
-              <span>KHÔNG GIAN GIÁO VIÊN</span>
-              <h2>Chia sẻ lớp học của bạn với học viên phù hợp.</h2>
-              <p>Tạo khóa học, cập nhật hồ sơ và xây dựng cộng đồng học tập của riêng bạn.</p>
-            </div>
-            <div className="teacher-workspace__actions">
-              <Link className="edu-button button-link" to={ROUTES.CREATE_COURSE}>
-                <BookPlus size={18} /> Thêm khóa học
-              </Link>
-              <Link className="edu-button edu-button-outline button-link" to={ROUTES.TEACHER_PROFILE(user.id)}>
-                <CircleUserRound size={18} /> Trang cá nhân
-              </Link>
-            </div>
-          </section>
-        )}
         <section id="khoa-hoc" className="home-section course-section" aria-labelledby="courses-heading">
           <SectionHeading
             title={<span id="courses-heading">Khóa học <span className="accent-text">đang mở</span></span>}
             description="Lộ trình rõ ràng từ các giáo viên trên EduMatch."
           >
-            {isTeacherView && <Link className="text-link" to={ROUTES.CREATE_COURSE}>Tạo khóa học <ArrowRight size={16} /></Link>}
+            <fieldset className="course-sort" aria-label="Sắp xếp khóa học">
+              <legend className="sr-only">Sắp xếp khóa học</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="course-sort"
+                  value="newest"
+                  checked={courseSort === 'newest'}
+                  onChange={(event) => { setCourseSort(event.target.value); setCoursePage(1); }}
+                />
+                Hiển thị khóa học mới nhất
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="course-sort"
+                  value="top-rated"
+                  checked={courseSort === 'top-rated'}
+                  onChange={(event) => { setCourseSort(event.target.value); setCoursePage(1); }}
+                />
+                Hiển thị theo lượt đánh giá
+              </label>
+            </fieldset>
           </SectionHeading>
           <div className="course-grid">
             {visibleCourses.map((course) => <CourseCard key={course.id} course={course} />)}
           </div>
+          {rankedCourses.length > 6 && (
+            <div className="course-pagination" aria-label="Điều hướng danh sách khóa học">
+              {!showAllCourses ? (
+                <button type="button" className="course-pagination__all" onClick={() => { setShowAllCourses(true); setCoursePage(1); }}>
+                  Xem tất cả khóa học <ArrowRight size={16} />
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={() => { setShowAllCourses(false); setCoursePage(1); }}>Thu gọn danh sách</button>
+                  <div className="course-pagination__pages">
+                    <button type="button" onClick={() => setCoursePage(1)} disabled={coursePage === 1}>Về đầu</button>
+                    <button type="button" onClick={() => setCoursePage((current) => Math.max(1, current - 1))} disabled={coursePage === 1}>Trước</button>
+                    {Array.from({ length: totalCoursePages }, (_, index) => index + 1).map((page) => (
+                      <button type="button" key={page} className={page === coursePage ? 'is-current' : ''} aria-current={page === coursePage ? 'page' : undefined} onClick={() => setCoursePage(page)}>{page}</button>
+                    ))}
+                    <button type="button" onClick={() => setCoursePage((current) => Math.min(totalCoursePages, current + 1))} disabled={coursePage === totalCoursePages}>Trang sau</button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </section>
         <section
           id="tim-gia-su"
@@ -619,109 +651,6 @@ export const Home = () => {
               )}
             </div>
           )}
-        </section>
-
-        <section id="cach-hoat-dong" className="how-section" aria-labelledby="how-heading">
-          <SectionHeading
-            title={
-              <span id="how-heading">
-                Hành trình học tập, <span className="accent-text">thật đơn giản</span>
-              </span>
-            }
-            description="Bốn bước nhỏ để bắt đầu một thay đổi lớn."
-          />
-          <div className="steps-grid">
-            {[
-              {
-                icon: Search,
-                title: 'Tìm kiếm gia sư',
-                description: 'Chọn môn học, hình thức và mức học phí phù hợp.',
-              },
-              {
-                icon: FileCheck2,
-                title: 'Chọn người đồng hành',
-                description: 'Khám phá hồ sơ, kinh nghiệm và đánh giá thực tế.',
-              },
-              {
-                icon: CalendarDays,
-                title: 'Sắp xếp lịch học',
-                description: 'Kết nối với giáo viên và chọn thời gian thuận tiện.',
-              },
-              {
-                icon: TrendingUp,
-                title: 'Bắt đầu tiến bộ',
-                description: 'Học theo lộ trình riêng, phát triển mỗi ngày.',
-              },
-            ].map(({ icon: Icon, title, description }, index) => (
-              <div className="learning-step" key={title}>
-                <div className="step-top">
-                  <span className="step-icon">
-                    <Icon size={27} strokeWidth={1.7} />
-                  </span>
-                  <span className="step-number">0{index + 1}</span>
-                  {index < 3 && <ArrowRight size={19} className="step-arrow" />}
-                </div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="vi-sao-edumatch"
-          className="home-section why-section"
-          aria-labelledby="why-heading"
-        >
-          <div className="why-intro">
-            <span className="why-mark">
-              <GraduationCap size={29} strokeWidth={1.5} />
-            </span>
-            <h2 id="why-heading">
-              An tâm lựa chọn.
-              <br />
-              <span className="accent-text">Tự tin tiến bước.</span>
-            </h2>
-            <p>EduMatch giúp bạn tập trung vào điều quan trọng nhất: học tập và phát triển.</p>
-            <a href="#cach-hoat-dong" className="text-link">
-              Tìm hiểu cách EduMatch hoạt động
-              <ArrowRight size={16} />
-            </a>
-          </div>
-          <div className="benefits-grid">
-            {[
-              {
-                icon: Award,
-                title: 'Chuyên môn bạn có thể tin',
-                description: 'Hồ sơ rõ ràng, chuyên môn được xác minh và đánh giá từ học viên.',
-              },
-              {
-                icon: Laptop,
-                title: 'Học theo nhịp sống của bạn',
-                description: 'Trực tuyến hoặc tại nhà. Chủ động sắp xếp lịch học phù hợp.',
-              },
-              {
-                icon: ShieldCheck,
-                title: 'Minh bạch trong từng buổi học',
-                description: 'Thông tin học phí rõ ràng, giúp bạn dễ dàng cân nhắc và lựa chọn.',
-              },
-              {
-                icon: Headphones,
-                title: 'Luôn có người đồng hành',
-                description: 'Đội ngũ hỗ trợ sẵn sàng lắng nghe trong suốt hành trình học tập.',
-              },
-            ].map(({ icon: Icon, title, description }) => (
-              <div className="benefit" key={title}>
-                <span className="benefit-icon">
-                  <Icon size={24} strokeWidth={1.7} />
-                </span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section

@@ -8,6 +8,7 @@ const formatCurrency = (value) =>
 
 export function CourseCard({ course, editable = false }) {
   const rating = getCourseRating(course.id);
+  const isCenter = course.teacher.role === 'center';
   return (
     <article className="course-card">
       <div className="course-card__top">
@@ -18,11 +19,11 @@ export function CourseCard({ course, editable = false }) {
         <span className="course-card__rating"><Star size={14} fill="currentColor" /> {rating.total ? `${rating.average.toFixed(1)} · ${rating.total} đánh giá` : 'Mới'}</span>
       </div>
       <h3>{course.title}</h3>
-      <div className="course-card__teacher" title={`GV. ${course.teacher.name}`}>
+      <div className="course-card__teacher" title={isCenter ? course.teacher.name : `GV. ${course.teacher.name}`}>
         <span className="course-card__avatar" aria-hidden="true">
           {course.teacher.avatar ? <img src={course.teacher.avatar} alt="" /> : course.teacher.name.slice(0, 1)}
         </span>
-        <span>GV. {course.teacher.name}</span>
+        <span>{isCenter ? course.teacher.name : `GV. ${course.teacher.name}`}</span>
       </div>
       <p className="course-card__description">{course.description}</p>
       <div className="course-card__facts">
