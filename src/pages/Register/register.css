@@ -612,6 +612,138 @@
   cursor: wait;
 }
 
+/* Teacher terms confirmation: a focused, scrollable legal acknowledgement step. */
+.teacher-terms-dialog {
+  color: var(--reg-ink);
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+}
+
+.teacher-terms-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+}
+
+.teacher-terms-dialog__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 470px;
+  color: var(--reg-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.teacher-terms-dialog__consent input {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+  accent-color: var(--reg-green);
+  cursor: pointer;
+}
+
+.teacher-terms-dialog__confirm {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--reg-green);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.teacher-terms-dialog__confirm:hover:not(:disabled) { background: var(--reg-green-hover); }
+.teacher-terms-dialog__confirm:active:not(:disabled) { transform: translateY(1px); }
+.teacher-terms-dialog__confirm:disabled { cursor: not-allowed; opacity: .52; }
+
+.teacher-terms-document { display: grid; gap: 20px; }
+
+.teacher-terms-document > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--reg-line);
+}
+
+.teacher-terms-document__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--reg-green-light);
+  color: var(--reg-green);
+}
+
+.teacher-terms-document > header p {
+  margin: 0 0 2px;
+  color: var(--reg-green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.teacher-terms-document h2,
+.teacher-terms-document h3 { margin: 0; color: var(--reg-ink); }
+.teacher-terms-document h2 { font-size: 18px; letter-spacing: -.35px; }
+.teacher-terms-document h3 { font-size: 14px; }
+
+.teacher-terms-document > p,
+.teacher-terms-document section > p,
+.teacher-terms-document__fees span {
+  margin: 0;
+  color: var(--reg-muted);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.teacher-terms-document section {
+  display: grid;
+  gap: 8px;
+  padding: 19px;
+  border: 1px solid #dcece5;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+
+.teacher-terms-document__heading { display: flex; align-items: center; gap: 8px; color: var(--reg-green); }
+.teacher-terms-document__heading h3 { color: var(--reg-ink); }
+
+.teacher-terms-document__fees {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teacher-terms-document__fees li {
+  display: grid;
+  grid-template-columns: minmax(155px, auto) minmax(0, 1fr);
+  gap: 9px;
+  padding: 11px 0;
+  border-top: 1px solid #e5efeb;
+}
+
+.teacher-terms-document__fees strong { color: var(--reg-ink); font-size: 12px; }
+.teacher-terms-document__fees span { font-size: 12px; }
+
+.teacher-terms-document__notice {
+  margin-top: 5px!important;
+  padding: 11px 12px;
+  border-left: 3px solid var(--reg-green);
+  background: var(--reg-green-light);
+  color: #42635b!important;
+  font-size: 12px!important;
+}
+
 .register-divider {
   display: flex;
   align-items: center;
@@ -1006,6 +1138,12 @@
   .register-hero__dashed-arc {
     display: none;
   }
+  .teacher-terms-dialog__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .teacher-terms-dialog__confirm { width: 100%; }
+  .teacher-terms-document__fees li { grid-template-columns: 1fr; gap: 4px; }
 }
 
 @media (max-width: 480px) {

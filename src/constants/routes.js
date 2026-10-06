@@ -5,6 +5,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  PARTNER_TERMS: '/dieu-khoan-giao-vien-doi-tac',
   MESSAGES: '/tin-nhan',
   CREATE_COURSE: '/khoa-hoc/them-moi',
   COURSE_DETAIL: (courseId = ':courseId') => `/khoa-hoc/${courseId}`,

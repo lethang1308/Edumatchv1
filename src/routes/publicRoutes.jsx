@@ -11,6 +11,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { CreateCoursePage, CourseDetailPage } from '@/pages/Courses';
 import { TeacherProfilePage } from '@/pages/TeacherProfile';
 import { MessagesPage } from '@/pages/Messages';
+import { PartnerTermsPage } from '@/pages/PartnerTerms';
 
 /**
  * Public routes accessible without authentication
@@ -22,6 +23,10 @@ export const publicRoutes = [
       {
         path: ROUTES.HOME,
         element: <Home />,
+      },
+      {
+        path: ROUTES.PARTNER_TERMS,
+        element: <PartnerTermsPage />,
       },
       {
         path: ROUTES.COURSE_DETAIL(),

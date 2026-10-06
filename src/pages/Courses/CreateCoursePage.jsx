@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2, MapPin, Monitor, PlusCircle, Video } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { getAge, saveCourse } from '@/features/learning/marketplace';
+import { getAge, getCourse, saveCourse, updateCourse } from '@/features/learning/marketplace';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
 import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
 import './courses.css';
@@ -19,7 +19,11 @@ const parseVnd = (value) => Number(String(value).replace(/[^\d]/g, ''));
 export function CreateCoursePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState(emptyForm);
+  const [searchParams] = useSearchParams();
+  const editingCourseId = searchParams.get('edit');
+  const editingCourse = editingCourseId ? getCourse(editingCourseId) : null;
+  const isEditing = Boolean(editingCourse);
+  const [form, setForm] = useState(() => isEditing ? { ...emptyForm, ...editingCourse } : emptyForm);
   const [errors, setErrors] = useState({});
   const summary = useMemo(() => ({
     name: user?.name || 'Giáo viên EduMatch', dob: user?.dob, qualifications: user?.qualifications || 'Đang cập nhật',
@@ -53,17 +57,20 @@ export function CreateCoursePage() {
     if (form.learningMode === 'in-person' && !form.ward.trim()) nextErrors.ward = 'Vui lòng chọn xã, phường hoặc đặc khu';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
-    const course = { id: `course-${Date.now()}`, ...form, paymentType, price, location: [form.ward, form.province].filter(Boolean).join(', '), createdAt: new Date().toISOString(), teacher: { id: user?.id, ...summary } };
-    saveCourse(course);
-    toast.success('Khóa học đã được đăng và hiển thị trên trang chủ.');
+    const courseData = { ...form, paymentType, price, location: [form.ward, form.province].filter(Boolean).join(', '), teacher: { id: user?.id, ...summary } };
+    const course = isEditing
+      ? updateCourse(editingCourse.id, courseData)
+      : saveCourse({ id: `course-${Date.now()}`, ...courseData, createdAt: new Date().toISOString() });
+    toast.success(isEditing ? 'Thông tin khóa học đã được cập nhật.' : 'Khóa học đã được đăng và hiển thị trên trang chủ.');
     navigate(ROUTES.COURSE_DETAIL(course.id));
   };
   if (user?.role !== 'teacher') return <section className="learning-page"><div className="learning-empty"><h1>Khu vực dành cho giáo viên</h1><p>Bạn cần đăng nhập bằng tài khoản giáo viên để tạo khóa học.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
+  if (isEditing && editingCourse.teacher?.id !== user?.id) return <section className="learning-page"><div className="learning-empty"><h1>Bạn không thể chỉnh sửa khóa học này</h1><p>Chỉ Giáo viên đã tạo khóa học mới có quyền cập nhật nội dung.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
   return (
     <section className="learning-page">
       <div className="learning-container course-editor">
-        <Link className="back-link" to={ROUTES.HOME}><ArrowLeft size={17} /> Quay về trang chủ</Link>
-        <div className="page-intro"><span><PlusCircle size={16} /> KHÓA HỌC MỚI</span><h1>Thiết kế lớp học rõ ràng, dễ lựa chọn.</h1><p>Thông tin này sẽ hiển thị cho học viên khi họ khám phá khóa học của bạn.</p></div>
+        <Link className="back-link" to={isEditing ? ROUTES.COURSE_DETAIL(editingCourse.id) : ROUTES.HOME}><ArrowLeft size={17} /> {isEditing ? 'Quay về khóa học' : 'Quay về trang chủ'}</Link>
+        <div className="page-intro"><span><PlusCircle size={16} /> {isEditing ? 'CẬP NHẬT KHÓA HỌC' : 'KHÓA HỌC MỚI'}</span><h1>{isEditing ? 'Cập nhật thông tin khóa học.' : 'Thiết kế lớp học rõ ràng, dễ lựa chọn.'}</h1><p>Thông tin này sẽ hiển thị cho học viên khi họ khám phá khóa học của bạn.</p></div>
         <form className="course-form" onSubmit={submit} noValidate>
           <section className="form-surface form-surface--main">
             <div className="form-heading"><h2>Thông tin khóa học</h2><p>Hãy mô tả ngắn gọn giá trị học viên sẽ nhận được.</p></div>
@@ -96,7 +103,7 @@ export function CreateCoursePage() {
               </div>
             </>}
             <div className="teacher-summary"><CheckCircle2 size={19} /><div><strong>Hồ sơ hiển thị cùng khóa học</strong><span>{summary.name} · {getAge(summary.dob)} tuổi</span></div></div>
-            <button className="publish-course" type="submit">Đăng khóa học</button>
+            <button className="publish-course" type="submit">{isEditing ? 'Lưu thay đổi' : 'Đăng khóa học'}</button>
           </aside>
         </form>
       </div>

@@ -50,6 +50,7 @@ export const Footer = () => {
             <h3>Dành cho Giáo viên</h3>
             <button onClick={() => openDialog('teacher')}>Trở thành giáo viên</button>
             <a href="#cach-hoat-dong">Cách EduMatch hoạt động</a>
+            <Link to={ROUTES.PARTNER_TERMS}>Điều khoản Giáo viên &amp; Đối tác</Link>
             <button onClick={() => openDialog('terms')}>Hướng dẫn sử dụng</button>
             <Link to={ROUTES.LOGIN}>Đăng nhập tài khoản</Link>
           </div>

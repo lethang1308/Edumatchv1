@@ -52,6 +52,17 @@ export const updateCourse = (courseId, updates) => {
   return next[index];
 };
 
+export const syncTeacherCourseProfile = (teacherId, profileUpdates) => {
+  const saved = read(STORAGE_KEYS.COURSES, []);
+  const next = saved.map((course) =>
+    course.teacher?.id === teacherId
+      ? { ...course, teacher: { ...course.teacher, ...profileUpdates } }
+      : course
+  );
+  write(STORAGE_KEYS.COURSES, next);
+  return next;
+};
+
 export const getCourseReviews = (courseId) =>
   read(STORAGE_KEYS.COURSE_REVIEWS, []).filter((review) => review.courseId === courseId);
 

@@ -6,7 +6,7 @@ import { enrollmentLabel, getCourseRating, modeLabel, paymentLabel } from '@/fea
 const formatCurrency = (value) =>
   Number(value) > 0 ? `${new Intl.NumberFormat('vi-VN').format(value)}đ` : 'Liên hệ';
 
-export function CourseCard({ course }) {
+export function CourseCard({ course, editable = false }) {
   const rating = getCourseRating(course.id);
   return (
     <article className="course-card">
@@ -27,7 +27,10 @@ export function CourseCard({ course }) {
       </div>
       <div className="course-card__bottom">
         <strong>{formatCurrency(course.price)}</strong>
-        <Link to={ROUTES.COURSE_DETAIL(course.id)}>Xem chi tiết <span aria-hidden="true">→</span></Link>
+        <div className="course-card__actions">
+          {editable && <Link className="course-card__edit" to={`${ROUTES.CREATE_COURSE}?edit=${course.id}`}>Chỉnh sửa</Link>}
+          <Link to={ROUTES.COURSE_DETAIL(course.id)}>Xem chi tiết <span aria-hidden="true">→</span></Link>
+        </div>
       </div>
     </article>
   );

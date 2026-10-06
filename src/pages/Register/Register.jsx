@@ -5,9 +5,12 @@ import {
   Briefcase,
   Calendar,
   Check,
+  BadgeCheck,
   Eye,
   EyeOff,
   GraduationCap,
+  Handshake,
+  Landmark,
   Lock,
   Mail,
   Menu,
@@ -18,6 +21,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { Modal } from '@/components/feedback/Modal';
 import { ROUTES } from '@/constants/routes';
 import studentImage from '@/assets/login-student-v2.png';
 import teacherAvatarsImg from '@/assets/teacher-avatars.png';
@@ -56,6 +60,8 @@ export const Register = () => {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTeacherTerms, setShowTeacherTerms] = useState(false);
+  const [teacherTermsAccepted, setTeacherTermsAccepted] = useState(false);
 
   const validate = () => {
     const nextErrors = {};
@@ -113,11 +119,7 @@ export const Register = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setFormError('');
-    if (!validate()) return;
-
+  const completeRegistration = async () => {
     setLoading(true);
     const payload = {
       role,
@@ -151,6 +153,32 @@ export const Register = () => {
     const message = result.message || 'Đăng ký chưa thành công. Vui lòng thử lại.';
     setFormError(message);
     toast.error(message);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setFormError('');
+    if (!validate()) return;
+
+    if (role === 'teacher') {
+      setTeacherTermsAccepted(false);
+      setShowTeacherTerms(true);
+      return;
+    }
+
+    completeRegistration();
+  };
+
+  const closeTeacherTerms = () => {
+    if (loading) return;
+    setTeacherTermsAccepted(false);
+    setShowTeacherTerms(false);
+  };
+
+  const confirmTeacherTerms = () => {
+    if (!teacherTermsAccepted) return;
+    setShowTeacherTerms(false);
+    completeRegistration();
   };
 
   const announceSocialLogin = (provider) => {
@@ -649,6 +677,78 @@ export const Register = () => {
           </aside>
         </div>
       </section>
+
+      <Modal
+        open={showTeacherTerms}
+        onClose={closeTeacherTerms}
+        title="Điều khoản dành cho Giáo viên & Đối tác"
+        description="Vui lòng đọc kỹ và xác nhận trước khi hoàn tất đăng ký."
+        size="xl"
+        className="teacher-terms-dialog"
+        footer={
+          <div className="teacher-terms-dialog__actions">
+            <label className="teacher-terms-dialog__consent">
+              <input
+                type="checkbox"
+                checked={teacherTermsAccepted}
+                onChange={(event) => setTeacherTermsAccepted(event.target.checked)}
+                disabled={loading}
+              />
+              <span>Tôi đã đọc, hiểu và đồng ý với Điều khoản dành cho Giáo viên &amp; Đối tác của EduMatch.</span>
+            </label>
+            <button
+              type="button"
+              className="teacher-terms-dialog__confirm"
+              disabled={!teacherTermsAccepted || loading}
+              onClick={confirmTeacherTerms}
+            >
+              {loading ? 'Đang tạo tài khoản...' : 'Đồng ý & hoàn tất đăng ký'}
+            </button>
+          </div>
+        }
+      >
+        <article className="teacher-terms-document">
+          <header>
+            <span className="teacher-terms-document__icon" aria-hidden="true"><Handshake size={22} /></span>
+            <div>
+              <p>ĐỒNG HÀNH CÙNG EDUMATCH</p>
+              <h2>Chào mừng Quý Giáo viên và Đối tác</h2>
+            </div>
+          </header>
+          <p>
+            EduMatch trân trọng cảm ơn Quý Giáo viên và Quý Đối tác đã tin tưởng đồng hành. EduMatch là nền tảng kết nối học tập,
+            tạo cầu nối tin cậy giữa giảng viên và học viên, hướng đến một môi trường giáo dục chuyên nghiệp, minh bạch và chất lượng.
+          </p>
+
+          <section>
+            <div className="teacher-terms-document__heading"><BadgeCheck size={18} /><h3>Cam kết giai đoạn khởi nghiệp</h3></div>
+            <p>
+              EduMatch là đơn vị khởi nghiệp từ năm 2026. Đến hết ngày 31/12/2026, EduMatch không thu bất kỳ khoản phí nền tảng
+              nào từ học viên, Giáo viên hoặc Đối tác.
+            </p>
+          </section>
+
+          <section>
+            <div className="teacher-terms-document__heading"><Landmark size={18} /><h3>Chính sách phí từ năm 2027</h3></div>
+            <p>Từ ngày 01/01/2027, EduMatch sẽ áp dụng các khoản phí sau cho khóa học được đăng trên nền tảng:</p>
+            <ul className="teacher-terms-document__fees">
+              <li><strong>Phí khởi tạo khóa học:</strong><span>200.000 VNĐ/lần cho mỗi khóa học được đăng ký và thiết lập.</span></li>
+              <li><strong>Phí duy trì khóa học:</strong><span>200.000 VNĐ/tháng để duy trì hiển thị, quản lý và vận hành khóa học.</span></li>
+            </ul>
+          </section>
+
+          <section>
+            <div className="teacher-terms-document__heading"><Handshake size={18} /><h3>Phương thức hợp tác</h3></div>
+            <p>
+              Khi Giáo viên tự đăng bài, chủ động liên hệ và chốt lịch với học viên, Giáo viên chỉ thanh toán phí khởi tạo và phí duy trì.
+              Khi EduMatch chủ động giới thiệu học viên, mức hoa hồng sẽ được thỏa thuận trước, thông thường từ 15% đến 20% tổng học phí khóa học.
+            </p>
+            <p className="teacher-terms-document__notice">
+              Giáo viên hoặc Đối tác có toàn quyền đồng ý tiếp nhận hoặc từ chối học viên được EduMatch giới thiệu trước khi sắp xếp lớp học.
+            </p>
+          </section>
+        </article>
+      </Modal>
     </main>
   );
 };
