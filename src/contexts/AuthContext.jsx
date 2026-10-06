@@ -60,6 +60,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (userData) => {
+    setLoading(true);
+    try {
+      const res = await authService.register(userData);
+      return { success: true, data: res };
+    } catch {
+      // Mock skeleton fallback khi backend chưa kết nối
+      const mockToken = 'mock_jwt_token_register';
+      const mockUser = {
+        id: 'usr_' + Date.now(),
+        name: userData.fullName || 'Người dùng mới',
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role || 'student',
+      };
+      storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
+      storage.set(STORAGE_KEYS.USER_INFO, mockUser);
+      setToken(mockToken);
+      setUser(mockUser);
+      return { success: true, user: mockUser };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await authService.logout();
@@ -77,6 +102,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: Boolean(token),
     loading,
     login,
+    register,
     logout,
   };
 

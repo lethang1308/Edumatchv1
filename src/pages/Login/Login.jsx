@@ -101,7 +101,7 @@ export const Login = () => {
             <Link className="login-nav__button login-nav__button--outline" to={ROUTES.LOGIN}>
               Đăng nhập
             </Link>
-            <Link className="login-nav__button login-nav__button--primary" to={ROUTES.HOME}>
+            <Link className="login-nav__button login-nav__button--primary" to={ROUTES.REGISTER}>
               Đăng ký
             </Link>
           </div>
@@ -243,7 +243,7 @@ export const Login = () => {
 
             {/* Footer Registration Link */}
             <p className="login-register-copy">
-              Chưa có tài khoản? <Link to={ROUTES.HOME}>Đăng ký ngay</Link>
+              Chưa có tài khoản? <Link to={ROUTES.REGISTER}>Đăng ký ngay</Link>
             </p>
           </section>
 

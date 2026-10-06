@@ -4,6 +4,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Home } from '@/pages/Home';
 import { Login } from '@/pages/Login';
+import { Register } from '@/pages/Register';
 import { Forbidden } from '@/pages/Forbidden';
 import { NotFound } from '@/pages/NotFound';
 
@@ -26,6 +27,10 @@ export const publicRoutes = [
       {
         path: ROUTES.LOGIN,
         element: <Login />,
+      },
+      {
+        path: ROUTES.REGISTER,
+        element: <Register />,
       },
     ],
   },
