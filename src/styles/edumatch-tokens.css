@@ -1,0 +1,46 @@
+/* Shared proportions from the homepage, used by public and authentication pages. */
+:root {
+  --edu-content-width: 1240px;
+  --edu-page-gutter: 80px;
+  --edu-font-family: 'Be Vietnam Pro', sans-serif;
+  --edu-font-body: 14px;
+  --edu-font-copy: 12px;
+  --edu-font-control: 12px;
+  --edu-font-auth-heading: 28px;
+  --edu-font-auth-hero: 32px;
+  --edu-control-height: 44px;
+  --edu-radius-control: 10px;
+  --edu-radius-surface: 16px;
+  --edu-brand-ink: #182b31;
+  --edu-brand-muted: #566a70;
+  --edu-brand-green: #087563;
+  --edu-brand-green-hover: #065b4d;
+  --edu-brand-line: #e4ece9;
+  --edu-brand-soft: #f4f8f7;
+  --edu-auth-card-width: 440px;
+  --edu-auth-card-padding: 28px;
+  --edu-auth-gap: 64px;
+  --edu-auth-page-padding: 56px;
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --edu-page-gutter: 56px;
+    --edu-auth-gap: 36px;
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --edu-page-gutter: 48px;
+    --edu-auth-page-padding: 32px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --edu-page-gutter: 32px;
+    --edu-auth-card-padding: 20px;
+    --edu-auth-page-padding: 24px;
+    --edu-font-auth-heading: 26px;
+    --edu-font-auth-hero: 28px;
+  }
+}

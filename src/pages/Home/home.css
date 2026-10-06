@@ -5,25 +5,25 @@
 .edu-site {
   --edu-bg: #fcfdfd;
   --edu-surface: #ffffff;
-  --edu-soft: #f4f8f7;
+  --edu-soft: var(--edu-brand-soft);
   --edu-mint: #edf7f3;
-  --edu-ink: #182b31;
-  --edu-muted: #566a70;
+  --edu-ink: var(--edu-brand-ink);
+  --edu-muted: var(--edu-brand-muted);
   --edu-faint: #5c7076;
-  --edu-line: #e4ece9;
-  --edu-green: #087563;
-  --edu-green-hover: #065b4d;
+  --edu-line: var(--edu-brand-line);
+  --edu-green: var(--edu-brand-green);
+  --edu-green-hover: var(--edu-brand-green-hover);
   --edu-tag: #e7f5ef;
   --edu-shadow: 0 8px 30px rgb(35 89 72 / 6%);
   background: var(--edu-bg);
   color: var(--edu-ink);
-  font-family: 'Be Vietnam Pro', sans-serif;
-  font-size: 14px;
+  font-family: var(--edu-font-family);
+  font-size: var(--edu-font-body);
   line-height: 1.6;
   color-scheme: light;
 }
 .edu-container {
-  width: min(1240px, calc(100% - 80px));
+  width: min(var(--edu-content-width), calc(100% - var(--edu-page-gutter)));
   margin-inline: auto;
 }
 .edu-site h1,
@@ -65,14 +65,14 @@
 }
 .edu-button.edu-button {
   gap: 9px;
-  height: 44px;
+  height: var(--edu-control-height);
   padding: 0 19px;
-  border-radius: 10px;
+  border-radius: var(--edu-radius-control);
   border: 1px solid var(--edu-green);
   background: var(--edu-green);
   color: #fff;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--edu-font-control);
   font-weight: 600;
   white-space: nowrap;
   box-shadow: none;
@@ -1436,7 +1436,7 @@
 }
 @media (max-width: 1200px) {
   .edu-container {
-    width: calc(100% - 56px);
+    width: calc(100% - var(--edu-page-gutter));
   }
   .header-inner {
     gap: 16px;
@@ -1508,7 +1508,7 @@
 }
 @media (max-width: 1023px) {
   .edu-container {
-    width: calc(100% - 48px);
+    width: calc(100% - var(--edu-page-gutter));
   }
   .header-inner {
     height: 68px;
@@ -1713,7 +1713,7 @@
 }
 @media (max-width: 767px) {
   .edu-container {
-    width: calc(100% - 32px);
+    width: calc(100% - var(--edu-page-gutter));
   }
   .header-inner {
     height: 65px;

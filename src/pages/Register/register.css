@@ -1,0 +1,573 @@
+/* Uses the homepage's shared typography, container and control proportions. */
+.register-page {
+  --register-ink: var(--edu-brand-ink);
+  --register-muted: var(--edu-brand-muted);
+  --register-green: var(--edu-brand-green);
+  --register-green-hover: var(--edu-brand-green-hover);
+  --register-line: var(--edu-brand-line);
+  min-height: 100dvh;
+  color: var(--register-ink);
+  color-scheme: light;
+  font-family: var(--edu-font-family);
+  font-size: var(--edu-font-body);
+  line-height: 1.6;
+  background:
+    linear-gradient(110deg, rgb(244 252 248 / 88%), rgb(244 252 248 / 48%)),
+    image-set(
+        url('../../assets/backgroup.webp') type('image/webp'),
+        url('../../assets/backgroup.png') type('image/png')
+      )
+      center / cover no-repeat fixed;
+  overflow-x: clip;
+}
+
+.register-page *,
+.register-page *::before,
+.register-page *::after {
+  box-sizing: border-box;
+}
+.register-page button,
+.register-page input,
+.register-page select,
+.register-page textarea {
+  font: inherit;
+}
+.register-page button,
+.register-page a,
+.register-role {
+  -webkit-tap-highlight-color: transparent;
+}
+.register-page button:focus-visible,
+.register-page a:focus-visible {
+  outline: 3px solid var(--register-green);
+  outline-offset: 4px;
+}
+.register-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.register-shell {
+  width: min(var(--edu-content-width), calc(100% - var(--edu-page-gutter)));
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding-block: var(--edu-auth-page-padding);
+  display: grid;
+  grid-template-columns: minmax(0, var(--edu-auth-card-width)) minmax(0, 1fr);
+  gap: var(--edu-auth-gap);
+  align-items: start;
+}
+.register-card {
+  width: 100%;
+  max-width: var(--edu-auth-card-width);
+  padding: var(--edu-auth-card-padding);
+  border: 1px solid var(--register-line);
+  border-radius: var(--edu-radius-surface);
+  background: #fff;
+  box-shadow: 0 20px 64px -28px rgb(7 103 81 / 20%);
+}
+.register-heading h1 {
+  margin: 0;
+  font-size: var(--edu-font-auth-heading);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.8px;
+}
+.register-heading p {
+  margin: 8px 0 0;
+  max-width: 44ch;
+  font-size: var(--edu-font-copy);
+  line-height: 1.6;
+  color: var(--register-muted);
+}
+.register-roles {
+  margin: 20px 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: var(--edu-radius-control);
+  background: var(--edu-brand-soft);
+}
+.register-role {
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 8px;
+  border: 1px solid var(--register-line);
+  border-radius: var(--edu-radius-control);
+  font-size: var(--edu-font-control);
+  color: var(--register-muted);
+  cursor: pointer;
+  transition:
+    border-color 160ms,
+    background 160ms,
+    color 160ms;
+}
+.register-role + .register-role {
+  margin-left: -1px;
+}
+.register-role input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.register-role > svg {
+  width: 22px;
+  height: 22px;
+}
+.register-role:hover {
+  background: #edf6f2;
+}
+.register-role.is-selected {
+  z-index: 1;
+  border-color: var(--register-green);
+  background: #f4fbf8;
+  color: var(--register-green);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--register-green);
+}
+.register-role:has(input:focus-visible) {
+  outline: 3px solid rgb(0 123 104 / 30%);
+  outline-offset: 3px;
+}
+.register-form {
+  display: grid;
+  gap: 16px;
+}
+.register-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+.register-field {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.register-control {
+  min-width: 0;
+  min-height: var(--edu-control-height);
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--register-line);
+  border-radius: var(--edu-radius-control);
+  background: var(--edu-brand-soft);
+  color: var(--register-muted);
+  transition:
+    background 160ms,
+    border-color 160ms,
+    box-shadow 160ms;
+}
+.register-control > svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+.register-control:focus-within {
+  border-color: var(--register-green);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(0 123 104 / 12%);
+}
+.register-control.is-invalid {
+  border-color: #c13a38;
+}
+.register-control input,
+.register-control select {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  align-self: stretch;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--register-ink);
+  font-size: var(--edu-font-control);
+}
+.register-control input::placeholder,
+.register-control textarea::placeholder {
+  color: var(--register-muted);
+  opacity: 1;
+}
+.register-password-toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 36px;
+  margin-right: -6px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--register-muted);
+  cursor: pointer;
+}
+.register-password-toggle:hover {
+  color: var(--register-green);
+  background: #e7f5ef;
+}
+.register-field__error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b62e2c;
+}
+.register-hint {
+  margin: -3px 0 0;
+  color: var(--register-muted);
+  font-size: 11px;
+}
+.register-page .register-submit {
+  width: 100%;
+  min-height: var(--edu-control-height);
+  border: 0;
+  border-radius: var(--edu-radius-control);
+  background: var(--register-green);
+  color: #fff;
+  font-size: var(--edu-font-control);
+  font-weight: 600;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background 160ms,
+    transform 160ms;
+}
+.register-submit:hover:not(:disabled) {
+  background: var(--register-green-hover);
+}
+.register-submit:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.register-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.register-login-copy {
+  margin: 20px 0 0;
+  color: var(--register-muted);
+  text-align: center;
+  font-size: var(--edu-font-copy);
+  line-height: 1.7;
+}
+.register-login-copy a {
+  color: var(--register-green);
+  font-weight: 700;
+  text-decoration: none;
+}
+.register-login-copy a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.register-alert {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #f0cccc;
+  border-radius: var(--edu-radius-control);
+  background: #fff4f3;
+  color: #a52c2a;
+  font-size: var(--edu-font-copy);
+  line-height: 1.6;
+}
+
+.register-page--teacher .register-shell {
+  align-items: start;
+}
+.register-page--teacher .register-roles {
+  margin-block: 18px;
+}
+.register-page--teacher .register-role {
+  min-height: 64px;
+  flex-direction: row;
+  gap: 10px;
+}
+.register-page--teacher .register-form {
+  gap: 14px;
+}
+.register-page--teacher .register-fields {
+  gap: 8px;
+}
+.register-page--teacher .register-control {
+  min-height: var(--edu-control-height);
+}
+.register-page--teacher .register-control input,
+.register-page--teacher .register-control select {
+  padding-block: 10px;
+  font-size: var(--edu-font-control);
+}
+.register-page--teacher .register-login-copy {
+  margin-top: 16px;
+}
+.register-teacher-fields {
+  padding-top: 16px;
+  border-top: 1px solid var(--register-line);
+}
+.register-control select {
+  appearance: none;
+  padding-right: 22px;
+  cursor: pointer;
+}
+.register-control select:invalid {
+  color: var(--register-muted);
+}
+.register-control select option {
+  color: var(--register-ink);
+  background: #fff;
+}
+.register-control--select {
+  position: relative;
+}
+.register-select-chevron {
+  position: absolute;
+  right: 16px;
+  pointer-events: none;
+}
+.register-control--textarea {
+  align-items: flex-start;
+  padding-block: 12px;
+}
+.register-textarea-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.register-textarea-body label {
+  font-size: var(--edu-font-control);
+  line-height: 1.4;
+}
+.register-textarea-body label span {
+  font-size: 10px;
+}
+.register-textarea-body textarea {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 5px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--register-ink);
+  font-size: 11px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.register-count {
+  justify-self: end;
+  color: var(--register-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.register-hero {
+  position: relative;
+  min-height: 660px;
+  align-self: start;
+}
+.register-page--teacher .register-hero {
+  position: sticky;
+  top: 32px;
+  align-self: start;
+}
+.register-hero__content {
+  position: relative;
+  z-index: 1;
+  padding-top: 20px;
+}
+.register-hero h2 {
+  margin: 0;
+  font-size: var(--edu-font-auth-hero);
+  letter-spacing: -1px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.register-hero h2 strong {
+  color: var(--register-green);
+  font-weight: inherit;
+}
+.register-benefits {
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  max-width: 440px;
+}
+.register-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.register-benefit-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: var(--edu-radius-control);
+  background: #d6f2e8;
+  color: var(--register-green);
+}
+.register-benefit-icon > svg {
+  width: 21px;
+  height: 21px;
+}
+.register-hero__photo {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: min(460px, 100%);
+  pointer-events: none;
+}
+.register-hero__photo::before {
+  content: '';
+  position: absolute;
+  inset: 9% 7% 2% 10%;
+  border-radius: 46% 54% 25% 65%;
+  background: linear-gradient(145deg, #c7eee0, #a7dfcc);
+  transform: rotate(-10deg);
+}
+.register-hero__photo img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 1023px) {
+  .register-shell {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .register-card {
+    margin-inline: auto;
+  }
+  .register-hero,
+  .register-page--teacher .register-hero {
+    position: relative;
+    top: auto;
+    min-height: auto;
+    width: min(100%, 620px);
+    margin-inline: auto;
+  }
+  .register-hero__content {
+    padding-top: 0;
+  }
+  .register-benefits {
+    max-width: none;
+  }
+  .register-hero__photo {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(440px, 100%);
+    margin-inline: auto;
+    margin-top: 24px;
+  }
+}
+@media (width < 768px) {
+  .register-page {
+    background-attachment: scroll;
+  }
+  .register-role,
+  .register-page--teacher .register-role {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    min-height: 64px;
+  }
+  .register-control {
+    padding-inline: 12px;
+    gap: 10px;
+  }
+  .register-hero,
+  .register-page--teacher .register-hero {
+    min-height: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 16px 12px;
+    align-items: center;
+  }
+  .register-hero__content {
+    display: contents;
+  }
+  .register-hero h2 {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: clamp(20px, 5.6vw, 24px);
+    letter-spacing: -0.7px;
+  }
+  .register-benefits {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+    gap: 10px;
+  }
+  .register-benefits li {
+    gap: 7px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .register-benefit-icon {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    border-radius: 8px;
+  }
+  .register-benefit-icon > svg {
+    width: 17px;
+    height: 17px;
+  }
+  .register-hero__photo {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    width: min(100%, 180px);
+    min-width: 0;
+    margin: 0;
+  }
+}
+@media (max-width: 374px) {
+  .register-control input {
+    font-size: 12px;
+  }
+  .register-control {
+    gap: 8px;
+  }
+  .register-hero,
+  .register-page--teacher .register-hero {
+    min-height: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .register-page *,
+  .register-page *::before,
+  .register-page *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
