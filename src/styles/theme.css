@@ -1,0 +1,110 @@
+/* EduMatch's shared design tokens. Home is the visual reference.
+   Define values here once; Tailwind, page CSS and JS all consume these tokens.
+   `static` keeps every token available to CSS/JS even without a utility class. */
+@theme static {
+  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+
+  --color-primary: #087563;
+  --color-primary-hover: #065b4d;
+  --color-primary-light: #effaf5;
+  --color-tag: #e7f5ef;
+  --color-mint: #edf7f3;
+  --color-bg: #fcfdfd;
+  --color-surface: #ffffff;
+  --color-soft: #f4f8f7;
+  --color-ink: #182b31;
+  --color-muted: #566a70;
+  --color-faint: #5c7076;
+  --color-line: #e4ece9;
+  --color-line-strong: #90bdb0;
+  --color-focus: #51bfa6;
+  --color-badge-gold: #946116;
+  --color-badge-gold-bg: #fdf7e9;
+
+  --text-display: clamp(31px, 3.28vw, 46px);
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 800;
+  --text-h1: 28px;
+  --text-h1--line-height: 1.25;
+  --text-h1--letter-spacing: -0.5px;
+  --text-h1--font-weight: 800;
+  --text-h2: 22px;
+  --text-h2--line-height: 1.3;
+  --text-h2--letter-spacing: -0.4px;
+  --text-h2--font-weight: 700;
+  --text-h3: 18px;
+  --text-h3--line-height: 1.35;
+  --text-h3--font-weight: 600;
+  --text-h4: 15px;
+  --text-h4--line-height: 1.4;
+  --text-h4--font-weight: 600;
+  --text-body: 14px;
+  --text-body--line-height: 1.6;
+  --text-control: 12px;
+  --text-control--line-height: 1.6;
+  --text-caption: 11px;
+  --text-caption--line-height: 1.5;
+  --text-caption-xs: 10px;
+  --text-caption-xs--line-height: 1.5;
+  --text-micro: 9px;
+  --text-micro--line-height: 1.4;
+  --text-micro--font-weight: 700;
+
+  --radius-surface: 16px;
+  --radius-control: 10px;
+  --radius-pill: 9999px;
+  --shadow-edu: 0 8px 30px rgb(35 89 72 / 6%);
+}
+
+:root {
+  --font-family-base: var(--font-sans);
+  --app-content-width: 1240px;
+  --app-page-gutter: 80px;
+  --app-container-width: min(var(--app-content-width), calc(100% - var(--app-page-gutter)));
+  --control-height: 44px;
+
+  /* Compatibility aliases keep the approved Home/Login/Register proportions. */
+  --edu-content-width: var(--app-content-width);
+  --edu-page-gutter: var(--app-page-gutter);
+  --edu-font-family: var(--font-sans);
+  --edu-font-body: var(--text-body);
+  --edu-font-copy: var(--text-control);
+  --edu-font-control: var(--text-control);
+  --edu-font-auth-heading: var(--text-h1);
+  --edu-font-auth-hero: 32px;
+  --edu-control-height: var(--control-height);
+  --edu-radius-control: var(--radius-control);
+  --edu-radius-surface: var(--radius-surface);
+  --edu-brand-ink: var(--color-ink);
+  --edu-brand-muted: var(--color-muted);
+  --edu-brand-green: var(--color-primary);
+  --edu-brand-green-hover: var(--color-primary-hover);
+  --edu-brand-line: var(--color-line);
+  --edu-brand-soft: var(--color-soft);
+  --edu-auth-card-width: 440px;
+  --edu-auth-card-padding: 28px;
+  --edu-auth-gap: 64px;
+  --edu-auth-page-padding: 56px;
+}
+
+@media (max-width: 1200px) {
+  :root {
+    --app-page-gutter: 56px;
+    --edu-auth-gap: 36px;
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --app-page-gutter: 48px;
+    --edu-auth-page-padding: 32px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --app-page-gutter: 32px;
+    --edu-auth-card-padding: 20px;
+    --edu-auth-page-padding: 24px;
+    --edu-font-auth-heading: 26px;
+    --edu-font-auth-hero: 28px;
+  }
+}

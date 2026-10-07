@@ -1,41 +1,23 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Award,
-  BookOpen,
-  ChartNoAxesColumnIncreasing,
-  ChevronDown,
-  Eye,
-  EyeOff,
-  FileText,
-  GraduationCap,
-  LockKeyhole,
-  Mail,
-  MapPin,
-  Monitor,
-  Phone,
-  UserRound,
-} from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { authService } from '@/services/authService';
-import { initialForm, roleContent, teacherFields, validateRegistration } from './registerData';
+import {
+  accountFields,
+  buildRegistrationPayload,
+  centerAccountFields,
+  centerFields,
+  getTodayDate,
+  initialForm,
+  registrationRoles,
+  roleContent,
+  teacherFields,
+  validateRegistration,
+} from './registerData';
 import registerImage from '@/assets/register-student.webp';
 import './register.css';
-
-const basicFields = [
-  { name: 'name', label: 'Họ và tên', icon: UserRound, autoComplete: 'name' },
-  { name: 'email', label: 'Email', icon: Mail, type: 'email', autoComplete: 'email' },
-  { name: 'phone', label: 'Số điện thoại', icon: Phone, type: 'tel', autoComplete: 'tel' },
-  { name: 'password', label: 'Mật khẩu', icon: LockKeyhole, autoComplete: 'new-password' },
-  {
-    name: 'confirmPassword',
-    label: 'Xác nhận mật khẩu',
-    icon: LockKeyhole,
-    autoComplete: 'new-password',
-  },
-];
-const teacherIcons = [BookOpen, MapPin, Monitor, ChartNoAxesColumnIncreasing, Award];
 
 function FieldError({ name, errors }) {
   return errors[name] ? (
@@ -45,10 +27,57 @@ function FieldError({ name, errors }) {
   ) : null;
 }
 
+function ProfileField({ field, form, errors, onChange }) {
+  const { name, label, placeholder, icon: Icon, multiline, maxLength } = field;
+  const describedBy = [
+    errors[name] && `register-${name}-error`,
+    multiline && `register-${name}-count`,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const sharedProps = {
+    id: `register-${name}`,
+    name,
+    placeholder,
+    value: form[name],
+    onChange,
+    maxLength,
+    required: true,
+    'aria-invalid': Boolean(errors[name]),
+    'aria-describedby': describedBy || undefined,
+  };
+  return (
+    <div className="register-field">
+      <label htmlFor={`register-${name}`} className="register-field-label">
+        {label} <span aria-hidden="true">*</span>
+      </label>
+      <div
+        className={`register-control ${multiline ? 'register-control--textarea' : ''} ${errors[name] ? 'is-invalid' : ''}`}
+      >
+        <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
+        {multiline ? (
+          <div className="register-textarea-body">
+            <textarea {...sharedProps} rows={3} />
+            <span className="register-count" id={`register-${name}-count`}>
+              {form[name].length}/{maxLength}
+            </span>
+          </div>
+        ) : (
+          <input {...sharedProps} type="text" />
+        )}
+      </div>
+      <FieldError name={name} errors={errors} />
+    </div>
+  );
+}
+
 export function Register() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const role = searchParams.get('role') === 'teacher' ? 'teacher' : 'student';
+  const requestedRole = searchParams.get('role');
+  const role = registrationRoles.some(({ value }) => value === requestedRole)
+    ? requestedRole
+    : 'student';
   const [form, setForm] = useState(initialForm);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [errors, setErrors] = useState({});
@@ -56,6 +85,8 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const formRef = useRef(null);
   const content = roleContent[role];
+  const fields = role === 'center' ? centerAccountFields : accountFields;
+  const today = getTodayDate();
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -65,7 +96,7 @@ export function Register() {
   };
 
   const changeRole = (nextRole) => {
-    setSearchParams(nextRole === 'teacher' ? { role: 'teacher' } : {}, { replace: true });
+    setSearchParams(nextRole === 'student' ? {} : { role: nextRole }, { replace: true });
     setErrors({});
     setFormError('');
   };
@@ -83,32 +114,16 @@ export function Register() {
     }
 
     setLoading(true);
-    const data = {
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: form.phone.replace(/[\s.-]/g, ''),
-      password: form.password,
-      role,
-      ...(role === 'teacher' && {
-        teacherProfile: Object.fromEntries(
-          [
-            'subject',
-            'area',
-            'teachingMode',
-            'experience',
-            'qualification',
-            'biography',
-            'workExperience',
-          ].map((key) => [key, form[key].trim()])
-        ),
-      }),
-    };
+    const data = buildRegistrationPayload(form, role);
     try {
       const result = await authService.register(data);
       if (result?.success === false)
         throw new Error(result.message || 'Chưa thể tạo tài khoản. Vui lòng thử lại.');
       toast.success('Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.');
-      navigate(ROUTES.LOGIN, { state: { registeredEmail: data.email }, replace: true });
+      navigate(ROUTES.LOGIN, {
+        state: { registeredIdentifier: data.email || data.phone },
+        replace: true,
+      });
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -132,15 +147,13 @@ export function Register() {
 
           <fieldset className="register-roles" disabled={loading}>
             <legend className="register-sr-only">Vai trò tài khoản</legend>
-            {[
-              { value: 'student', label: 'Tôi là học sinh', icon: GraduationCap },
-              { value: 'teacher', label: 'Tôi là giáo viên', icon: UserRound },
-            ].map(({ value, label, icon: Icon }) => (
+            {registrationRoles.map(({ value, label, accessibleLabel, icon: Icon }) => (
               <label key={value} className={`register-role ${role === value ? 'is-selected' : ''}`}>
                 <input
                   type="radio"
                   name="role"
                   value={value}
+                  aria-label={accessibleLabel}
                   checked={role === value}
                   onChange={() => changeRole(value)}
                 />
@@ -159,139 +172,108 @@ export function Register() {
           >
             <fieldset className="register-fields" disabled={loading}>
               <legend className="register-sr-only">Thông tin tài khoản</legend>
-              {basicFields.map(({ name, label, icon: Icon, type = 'text', autoComplete }) => {
-                const isPassword = name === 'password' || name === 'confirmPassword';
-                return (
-                  <div className="register-field" key={name}>
-                    <label htmlFor={`register-${name}`} className="register-sr-only">
-                      {label}
-                    </label>
-                    <div className={`register-control ${errors[name] ? 'is-invalid' : ''}`}>
-                      <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
-                      <input
-                        id={`register-${name}`}
-                        name={name}
-                        type={isPassword ? (visiblePasswords[name] ? 'text' : 'password') : type}
-                        autoComplete={autoComplete}
-                        placeholder={label}
-                        value={form[name]}
-                        onChange={updateField}
-                        required
-                        maxLength={
-                          isPassword ? 128 : name === 'name' ? 100 : name === 'phone' ? 20 : 254
+              {fields.map(
+                ({
+                  name,
+                  label,
+                  placeholder,
+                  icon: Icon,
+                  type = 'text',
+                  autoComplete,
+                  maxLength,
+                  showLabel,
+                }) => {
+                  const isPassword = name === 'password' || name === 'confirmPassword';
+                  return (
+                    <div className="register-field" key={name}>
+                      <label
+                        htmlFor={`register-${name}`}
+                        className={
+                          role === 'center' || showLabel
+                            ? 'register-field-label'
+                            : 'register-sr-only'
                         }
-                        aria-invalid={Boolean(errors[name])}
-                        aria-describedby={
-                          errors[name]
-                            ? `register-${name}-error`
-                            : name === 'password'
-                              ? 'register-password-hint'
-                              : undefined
-                        }
-                      />
-                      {isPassword && (
-                        <button
-                          type="button"
-                          className="register-password-toggle"
-                          onClick={() =>
-                            setVisiblePasswords((current) => ({
-                              ...current,
-                              [name]: !current[name],
-                            }))
+                      >
+                        {label}{' '}
+                        {(role === 'center' || showLabel) && <span aria-hidden="true">*</span>}
+                      </label>
+                      <div className={`register-control ${errors[name] ? 'is-invalid' : ''}`}>
+                        <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
+                        <input
+                          id={`register-${name}`}
+                          name={name}
+                          type={isPassword ? (visiblePasswords[name] ? 'text' : 'password') : type}
+                          autoComplete={autoComplete}
+                          placeholder={placeholder || label}
+                          value={form[name]}
+                          onChange={updateField}
+                          required
+                          maxLength={isPassword ? 128 : maxLength}
+                          max={type === 'date' ? today : undefined}
+                          lang={type === 'date' ? 'vi' : undefined}
+                          aria-invalid={Boolean(errors[name])}
+                          aria-describedby={
+                            errors[name]
+                              ? `register-${name}-error`
+                              : name === 'password'
+                                ? 'register-password-hint'
+                                : undefined
                           }
-                          aria-label={`${visiblePasswords[name] ? 'Ẩn' : 'Hiện'} ${label.toLowerCase()}`}
-                          aria-pressed={Boolean(visiblePasswords[name])}
-                        >
-                          {visiblePasswords[name] ? <EyeOff size={21} /> : <Eye size={21} />}
-                        </button>
-                      )}
+                        />
+                        {isPassword && (
+                          <button
+                            type="button"
+                            className="register-password-toggle"
+                            onClick={() =>
+                              setVisiblePasswords((current) => ({
+                                ...current,
+                                [name]: !current[name],
+                              }))
+                            }
+                            aria-label={`${visiblePasswords[name] ? 'Ẩn' : 'Hiện'} ${label.toLowerCase()}`}
+                            aria-pressed={Boolean(visiblePasswords[name])}
+                          >
+                            {visiblePasswords[name] ? <EyeOff size={21} /> : <Eye size={21} />}
+                          </button>
+                        )}
+                      </div>
+                      <FieldError name={name} errors={errors} />
                     </div>
-                    <FieldError name={name} errors={errors} />
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
               <p className="register-hint" id="register-password-hint">
                 Mật khẩu có ít nhất 8 ký tự.
               </p>
             </fieldset>
 
-            {role === 'teacher' && (
-              <fieldset className="register-fields register-teacher-fields" disabled={loading}>
-                <legend className="register-sr-only">Thông tin giảng dạy</legend>
-                {teacherFields.map(({ name, label, options }, index) => {
-                  const Icon = teacherIcons[index];
-                  return (
-                    <div className="register-field" key={name}>
-                      <label htmlFor={`register-${name}`} className="register-sr-only">
-                        {label}
-                      </label>
-                      <div
-                        className={`register-control register-control--select ${errors[name] ? 'is-invalid' : ''}`}
-                      >
-                        <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
-                        <select
-                          id={`register-${name}`}
-                          name={name}
-                          value={form[name]}
-                          onChange={updateField}
-                          required
-                          aria-invalid={Boolean(errors[name])}
-                          aria-describedby={errors[name] ? `register-${name}-error` : undefined}
-                        >
-                          <option value="" disabled>
-                            {label}
-                          </option>
-                          {options.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown
-                          size={18}
-                          aria-hidden="true"
-                          className="register-select-chevron"
-                        />
-                      </div>
-                      <FieldError name={name} errors={errors} />
-                    </div>
-                  );
-                })}
-                {[
-                  {
-                    name: 'biography',
-                    label: 'Mô tả bản thân',
-                    placeholder: 'Giới thiệu về bạn, phong cách giảng dạy, điểm mạnh...',
-                    maxLength: 500,
-                  },
-                  {
-                    name: 'workExperience',
-                    label: 'Kinh nghiệm làm việc',
-                    placeholder: 'Chia sẻ kinh nghiệm giảng dạy, thành tích, nơi từng công tác...',
-                    maxLength: 1000,
-                  },
-                ].map(({ name, label, placeholder, maxLength }) => (
-                  <div className="register-control register-control--textarea" key={name}>
-                    <FileText size={21} strokeWidth={1.8} aria-hidden="true" />
-                    <div className="register-textarea-body">
-                      <label htmlFor={`register-${name}`}>
-                        {label} <span>(không bắt buộc)</span>
-                      </label>
-                      <textarea
-                        id={`register-${name}`}
-                        name={name}
-                        placeholder={placeholder}
-                        value={form[name]}
-                        onChange={updateField}
-                        maxLength={maxLength}
-                        rows={2}
-                        aria-describedby={`register-${name}-count`}
-                      />
-                      <span className="register-count" id={`register-${name}-count`}>
-                        {form[name].length}/{maxLength}
-                      </span>
-                    </div>
-                  </div>
+            {(role === 'teacher' || role === 'center') && (
+              <fieldset className="register-fields register-profile-fields" disabled={loading}>
+                <legend className="register-sr-only">
+                  {role === 'teacher'
+                    ? 'Thông tin dành cho giáo viên'
+                    : 'Thông tin trung tâm đào tạo'}
+                </legend>
+                <div className="register-profile-heading">
+                  <h2>
+                    {role === 'teacher'
+                      ? 'Thông tin dành cho giáo viên'
+                      : 'Thông tin trung tâm đào tạo'}
+                  </h2>
+                  <p>
+                    {role === 'teacher'
+                      ? 'Hoàn thiện hồ sơ chuyên môn để học viên hiểu hơn về bạn.'
+                      : 'Giới thiệu ngắn gọn để học viên hiểu rõ hơn về đơn vị của bạn.'}
+                  </p>
+                </div>
+                {(role === 'teacher' ? teacherFields : centerFields).map((field) => (
+                  <ProfileField
+                    key={field.name}
+                    field={field}
+                    form={form}
+                    errors={errors}
+                    onChange={updateField}
+                  />
                 ))}
               </fieldset>
             )}

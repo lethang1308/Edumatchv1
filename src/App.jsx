@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts';
 import AppRoutes from '@/routes';
+import { COLORS } from '@/constants/theme';
 
 function App() {
   return (
@@ -14,12 +15,12 @@ function App() {
           toastOptions={{
             duration: 3500,
             style: {
-              background: '#ffffff',
-              color: '#0f172a',
-              border: '1px solid #e2e8f0',
-              borderRadius: '0.75rem',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              fontSize: '0.875rem',
+              background: COLORS.surface,
+              color: COLORS.ink,
+              border: `1px solid ${COLORS.line}`,
+              borderRadius: 'var(--radius-control)',
+              boxShadow: 'var(--shadow-edu)',
+              fontSize: 'var(--text-body)',
             },
           }}
         />

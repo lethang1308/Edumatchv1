@@ -3,18 +3,18 @@
    Radius system: surfaces 16px, controls 10px, semantic tags and avatars pill.
    Layers: sticky header 30, shared modal 50, keyboard skip link 60. */
 .edu-site {
-  --edu-bg: #fcfdfd;
-  --edu-surface: #ffffff;
+  --edu-bg: var(--color-bg);
+  --edu-surface: var(--color-surface);
   --edu-soft: var(--edu-brand-soft);
-  --edu-mint: #edf7f3;
+  --edu-mint: var(--color-mint);
   --edu-ink: var(--edu-brand-ink);
   --edu-muted: var(--edu-brand-muted);
-  --edu-faint: #5c7076;
+  --edu-faint: var(--color-faint);
   --edu-line: var(--edu-brand-line);
   --edu-green: var(--edu-brand-green);
   --edu-green-hover: var(--edu-brand-green-hover);
-  --edu-tag: #e7f5ef;
-  --edu-shadow: 0 8px 30px rgb(35 89 72 / 6%);
+  --edu-tag: var(--color-tag);
+  --edu-shadow: var(--shadow-edu);
   background: var(--edu-bg);
   color: var(--edu-ink);
   font-family: var(--edu-font-family);
@@ -54,7 +54,7 @@
     box-shadow 150ms;
 }
 .edu-site :is(a, button, input, select, summary):focus-visible {
-  outline: 3px solid #51bfa6;
+  outline: 3px solid var(--color-focus);
   outline-offset: 4px;
 }
 .edu-site section[id] {
@@ -90,7 +90,7 @@
 .edu-button.edu-button-outline {
   color: var(--edu-green);
   background: var(--edu-surface);
-  border-color: #90bdb0;
+  border-color: var(--color-line-strong);
 }
 .edu-button.edu-button-outline:hover {
   background: var(--edu-tag);
@@ -149,7 +149,7 @@
   width: 32px;
   height: 36px;
   border-radius: 9px;
-  background: #087563;
+  background: var(--color-primary);
   color: #fff;
   font-size: 24px;
   font-weight: 800;
@@ -224,9 +224,9 @@
   color: var(--edu-green);
 }
 .desktop-nav .consultation-nav {
-  color: #946116;
+  color: var(--color-badge-gold);
   padding: 8px 10px;
-  background: #fdf7e9;
+  background: var(--color-badge-gold-bg);
   border-radius: 8px;
 }
 .desktop-nav .admin-nav {
@@ -307,7 +307,7 @@
 }
 .hero-copy h1 {
   margin-top: 22px;
-  font-size: clamp(31px, 3.28vw, 46px);
+  font-size: var(--text-display);
   font-weight: 800;
   letter-spacing: -1.65px;
   line-height: 1.25;
@@ -394,7 +394,7 @@
 }
 .community-note strong {
   display: block;
-  color: #087563;
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
 }
@@ -716,7 +716,7 @@
   gap: 12px;
 }
 .subject-tile {
-  --subject-color: #087563;
+  --subject-color: var(--color-primary);
   --subject-bg: #f0f8f4;
   display: flex;
   flex-direction: column;

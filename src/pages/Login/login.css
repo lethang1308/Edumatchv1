@@ -2,10 +2,10 @@
   --login-ink: var(--edu-brand-ink);
   --login-muted: var(--edu-brand-muted);
   --login-line: var(--edu-brand-line);
-  --login-surface: #ffffff;
+  --login-surface: var(--color-surface);
   --login-green: var(--edu-brand-green);
   --login-green-hover: var(--edu-brand-green-hover);
-  --login-green-light: #effaf5;
+  --login-green-light: var(--color-primary-light);
   --login-check: var(--edu-brand-green);
   min-height: 100dvh;
   color: var(--login-ink);
@@ -101,7 +101,7 @@
   padding: var(--edu-auth-card-padding);
   border: 1px solid var(--login-line);
   border-radius: var(--edu-radius-surface);
-  background: #ffffff;
+  background: var(--login-surface);
   box-shadow:
     0 20px 45px -12px rgba(10, 123, 104, 0.08),
     0 2px 10px rgba(0, 0, 0, 0.02);

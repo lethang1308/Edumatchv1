@@ -19,8 +19,10 @@ export const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState(location.state?.registeredEmail || 'admin@example.com');
-  const [password, setPassword] = useState(location.state?.registeredEmail ? '' : 'password123');
+  const registeredIdentifier =
+    location.state?.registeredIdentifier || location.state?.registeredEmail;
+  const [email, setEmail] = useState(registeredIdentifier || 'admin@example.com');
+  const [password, setPassword] = useState(registeredIdentifier ? '' : 'password123');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});

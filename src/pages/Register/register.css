@@ -70,7 +70,7 @@
   padding: var(--edu-auth-card-padding);
   border: 1px solid var(--register-line);
   border-radius: var(--edu-radius-surface);
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: 0 20px 64px -28px rgb(7 103 81 / 20%);
 }
 .register-heading h1 {
@@ -92,7 +92,7 @@
   padding: 0;
   border: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-radius: var(--edu-radius-control);
   background: var(--edu-brand-soft);
 }
@@ -163,6 +163,30 @@
   display: grid;
   gap: 5px;
 }
+.register-field-label {
+  color: var(--register-ink);
+  font-size: var(--text-control);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.register-field-label > span {
+  color: #b62e2c;
+}
+.register-profile-heading {
+  margin-bottom: 4px;
+}
+.register-profile-heading h2 {
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+.register-profile-heading p {
+  margin-top: 5px;
+  color: var(--register-muted);
+  font-size: var(--text-caption);
+  line-height: 1.6;
+}
 .register-control {
   min-width: 0;
   min-height: var(--edu-control-height);
@@ -209,6 +233,14 @@
 .register-control textarea::placeholder {
   color: var(--register-muted);
   opacity: 1;
+}
+.register-control input[type='date'] {
+  min-height: var(--control-height);
+  color-scheme: light;
+}
+.register-control input[type='date']::-webkit-date-and-time-value {
+  min-height: 1.6em;
+  text-align: left;
 }
 .register-password-toggle {
   flex-shrink: 0;
@@ -299,8 +331,6 @@
 }
 .register-page--teacher .register-role {
   min-height: 64px;
-  flex-direction: row;
-  gap: 10px;
 }
 .register-page--teacher .register-form {
   gap: 14px;
@@ -319,29 +349,9 @@
 .register-page--teacher .register-login-copy {
   margin-top: 16px;
 }
-.register-teacher-fields {
+.register-profile-fields {
   padding-top: 16px;
   border-top: 1px solid var(--register-line);
-}
-.register-control select {
-  appearance: none;
-  padding-right: 22px;
-  cursor: pointer;
-}
-.register-control select:invalid {
-  color: var(--register-muted);
-}
-.register-control select option {
-  color: var(--register-ink);
-  background: #fff;
-}
-.register-control--select {
-  position: relative;
-}
-.register-select-chevron {
-  position: absolute;
-  right: 16px;
-  pointer-events: none;
 }
 .register-control--textarea {
   align-items: flex-start;
@@ -352,31 +362,23 @@
   min-width: 0;
   display: grid;
 }
-.register-textarea-body label {
-  font-size: var(--edu-font-control);
-  line-height: 1.4;
-}
-.register-textarea-body label span {
-  font-size: 10px;
-}
 .register-textarea-body textarea {
   display: block;
   width: 100%;
-  min-height: 38px;
-  margin-top: 5px;
+  min-height: 58px;
   padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--register-ink);
-  font-size: 11px;
+  font-size: var(--text-control);
   line-height: 1.6;
   resize: vertical;
 }
 .register-count {
   justify-self: end;
   color: var(--register-muted);
-  font-size: 10px;
+  font-size: var(--text-caption-xs);
   font-variant-numeric: tabular-nums;
 }
 

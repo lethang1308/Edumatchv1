@@ -1,14 +1,18 @@
 # EduMatch registration
 
-Public route: `/register` for students, `/register?role=teacher` for teachers. Both render through the project's `AuthLayout`, without a header. The login page's “Đăng ký ngay” link opens this route.
+Public routes: `/register` for students, `/register?role=teacher` for teachers and `/register?role=center` for training centers. All render through the project's `AuthLayout`, without a header. The login page's “Đăng ký ngay” link opens this route.
 
-The role selector preserves entered values while changing the fields and benefits. Registration validates account details and the teacher selectors, then calls the existing `authService.register`. Successful responses return to login with the registered email. Server errors stay in the form; the UI does not simulate successful account creation.
+The three-role selector preserves entered values while changing the fields and benefits. Students and teachers enter name, email, phone, date of birth, password and password confirmation. A native date input opens the device's date picker; future and invalid birth dates are rejected, without imposing an age restriction.
 
-The current API service posts to `/auth/register`. Account fields are `name`, `email`, `phone`, `password`, and `role` (`student` or `teacher`). Teacher fields are grouped under `teacherProfile`: `subject`, `area`, `teachingMode`, `experience`, `qualification`, `biography`, and `workExperience`. The repository has no backend schema; confirm these fields against the real API when integrating the backend.
+The teacher profile contains only three required fields: qualifications/certificates (text), teaching experience (text), and introduction (textarea, 500 characters). The former subject, area, teaching mode and separate work-experience fields are omitted from both the UI and the payload. Training centers enter center name, phone (login identifier), password, confirmation and center description (textarea, 1000 characters); email and date of birth are not required for this role. Passwords retain the project's minimum of 8 characters.
 
-Native radio buttons, selects and labelled inputs provide keyboard access. The first invalid field receives focus; password visibility toggles, character counts, and disabled submission states are included.
+Registration validates only the active role's fields, then calls the existing `authService.register`. Successful responses return to login with the registered email or center phone; server errors stay in the form. The UI does not simulate successful account creation.
 
-Typography and layout share `src/styles/edumatch-tokens.css` with the homepage and login: a 1240px content container, responsive gutters, 12px control text, 44px controls, 16px surfaces, and the existing Be Vietnam Pro font. Both authentication forms use a 440px card and matching padding. The document reserves scrollbar space to keep horizontal alignment stable across routes.
+The current API service posts to `/auth/register`. Shared account fields are `name`, `phone`, `password`, and `role` (`student`, `teacher`, or `center`). Student/teacher payloads also include `email` and `dateOfBirth` as `YYYY-MM-DD`. `teacherProfile` contains `qualification`, `experience`, and `biography`. For centers, `name` is the center name and `centerProfile.description` contains the description. `buildRegistrationPayload` explicitly excludes inactive fields and password confirmation. The repository has no backend schema; these frontend payload fields and the new `center` role require alignment with the real API during backend integration.
+
+Native radio buttons and labelled date/text inputs provide keyboard access. The first invalid field receives focus; password visibility toggles, character counts, and disabled submission states are included. Role tabs retain full accessible names while their visible labels are kept short for mobile.
+
+Typography and layout share `src/styles/theme.css` with the homepage and login: a 1240px content container, responsive gutters, 12px control text, 44px controls, 16px surfaces, and the existing Be Vietnam Pro font. Both authentication forms use a 440px card and matching padding. The document reserves scrollbar space to keep horizontal alignment stable across routes. See `src/styles/README.md` for the shared Tailwind utilities and CSS tokens.
 
 ## Image asset
 
