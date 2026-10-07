@@ -159,6 +159,7 @@ export const Home = () => {
   const [courseSort, setCourseSort] = useState('newest');
   const [showAllCourses, setShowAllCourses] = useState(false);
   const [coursePage, setCoursePage] = useState(1);
+  const [tutorPage, setTutorPage] = useState(1);
   const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
   const [profile, setProfile] = useState(null);
@@ -197,7 +198,7 @@ export const Home = () => {
       }
       return new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
     });
-  const coursePageSize = 18;
+  const coursePageSize = 9;
   const totalCoursePages = Math.max(1, Math.ceil(rankedCourses.length / coursePageSize));
   const visibleCourses = showAllCourses
     ? rankedCourses.slice((coursePage - 1) * coursePageSize, coursePage * coursePageSize)
@@ -310,7 +311,11 @@ export const Home = () => {
   })();
 
   const isFiltered = Boolean(query || savedOnly || Object.values(appliedFilters).some(Boolean));
-  const visibleTutors = showAll || isFiltered ? filteredTutors : filteredTutors.slice(0, 4);
+  const tutorPageSize = 12;
+  const totalTutorPages = Math.max(1, Math.ceil(filteredTutors.length / tutorPageSize));
+  const visibleTutors = showAll
+    ? filteredTutors.slice((tutorPage - 1) * tutorPageSize, tutorPage * tutorPageSize)
+    : filteredTutors.slice(0, 8);
   const wardOptions = useMemo(() => getAdministrativeWards(filters.province), [filters.province]);
   const updateFilter = (event) => {
     const { name, value } = event.target;
@@ -330,6 +335,14 @@ export const Home = () => {
       [name]: value,
       ...(name === 'province' ? { ward: '' } : {}),
     }));
+  };
+  const goToCoursePage = (page) => {
+    setCoursePage(page);
+    requestAnimationFrame(() => scrollTo(courseRef.current));
+  };
+  const goToTutorPage = (page) => {
+    setTutorPage(page);
+    requestAnimationFrame(() => scrollTo(resultsRef.current));
   };
   const closeDialog = () => {
     setConsultationComplete(false);
@@ -352,6 +365,8 @@ export const Home = () => {
     setFilters(initialFilters);
     setAppliedFilters(initialFilters);
     setSavedOnly(false);
+    setShowAll(false);
+    setTutorPage(1);
     setParams(
       (current) => {
         current.delete('q');
@@ -365,6 +380,8 @@ export const Home = () => {
     setFilters(next);
     setAppliedFilters(next);
     setSavedOnly(false);
+    setShowAll(false);
+    setTutorPage(1);
     setParams(
       (current) => {
         current.delete('q');
@@ -550,12 +567,12 @@ export const Home = () => {
                 <>
                   <button type="button" onClick={() => { setShowAllCourses(false); setCoursePage(1); }}>Thu gọn danh sách</button>
                   <div className="course-pagination__pages">
-                    <button type="button" onClick={() => setCoursePage(1)} disabled={coursePage === 1}>Về đầu</button>
-                    <button type="button" onClick={() => setCoursePage((current) => Math.max(1, current - 1))} disabled={coursePage === 1}>Trước</button>
+                    <button type="button" onClick={() => goToCoursePage(1)} disabled={coursePage === 1}>Về đầu</button>
+                    <button type="button" onClick={() => goToCoursePage(Math.max(1, coursePage - 1))} disabled={coursePage === 1}>Trước</button>
                     {Array.from({ length: totalCoursePages }, (_, index) => index + 1).map((page) => (
-                      <button type="button" key={page} className={page === coursePage ? 'is-current' : ''} aria-current={page === coursePage ? 'page' : undefined} onClick={() => setCoursePage(page)}>{page}</button>
+                      <button type="button" key={page} className={page === coursePage ? 'is-current' : ''} aria-current={page === coursePage ? 'page' : undefined} onClick={() => goToCoursePage(page)}>{page}</button>
                     ))}
-                    <button type="button" onClick={() => setCoursePage((current) => Math.min(totalCoursePages, current + 1))} disabled={coursePage === totalCoursePages}>Trang sau</button>
+                    <button type="button" onClick={() => goToCoursePage(Math.min(totalCoursePages, coursePage + 1))} disabled={coursePage === totalCoursePages}>Trang sau</button>
                   </div>
                 </>
               )}
@@ -575,12 +592,7 @@ export const Home = () => {
               </span>
             }
             description="Chuyên môn vững vàng, tận tâm đồng hành trên từng bước tiến."
-          >
-            <button className="text-link" onClick={() => setShowAll((current) => !current)}>
-              {showAll ? 'Thu gọn danh sách' : 'Xem tất cả giáo viên'}
-              <ArrowRight size={16} />
-            </button>
-          </SectionHeading>
+          />
           <div id="tim-gia-su" className="tutor-search tutor-search--inline" ref={filterRef} aria-labelledby="search-title">
             <div className="search-panel-heading">
               <h3 id="search-title">
@@ -594,6 +606,8 @@ export const Home = () => {
               onSubmit={(event) => {
                 event.preventDefault();
                 setAppliedFilters(filters);
+                setShowAll(false);
+                setTutorPage(1);
                 scrollTo(resultsRef.current);
               }}
             >
@@ -697,6 +711,26 @@ export const Home = () => {
               <Button className="edu-button" onClick={resetSearch}>
                 Xóa bộ lọc
               </Button>
+            </div>
+          )}
+          {filteredTutors.length > 8 && !showAll && (
+            <div className="course-pagination" aria-label="Mở rộng danh sách giáo viên và trung tâm">
+              <button type="button" className="course-pagination__all" onClick={() => { setShowAll(true); setTutorPage(1); }}>
+                Xem tất cả giáo viên <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+          {filteredTutors.length > 8 && showAll && (
+            <div className="course-pagination" aria-label="Điều hướng danh sách giáo viên và trung tâm">
+              <button type="button" onClick={() => { setShowAll(false); setTutorPage(1); }}>Thu gọn danh sách</button>
+              <div className="course-pagination__pages">
+                <button type="button" onClick={() => goToTutorPage(1)} disabled={tutorPage === 1}>Về đầu</button>
+                <button type="button" onClick={() => goToTutorPage(Math.max(1, tutorPage - 1))} disabled={tutorPage === 1}>Trước</button>
+                {Array.from({ length: totalTutorPages }, (_, index) => index + 1).map((page) => (
+                  <button type="button" key={page} className={page === tutorPage ? 'is-current' : ''} aria-current={page === tutorPage ? 'page' : undefined} onClick={() => goToTutorPage(page)}>{page}</button>
+                ))}
+                <button type="button" onClick={() => goToTutorPage(Math.min(totalTutorPages, tutorPage + 1))} disabled={tutorPage === totalTutorPages}>Trang sau</button>
+              </div>
             </div>
           )}
           <p className="sample-note">Hồ sơ giáo viên và trung tâm minh hoạ cho giao diện.</p>

@@ -76,11 +76,6 @@ export const Header = ({ theme, onToggleTheme }) => {
             <GraduationCap size={16} />
             Tìm kiếm lớp học
           </a>
-          {isAuthenticated && (
-            <Link to={ROUTES.MESSAGES} className="teacher-action-link">
-              <MessageCircle size={15} /> Tin nhắn
-            </Link>
-          )}
           <Link to={teachingDestination}>{teachingLabel}</Link>
           {isCenterAccount ? (
             <Link className="consultation-nav" to={ROUTES.CENTER_SUPPORT}>
@@ -92,6 +87,11 @@ export const Header = ({ theme, onToggleTheme }) => {
               <Phone size={14} />
               Tư vấn miễn phí
             </button>
+          )}
+          {isAuthenticated && (
+            <Link to={ROUTES.MESSAGES} className="teacher-action-link">
+              <MessageCircle size={15} /> Tin nhắn
+            </Link>
           )}
         </nav>
         <div className="header-auth">
@@ -160,14 +160,14 @@ export const Header = ({ theme, onToggleTheme }) => {
           <a href="#tim-khoa-hoc" onClick={() => setMobileMenuOpen(false)}>
             Tìm kiếm lớp học
           </a>
-          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
-          {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
           <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
           {isCenterAccount ? (
             <Link to={ROUTES.CENTER_SUPPORT} onClick={() => setMobileMenuOpen(false)}>Tư vấn miễn phí</Link>
           ) : (
             <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
           )}
+          {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
+          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
           {isAuthenticated ? (
             <button
               onClick={() => {
