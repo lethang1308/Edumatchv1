@@ -41,7 +41,7 @@ export const Footer = () => {
           </div>
           <div>
             <h3>Dành cho Học viên</h3>
-            <a href="#tim-gia-su">Tìm gia sư phù hợp</a>
+            <a href="#tim-khoa-hoc">Tìm kiếm lớp học phù hợp</a>
             <button onClick={() => openDialog('consultation')}>Tư vấn lộ trình học tập</button>
             <a href="#danh-gia">Câu chuyện học viên</a>
             <button onClick={() => openDialog('faq')}>Câu hỏi thường gặp</button>
@@ -49,6 +49,7 @@ export const Footer = () => {
           <div>
             <h3>Dành cho Giáo viên</h3>
             <button onClick={() => openDialog('teacher')}>Trở thành giáo viên</button>
+            <Link to={ROUTES.CENTER_SUPPORT}>Hỗ trợ trung tâm đào tạo</Link>
             <a href="#cach-hoat-dong">Cách EduMatch hoạt động</a>
             <Link to={ROUTES.PARTNER_TERMS}>Điều khoản Giáo viên &amp; Đối tác</Link>
             <button onClick={() => openDialog('terms')}>Hướng dẫn sử dụng</button>

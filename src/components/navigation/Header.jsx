@@ -20,6 +20,7 @@ export const Header = ({ theme, onToggleTheme }) => {
   const [params, setParams] = useSearchParams();
   const { isAuthenticated, user, logout } = useAuth();
   const isEducationProvider = isAuthenticated && ['teacher', 'center'].includes(user?.role);
+  const isCenterAccount = isAuthenticated && user?.role === 'center';
   const teachingDestination = isEducationProvider ? ROUTES.CREATE_COURSE : ROUTES.REGISTER;
   const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
   const openDialog = (name) => {
@@ -47,7 +48,7 @@ export const Header = ({ theme, onToggleTheme }) => {
 
   return (
     <header className="edu-header">
-      <a className="skip-link" href="#tim-gia-su">
+      <a className="skip-link" href="#tim-khoa-hoc">
         Đi đến nội dung chính
       </a>
       <div className="edu-container header-inner">
@@ -71,9 +72,9 @@ export const Header = ({ theme, onToggleTheme }) => {
           <kbd>↵</kbd>
         </form>
         <nav className="desktop-nav" aria-label="Điều hướng chính">
-          <a href="#tim-gia-su">
+          <a href="#tim-khoa-hoc">
             <GraduationCap size={16} />
-            Tìm gia sư
+            Tìm kiếm lớp học
           </a>
           {isAuthenticated && (
             <Link to={ROUTES.MESSAGES} className="teacher-action-link">
@@ -81,10 +82,17 @@ export const Header = ({ theme, onToggleTheme }) => {
             </Link>
           )}
           <Link to={teachingDestination}>{teachingLabel}</Link>
-          <button className="consultation-nav" onClick={() => openDialog('consultation')}>
-            <Phone size={14} />
-            Tư vấn miễn phí
-          </button>
+          {isCenterAccount ? (
+            <Link className="consultation-nav" to={ROUTES.CENTER_SUPPORT}>
+              <Phone size={14} />
+              Tư vấn miễn phí
+            </Link>
+          ) : (
+            <button className="consultation-nav" onClick={() => openDialog('consultation')}>
+              <Phone size={14} />
+              Tư vấn miễn phí
+            </button>
+          )}
         </nav>
         <div className="header-auth">
           <button
@@ -149,13 +157,17 @@ export const Header = ({ theme, onToggleTheme }) => {
               <ArrowRight size={19} />
             </button>
           </form>
-          <a href="#tim-gia-su" onClick={() => setMobileMenuOpen(false)}>
-            Tìm gia sư
+          <a href="#tim-khoa-hoc" onClick={() => setMobileMenuOpen(false)}>
+            Tìm kiếm lớp học
           </a>
           {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
           {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
           <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
-          <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
+          {isCenterAccount ? (
+            <Link to={ROUTES.CENTER_SUPPORT} onClick={() => setMobileMenuOpen(false)}>Tư vấn miễn phí</Link>
+          ) : (
+            <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
+          )}
           {isAuthenticated ? (
             <button
               onClick={() => {

@@ -115,7 +115,8 @@
   margin-top:22px;
 }
 .teacher-bio__edit,
-.teacher-bio__add-course {
+.teacher-bio__add-course,
+.teacher-bio__support {
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -133,6 +134,8 @@
 .teacher-bio__edit { background:#fff; }
 .teacher-bio > .teacher-bio__edit { margin-top:22px; }
 .teacher-bio__edit:hover { background:#eef9f4; }
+.teacher-bio__support { background:#f1faf6; border-color:#b9ded2; }
+.teacher-bio__support:hover { background:#e2f3ec; }
 .teacher-bio__add-course { border-color:var(--edu-green); background:var(--edu-green); color:#fff; }
 .teacher-bio__add-course:hover { background:var(--edu-green-hover); }
 

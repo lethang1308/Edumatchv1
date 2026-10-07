@@ -12,6 +12,7 @@ import { CreateCoursePage, CourseDetailPage } from '@/pages/Courses';
 import { TeacherProfilePage } from '@/pages/TeacherProfile';
 import { MessagesPage } from '@/pages/Messages';
 import { PartnerTermsPage } from '@/pages/PartnerTerms';
+import { CenterSupportPage } from '@/pages/CenterSupport';
 
 /**
  * Public routes accessible without authentication
@@ -27,6 +28,10 @@ export const publicRoutes = [
       {
         path: ROUTES.PARTNER_TERMS,
         element: <PartnerTermsPage />,
+      },
+      {
+        path: ROUTES.CENTER_SUPPORT,
+        element: <CenterSupportPage />,
       },
       {
         path: ROUTES.COURSE_DETAIL(),

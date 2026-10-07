@@ -107,6 +107,7 @@ export function PartnerTermsPage() {
         </div>
 
         <footer className="partner-terms__closing">
+          <p>Chính sách tính phí sẽ được điều chỉnh theo thời gian. Chúng tôi luôn nỗ lực để tìm ra chính sách phù hợp, có lợi cho Quý Thầy Cô và các đơn vị đối tác.</p>
           <h2>Trân trọng sự đồng hành của Quý Giáo viên và Quý Đối tác.</h2>
           <p>EduMatch cam kết lắng nghe, hoàn thiện từng ngày và cùng Quý vị kiến tạo một cộng đồng học tập đáng tin cậy.</p>
           <Link to={ROUTES.HOME}>Khám phá EduMatch</Link>

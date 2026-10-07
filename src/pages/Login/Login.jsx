@@ -90,7 +90,7 @@ export const Login = () => {
           <nav className="login-nav__links" aria-label="Điều hướng chính">
             <Link to={ROUTES.HOME}>
               <Search size={18} aria-hidden="true" />
-              Tìm gia sư
+              Tìm kiếm lớp học
             </Link>
             <Link to={ROUTES.HOME}>Dành cho giáo viên</Link>
             <Link to={ROUTES.HOME}>Về chúng tôi</Link>

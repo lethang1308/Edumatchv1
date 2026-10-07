@@ -206,7 +206,7 @@ export const Register = () => {
           <nav className="register-nav__links" aria-label="Điều hướng chính">
             <Link to={ROUTES.HOME}>
               <Search size={18} aria-hidden="true" />
-              Tìm gia sư
+              Tìm kiếm lớp học
             </Link>
             <Link to={ROUTES.HOME}>Dành cho giáo viên</Link>
             <Link to={ROUTES.HOME}>Về chúng tôi</Link>
@@ -807,6 +807,9 @@ export const Register = () => {
               Giáo viên hoặc Đối tác có toàn quyền đồng ý tiếp nhận hoặc từ chối học viên được EduMatch giới thiệu trước khi sắp xếp lớp học.
             </p>
           </section>
+          <p className="teacher-terms-document__notice">
+            Chính sách tính phí sẽ được điều chỉnh theo thời gian. Chúng tôi luôn nỗ lực để tìm ra chính sách phù hợp, có lợi cho Quý Thầy Cô và các đơn vị đối tác.
+          </p>
         </article>
       </Modal>
     </main>
