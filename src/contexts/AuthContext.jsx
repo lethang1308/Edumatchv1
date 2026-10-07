@@ -60,6 +60,51 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (userData) => {
+    setLoading(true);
+    try {
+      const res = await authService.register(userData);
+      const authToken = res?.token || res?.access_token || 'mock_jwt_token_register';
+      const authUser = res?.user || {
+        id: `usr_${Date.now()}`,
+        name: userData.fullName || 'Người dùng mới',
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role || 'student',
+        dob: userData.dob || '',
+        qualifications: userData.qualifications || '',
+        experience: userData.experience || '',
+        bio: userData.bio || '',
+      };
+      storage.set(STORAGE_KEYS.ACCESS_TOKEN, authToken);
+      storage.set(STORAGE_KEYS.USER_INFO, authUser);
+      setToken(authToken);
+      setUser(authUser);
+      return { success: true, user: authUser, data: res };
+    } catch {
+      // Mock skeleton fallback khi backend chưa kết nối
+      const mockToken = 'mock_jwt_token_register';
+      const mockUser = {
+        id: 'usr_' + Date.now(),
+        name: userData.fullName || 'Người dùng mới',
+        email: userData.email,
+        phone: userData.phone,
+        role: userData.role || 'student',
+        dob: userData.dob || '',
+        qualifications: userData.qualifications || '',
+        experience: userData.experience || '',
+        bio: userData.bio || '',
+      };
+      storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
+      storage.set(STORAGE_KEYS.USER_INFO, mockUser);
+      setToken(mockToken);
+      setUser(mockUser);
+      return { success: true, user: mockUser };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await authService.logout();
@@ -71,12 +116,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updates) => {
+    let nextUser;
+    setUser((current) => {
+      nextUser = { ...current, ...updates };
+      storage.set(STORAGE_KEYS.USER_INFO, nextUser);
+      return nextUser;
+    });
+    return nextUser;
+  };
+
   const value = {
     user,
     token,
     isAuthenticated: Boolean(token),
     loading,
     login,
+    register,
+    updateUser,
     logout,
   };
 

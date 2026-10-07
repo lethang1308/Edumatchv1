@@ -100,3 +100,15 @@ Sửa token trong `theme.css`, sau đó kiểm tra Home, `/login`, `/register` v
 `/register?role=teacher` ở desktop/mobile. Palette tối của Home tiếp tục được
 override trong `home.css`; không thay các màu trạng thái hoặc màu minh họa
 riêng của môn học bằng màu thương hiệu.
+
+## Trang khóa học trong MainLayout
+
+`CourseCard`, các trang trong `Courses` và `AdministrativePicker` dùng cùng
+token typography, container và màu với Home. Trong `.edu-site`, heading cũ
+được reset để giữ bố cục Home; CSS của page mới cần khai báo cả cỡ chữ,
+font-weight và line-height bằng token tương ứng (không chỉ font-size).
+
+Màu `--edu-bg`, `--edu-surface`, `--edu-ink`, `--edu-muted`, `--edu-green`
+trỏ về theme chung ở chế độ sáng và nhận palette tối của MainLayout.
+Chữ trên button nền thương hiệu dùng `--edu-on-primary`. Màu trạng thái
+đóng lớp/lỗi vẫn giữ ý nghĩa riêng.

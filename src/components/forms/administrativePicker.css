@@ -1,0 +1,105 @@
+.administrative-picker {
+  position: relative;
+  min-width: 0;
+}
+.administrative-picker > label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--edu-ink);
+  font-size: var(--text-control);
+  font-weight: 700;
+}
+.administrative-picker__control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: var(--control-height);
+  padding: 0 12px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-bg);
+  color: var(--edu-muted);
+}
+.administrative-picker__control:focus-within {
+  border-color: var(--edu-green);
+  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+}
+.administrative-picker__control input {
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  min-height: 41px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--edu-ink);
+  box-shadow: none !important;
+  font: inherit;
+  font-size: var(--text-control);
+  outline: 0;
+}
+.administrative-picker__control input::placeholder {
+  color: var(--edu-faint);
+}
+.administrative-picker__control > svg:last-child {
+  flex: 0 0 auto;
+}
+.administrative-picker.is-disabled {
+  opacity: 0.64;
+}
+.administrative-picker__menu {
+  position: absolute;
+  z-index: 45;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  max-height: 310px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-surface);
+  box-shadow: 0 18px 34px rgb(20 56 45 / 16%);
+}
+.administrative-picker__hint,
+.administrative-picker__empty {
+  margin: 4px 7px 7px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption-xs);
+  line-height: 1.45;
+}
+.administrative-picker__empty {
+  padding: 9px 0;
+}
+.administrative-picker__menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 8px;
+  border-radius: var(--radius-control);
+  color: var(--edu-ink);
+  text-align: left;
+}
+.administrative-picker__menu button:hover,
+.administrative-picker__menu button.is-selected {
+  background: var(--edu-tag);
+  color: var(--edu-green);
+}
+.administrative-picker__menu button > span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+  font-size: var(--text-control);
+  font-weight: 700;
+}
+.administrative-picker__menu button small {
+  color: var(--edu-faint);
+  font-size: var(--text-caption-xs);
+  font-weight: 500;
+}
+.administrative-picker__menu button > svg:last-child {
+  flex: 0 0 auto;
+}

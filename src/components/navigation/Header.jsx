@@ -4,10 +4,10 @@ import {
   ArrowRight,
   GraduationCap,
   Menu,
+  MessageCircle,
   Moon,
   Phone,
   Search,
-  ShieldCheck,
   Sun,
   X,
 } from 'lucide-react';
@@ -19,6 +19,10 @@ export const Header = ({ theme, onToggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const { isAuthenticated, user, logout } = useAuth();
+  const isEducationProvider = isAuthenticated && ['teacher', 'center'].includes(user?.role);
+  const isCenterAccount = isAuthenticated && user?.role === 'center';
+  const teachingDestination = isEducationProvider ? ROUTES.CREATE_COURSE : ROUTES.REGISTER;
+  const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
   const openDialog = (name) => {
     setMobileMenuOpen(false);
     setParams((current) => {
@@ -44,7 +48,7 @@ export const Header = ({ theme, onToggleTheme }) => {
 
   return (
     <header className="edu-header">
-      <a className="skip-link" href="#tim-gia-su">
+      <a className="skip-link" href="#tim-khoa-hoc">
         Đi đến nội dung chính
       </a>
       <div className="edu-container header-inner">
@@ -68,19 +72,27 @@ export const Header = ({ theme, onToggleTheme }) => {
           <kbd>↵</kbd>
         </form>
         <nav className="desktop-nav" aria-label="Điều hướng chính">
-          <a href="#tim-gia-su">
+          <a href="#tim-khoa-hoc">
             <GraduationCap size={16} />
-            Tìm gia sư
+            Tìm kiếm lớp học
           </a>
-          <button onClick={() => openDialog('teacher')}>Đăng ký dạy</button>
-          <button className="consultation-nav" onClick={() => openDialog('consultation')}>
-            <Phone size={14} />
-            Tư vấn miễn phí
-          </button>
-          <Link to={ROUTES.DASHBOARD} className="admin-nav" title="Bảng điều khiển">
-            <ShieldCheck size={14} />
-            <span>Quản trị</span>
-          </Link>
+          {isAuthenticated && (
+            <Link to={ROUTES.MESSAGES} className="teacher-action-link">
+              <MessageCircle size={15} /> Tin nhắn
+            </Link>
+          )}
+          <Link to={teachingDestination}>{teachingLabel}</Link>
+          {isCenterAccount ? (
+            <Link className="consultation-nav" to={ROUTES.CENTER_SUPPORT}>
+              <Phone size={14} />
+              Tư vấn miễn phí
+            </Link>
+          ) : (
+            <button className="consultation-nav" onClick={() => openDialog('consultation')}>
+              <Phone size={14} />
+              Tư vấn miễn phí
+            </button>
+          )}
         </nav>
         <div className="header-auth">
           <button
@@ -94,7 +106,9 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <span className="user-name">{user?.name}</span>
+              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+                {user?.name}
+              </Link>
               <Button
                 variant="outline"
                 className="edu-button edu-button-outline"
@@ -109,14 +123,10 @@ export const Header = ({ theme, onToggleTheme }) => {
               <Link to={ROUTES.LOGIN} className="login-link">
                 Đăng nhập
               </Link>
-              <Button
-                size="sm"
-                className="edu-button register-button"
-                onClick={() => openDialog('register')}
-              >
+              <Link to={ROUTES.REGISTER} className="edu-button register-button">
                 Đăng ký
                 <ArrowRight size={14} />
-              </Button>
+              </Link>
             </>
           )}
         </div>
@@ -147,14 +157,17 @@ export const Header = ({ theme, onToggleTheme }) => {
               <ArrowRight size={19} />
             </button>
           </form>
-          <a href="#tim-gia-su" onClick={() => setMobileMenuOpen(false)}>
-            Tìm gia sư
+          <a href="#tim-khoa-hoc" onClick={() => setMobileMenuOpen(false)}>
+            Tìm kiếm lớp học
           </a>
-          <button onClick={() => openDialog('teacher')}>Đăng ký dạy</button>
-          <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
-          <Link to={ROUTES.DASHBOARD} onClick={() => setMobileMenuOpen(false)}>
-            Quản trị
-          </Link>
+          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
+          {isAuthenticated && <Link to={ROUTES.MESSAGES} onClick={() => setMobileMenuOpen(false)}>Tin nhắn</Link>}
+          <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
+          {isCenterAccount ? (
+            <Link to={ROUTES.CENTER_SUPPORT} onClick={() => setMobileMenuOpen(false)}>Tư vấn miễn phí</Link>
+          ) : (
+            <button onClick={() => openDialog('consultation')}>Tư vấn miễn phí</button>
+          )}
           {isAuthenticated ? (
             <button
               onClick={() => {
@@ -165,9 +178,10 @@ export const Header = ({ theme, onToggleTheme }) => {
               Đăng xuất
             </button>
           ) : (
-            <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
-              Đăng nhập
-            </Link>
+            <>
+              <Link to={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>Đăng nhập</Link>
+              <Link to={ROUTES.REGISTER} onClick={() => setMobileMenuOpen(false)}>Đăng ký</Link>
+            </>
           )}
         </nav>
       )}
