@@ -32,8 +32,18 @@ export const getCourses = () => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const currentUser = read(STORAGE_KEYS.USER_INFO, null);
   const hydratedSavedCourses = saved.map((course) =>
-    course.teacher?.id === currentUser?.id && currentUser?.avatar
-      ? { ...course, teacher: { ...course.teacher, avatar: currentUser.avatar } }
+    course.teacher?.id === currentUser?.id
+      ? {
+          ...course,
+          teacher: {
+            ...course.teacher,
+            ...(currentUser.avatar ? { avatar: currentUser.avatar } : {}),
+            ...(currentUser.phone ? { phone: currentUser.phone } : {}),
+            ...(typeof currentUser.isPhonePublic === 'boolean'
+              ? { isPhonePublic: currentUser.isPhonePublic }
+              : {}),
+          },
+        }
       : course
   );
   return [...hydratedSavedCourses, ...sampleCourses];
@@ -86,8 +96,10 @@ export const getCourseRating = (courseId) => {
   return { total, average };
 };
 
-export const getPosts = (teacherId) =>
-  read(STORAGE_KEYS.TEACHER_POSTS, []).filter((post) => post.teacherId === teacherId);
+export const getPosts = (authorId) => {
+  const posts = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  return authorId ? posts.filter((post) => post.teacherId === authorId || post.authorId === authorId) : posts;
+};
 
 export const savePost = (post) => {
   const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
@@ -100,6 +112,63 @@ export const updatePost = (postId, updater) => {
   );
   write(STORAGE_KEYS.TEACHER_POSTS, next);
   return next;
+};
+
+const notifyNotificationChange = () => {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:notifications-updated'));
+};
+
+export const getNotifications = (recipientId) =>
+  read(STORAGE_KEYS.NOTIFICATIONS, [])
+    .filter((notification) => notification.recipientId === recipientId)
+    .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
+
+export const createNotification = (notification) => {
+  if (!notification.recipientId) return null;
+  const nextNotification = {
+    id: `notification-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+    ...notification,
+  };
+  const saved = read(STORAGE_KEYS.NOTIFICATIONS, []);
+  write(STORAGE_KEYS.NOTIFICATIONS, [nextNotification, ...saved]);
+  notifyNotificationChange();
+  return nextNotification;
+};
+
+export const markNotificationRead = (notificationId) => {
+  const next = read(STORAGE_KEYS.NOTIFICATIONS, []).map((notification) =>
+    notification.id === notificationId ? { ...notification, isRead: true } : notification
+  );
+  write(STORAGE_KEYS.NOTIFICATIONS, next);
+  notifyNotificationChange();
+  return next;
+};
+
+export const markAllNotificationsRead = (recipientId) => {
+  const next = read(STORAGE_KEYS.NOTIFICATIONS, []).map((notification) =>
+    notification.recipientId === recipientId ? { ...notification, isRead: true } : notification
+  );
+  write(STORAGE_KEYS.NOTIFICATIONS, next);
+  notifyNotificationChange();
+  return next;
+};
+
+export const getProviderAffinity = (userId) => {
+  if (!userId) return {};
+  return read(STORAGE_KEYS.FEED_AFFINITY, [])
+    .filter((record) => record.userId === userId)
+    .reduce((scores, record) => ({ ...scores, [record.providerId]: (scores[record.providerId] || 0) + Number(record.score || 0) }), {});
+};
+
+export const trackProviderAffinity = (userId, providerId, action, score = 1) => {
+  if (!userId || !providerId || userId === providerId) return;
+  const saved = read(STORAGE_KEYS.FEED_AFFINITY, []);
+  const existingIndex = saved.findIndex((record) => record.userId === userId && record.providerId === providerId && record.action === action);
+  const entry = { userId, providerId, action, score, updatedAt: new Date().toISOString() };
+  const next = existingIndex === -1 ? [entry, ...saved] : saved.map((record, index) => index === existingIndex ? entry : record);
+  write(STORAGE_KEYS.FEED_AFFINITY, next);
 };
 
 export const saveConversation = (conversation) => {

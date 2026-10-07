@@ -47,6 +47,7 @@ export const Register = () => {
   const [dob, setDob] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [isPhonePublic, setIsPhonePublic] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -130,6 +131,7 @@ export const Register = () => {
       role,
       fullName: fullName.trim(),
       phone: phone.trim(),
+      ...(role !== 'student' ? { isPhonePublic } : {}),
       password,
       ...(role !== 'center' ? { dob, email: email.trim() } : {}),
       ...(role === 'teacher'
@@ -414,6 +416,15 @@ export const Register = () => {
                 </div>
                 {errors.phone && <p className="register-field__error">{errors.phone}</p>}
               </div>
+
+              {role !== 'student' && <fieldset className="register-phone-visibility">
+                <legend>Bạn có muốn công khai số điện thoại?</legend>
+                <p>Số điện thoại chỉ hiển thị trên hồ sơ, danh sách tìm kiếm và khóa học khi bạn đồng ý.</p>
+                <div>
+                  <label><input type="radio" name="isPhonePublic" checked={isPhonePublic} onChange={() => setIsPhonePublic(true)} /> Có, công khai số điện thoại</label>
+                  <label><input type="radio" name="isPhonePublic" checked={!isPhonePublic} onChange={() => setIsPhonePublic(false)} /> Không, giữ riêng tư</label>
+                </div>
+              </fieldset>}
 
               {/* Row: Mật khẩu & Xác nhận mật khẩu */}
               <div className="register-row">

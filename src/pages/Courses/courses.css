@@ -64,6 +64,43 @@
 @media (max-width: 720px) { .teacher-cover__actions { width:100%; margin-left:0; flex-wrap:wrap; }.profile-cover-upload,.profile-edit-trigger,.teacher-cover__actions > a { flex:1; justify-content:center; }.teacher-profile-editor { grid-template-columns:1fr; } }
 .teacher-profile-card__avatar { overflow:hidden; }
 .teacher-profile-card__avatar img { width:100%; height:100%; object-fit:cover; }
+.teacher-profile-card__info { min-width:0; }
+.teacher-profile-card > .teacher-profile-card__profile { display:inline-flex; align-items:center; gap:6px; margin-left:auto; color:var(--edu-green); font-size:11px; font-weight:700; white-space:nowrap; }
+.teacher-profile-card__phone,.teacher-bio__phone { display:inline-flex; align-items:center; gap:6px; margin-top:6px; color:var(--edu-green); font-size:11px; font-weight:800; }
+.teacher-profile-card__info .teacher-profile-card__phone { margin-left:0; }
+.teacher-profile-card__phone:hover,.teacher-bio__phone:hover { color:var(--edu-green-hover); }
+@media (max-width: 720px) { .teacher-profile-card > .teacher-profile-card__profile { width:100%; margin:3px 0 0; } .teacher-profile-card__info .teacher-profile-card__phone { width:auto; margin:6px 0 0; } }
+.teacher-profile-card { align-items:flex-start; gap:16px; padding:24px 0; }
+.teacher-profile-card__avatar { align-self:center; }
+.teacher-profile-card__info { display:grid; flex:1; gap:3px; }
+.teacher-profile-card__meta { display:block; }
+.teacher-profile-card__info .teacher-profile-card__phone { display:grid; grid-template-columns:16px auto; grid-template-rows:auto auto; column-gap:8px; align-items:center; width:max-content; margin-top:10px; padding:8px 11px; border:1px solid #cae4da; border-radius:10px; background:#f1faf6; color:var(--edu-green); }
+.teacher-profile-card__phone > svg { grid-row:1 / span 2; }
+.teacher-profile-card__phone > span { color:#6d7d84; font-size:9px; font-weight:700; line-height:1.1; }
+.teacher-profile-card__phone > strong { color:var(--edu-green); font-size:13px; line-height:1.25; letter-spacing:.01em; }
+.teacher-profile-card > .teacher-profile-card__profile { align-self:center; }
+@media (max-width: 720px) { .teacher-profile-card__info .teacher-profile-card__phone { width:max-content; margin:10px 0 0; } .teacher-profile-card > .teacher-profile-card__profile { align-self:auto; } }
+.teacher-profile-card { display:grid; grid-template-columns:56px minmax(0,1fr) auto; column-gap:16px; row-gap:12px; align-items:center; }
+.teacher-profile-card__avatar { grid-column:1; grid-row:1; }
+.teacher-profile-card__info { grid-column:2; grid-row:1; }
+.teacher-profile-card > .teacher-profile-card__profile { grid-column:3; grid-row:1; margin-left:0; }
+.teacher-profile-card__details { grid-column:2 / -1; display:grid; gap:14px; padding-top:15px; border-top:1px solid var(--edu-line); }
+.teacher-profile-card__facts { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin:0; }
+.teacher-profile-card__facts > div { min-width:0; padding:10px 12px; border-radius:10px; background:#f4f8f7; }
+.teacher-profile-card__facts dt,.teacher-profile-card__bio > span { display:block; color:var(--edu-muted); font-size:10px; font-weight:700; }
+.teacher-profile-card__facts dd { margin:4px 0 0; color:var(--edu-ink); font-size:12px; font-weight:700; line-height:1.5; }
+.teacher-profile-card__bio { display:grid; gap:5px; }
+.teacher-profile-card__bio > p { margin:0; color:var(--edu-ink); font-size:13px; font-weight:500; line-height:1.7; }
+.teacher-profile-card__details .teacher-profile-card__phone { display:grid; grid-template-columns:16px auto; grid-template-rows:auto auto; column-gap:8px; align-items:center; justify-self:start; width:max-content; margin:0; padding:8px 11px; border:1px solid #cae4da; border-radius:10px; background:#f1faf6; color:var(--edu-green); }
+.teacher-profile-card__details .teacher-profile-card__phone > svg { grid-row:1 / span 2; }
+.teacher-profile-card__details .teacher-profile-card__phone > span { color:#6d7d84; font-size:9px; font-weight:700; line-height:1.1; }
+.teacher-profile-card__details .teacher-profile-card__phone > strong { color:var(--edu-green); font-size:13px; line-height:1.25; letter-spacing:.01em; }
+.teacher-profile-editor__phone-visibility { display:flex!important; align-items:flex-start; gap:10px; padding:12px; border:1px solid #cfe0da; border-radius:10px; background:#f4f9f7; cursor:pointer; }
+.teacher-profile-editor__phone-visibility input { flex:0 0 auto; width:17px!important; min-height:17px!important; margin:1px 0 0; padding:0!important; accent-color:var(--edu-green); }
+.teacher-profile-editor__phone-visibility > span { display:grid; gap:3px; }
+.teacher-profile-editor__phone-visibility strong { font-size:12px; }
+.teacher-profile-editor__phone-visibility small { color:var(--edu-muted)!important; font-size:10px; font-weight:500; line-height:1.5; }
+@media (max-width: 720px) { .teacher-profile-card { grid-template-columns:48px minmax(0,1fr); }.teacher-profile-card > .teacher-profile-card__profile { grid-column:2; grid-row:2; width:auto; margin:0; justify-self:start; }.teacher-profile-card__details { grid-column:1 / -1; }.teacher-profile-card__facts { grid-template-columns:1fr; } }
 
 /* The cover sits inside .learning-container, so it needs local padding—not viewport padding. */
 .teacher-cover {
@@ -168,4 +205,129 @@
     bottom:16px;
   }
   .teacher-cover__actions { margin-left:0; }
+}
+
+/* Course-provider information: one clear, consistent line per item. */
+.teacher-profile-card__details {
+  grid-column:1 / -1;
+  gap:0;
+  padding-top:14px;
+}
+.teacher-profile-card__facts {
+  grid-template-columns:1fr;
+  gap:0;
+  overflow:hidden;
+  border-top:1px solid var(--edu-line);
+}
+.teacher-profile-card__facts > div,
+.teacher-profile-card__bio,
+.teacher-profile-card__details .teacher-profile-card__phone {
+  display:grid;
+  grid-template-columns:180px minmax(0, 1fr);
+  column-gap:18px;
+  align-items:start;
+  width:100%;
+  min-height:52px;
+  margin:0;
+  padding:14px 0;
+  border:0;
+  border-bottom:1px solid var(--edu-line);
+  border-radius:0;
+  background:transparent;
+  box-sizing:border-box;
+}
+.teacher-profile-card__facts > div { border-radius:0; }
+.teacher-profile-card__facts dt,
+.teacher-profile-card__bio > span,
+.teacher-profile-card__details .teacher-profile-card__phone > span {
+  grid-column:1;
+  color:var(--edu-ink);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.55;
+}
+.teacher-profile-card__facts dd,
+.teacher-profile-card__bio > p,
+.teacher-profile-card__details .teacher-profile-card__phone > strong {
+  grid-column:2;
+  margin:0;
+  color:var(--edu-muted);
+  font-size:13px;
+  font-weight:500;
+  line-height:1.6;
+}
+.teacher-profile-card__bio { gap:0; }
+.teacher-profile-card__bio > p { font-weight:500; }
+.teacher-profile-card__details .teacher-profile-card__phone {
+  padding-left:0;
+  color:var(--edu-green);
+}
+.teacher-profile-card__details .teacher-profile-card__phone > svg {
+  display:none;
+}
+.teacher-profile-card__details .teacher-profile-card__phone > strong {
+  color:var(--edu-green);
+  font-weight:600;
+}
+
+@media (max-width: 720px) {
+  .teacher-profile-card__facts > div,
+  .teacher-profile-card__bio,
+  .teacher-profile-card__details .teacher-profile-card__phone {
+    grid-template-columns:1fr;
+    gap:3px;
+  }
+  .teacher-profile-card__facts dt,
+  .teacher-profile-card__bio > span,
+  .teacher-profile-card__details .teacher-profile-card__phone > span,
+  .teacher-profile-card__facts dd,
+  .teacher-profile-card__bio > p,
+  .teacher-profile-card__details .teacher-profile-card__phone > strong { grid-column:1; }
+}
+
+/* Keep provider details on the same visual axis as the provider name. */
+.teacher-profile-card__details {
+  grid-column:2 / -1;
+  padding-top:12px;
+}
+.teacher-profile-card__facts > div,
+.teacher-profile-card__bio,
+.teacher-profile-card__details .teacher-profile-card__phone {
+  display:block;
+  min-height:0;
+  padding:14px 0;
+}
+.teacher-profile-card__facts dt,
+.teacher-profile-card__bio > span,
+.teacher-profile-card__details .teacher-profile-card__phone > span {
+  display:block;
+  color:var(--edu-ink);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.5;
+}
+.teacher-profile-card__facts dd,
+.teacher-profile-card__bio > p,
+.teacher-profile-card__details .teacher-profile-card__phone > strong {
+  display:block;
+  margin:5px 0 0;
+  color:var(--edu-muted);
+  font-size:13px;
+  font-weight:500;
+  line-height:1.6;
+}
+.teacher-profile-card__details .teacher-profile-card__phone > svg { display:none; }
+.teacher-profile-card__details .teacher-profile-card__phone > strong { color:var(--edu-green); font-weight:600; }
+
+@media (max-width: 720px) {
+  .teacher-profile-card__details { grid-column:1 / -1; }
+}
+
+.teacher-profile-card__info .teacher-profile-card__intro {
+  max-width:720px;
+  margin:5px 0 0;
+  color:var(--edu-muted);
+  font-size:13px;
+  font-weight:500;
+  line-height:1.65;
 }

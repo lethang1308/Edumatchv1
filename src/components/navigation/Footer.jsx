@@ -3,6 +3,7 @@ import { ArrowUpRight, BookOpen, GraduationCap, Mail, MessageCircle } from 'luci
 import { ROUTES } from '@/constants/routes';
 
 export const Footer = () => {
+  const homeSection = (section) => `${ROUTES.HOME}#${section}`;
   const [, setParams] = useSearchParams();
   const openDialog = (name) =>
     setParams((current) => {
@@ -34,36 +35,36 @@ export const Footer = () => {
               <button onClick={() => openDialog('consultation')} aria-label="Tư vấn học tập">
                 <GraduationCap size={19} />
               </button>
-              <a href="#mon-hoc" aria-label="Khám phá môn học">
+              <Link to={homeSection('mon-hoc')} aria-label="Khám phá môn học">
                 <BookOpen size={18} />
-              </a>
+              </Link>
             </div>
           </div>
-          <div>
-            <h3>Dành cho Học viên</h3>
-            <a href="#tim-khoa-hoc">Tìm kiếm lớp học phù hợp</a>
-            <button onClick={() => openDialog('consultation')}>Tư vấn lộ trình học tập</button>
-            <a href="#danh-gia">Câu chuyện học viên</a>
-            <button onClick={() => openDialog('faq')}>Câu hỏi thường gặp</button>
-          </div>
-          <div>
-            <h3>Dành cho Giáo viên</h3>
-            <button onClick={() => openDialog('teacher')}>Trở thành giáo viên</button>
-            <Link to={ROUTES.CENTER_SUPPORT}>Hỗ trợ trung tâm đào tạo</Link>
-            <a href="#cach-hoat-dong">Cách EduMatch hoạt động</a>
-            <Link to={ROUTES.PARTNER_TERMS}>Điều khoản Giáo viên &amp; Đối tác</Link>
-            <button onClick={() => openDialog('terms')}>Hướng dẫn sử dụng</button>
-            <Link to={ROUTES.LOGIN}>Đăng nhập tài khoản</Link>
-          </div>
           <div className="footer-contact">
-            <h3>Chúng tôi luôn sẵn sàng</h3>
-            <p>Cùng bạn tìm ra cách học phù hợp.</p>
-            <button className="footer-support" onClick={() => openDialog('support')}>
+            <h3>Thông tin liên hệ</h3>
+            <p className="footer-contact__address">Văn phòng đại diện: 223 Quan Hoa, Cầu Giấy, Hà Nội, Việt Nam</p>
+            <a className="footer-contact__hotline" href="tel:19001345">Hỗ trợ học viên: <strong>19001345</strong></a>
+            <a className="footer-contact__hotline" href="tel:19001234">Giáo viên &amp; đối tác: <strong>19001234</strong></a>
+            <Link className="footer-support" to={ROUTES.CONTACT}>
               <Mail size={17} />
               Kết nối với EduMatch
               <ArrowUpRight size={16} />
-            </button>
+            </Link>
             <span>Học tập tốt hơn, mỗi ngày.</span>
+          </div>
+          <div>
+            <h3>Dành cho Học viên</h3>
+            <Link to={homeSection('khoa-hoc')}>Tìm kiếm lớp học phù hợp</Link>
+            <Link to={homeSection('giao-vien')}>Tìm kiếm giáo viên phù hợp</Link>
+            <button onClick={() => openDialog('consultation')}>Tư vấn lộ trình học tập</button>
+            <Link to={homeSection('danh-gia')}>Câu chuyện học viên</Link>
+            <button onClick={() => openDialog('faq')}>Câu hỏi thường gặp</button>
+          </div>
+          <div>
+            <h3>Dành cho Giáo viên và Đối tác</h3>
+            <Link to={ROUTES.CENTER_SUPPORT}>Hỗ trợ trung tâm đào tạo</Link>
+            <Link to={ROUTES.PARTNER_TERMS}>Điều khoản Giáo viên &amp; Đối tác</Link>
+            <Link to={ROUTES.LOGIN}>Đăng nhập tài khoản</Link>
           </div>
         </div>
         <div className="footer-bottom">
@@ -71,7 +72,7 @@ export const Footer = () => {
           <div>
             <button onClick={() => openDialog('terms')}>Điều khoản sử dụng</button>
             <button onClick={() => openDialog('privacy')}>Chính sách bảo mật</button>
-            <button onClick={() => openDialog('support')}>Liên hệ</button>
+            <Link to={ROUTES.CONTACT}>Liên hệ</Link>
           </div>
         </div>
       </div>

@@ -9,5 +9,7 @@ export const STORAGE_KEYS = {
   COURSES: 'edumatch:courses',
   COURSE_REVIEWS: 'edumatch:course-reviews',
   TEACHER_POSTS: 'edumatch:teacher-posts',
+  NOTIFICATIONS: 'edumatch:notifications',
+  FEED_AFFINITY: 'edumatch:feed-affinity',
   CONVERSATIONS: 'edumatch:conversations',
 };

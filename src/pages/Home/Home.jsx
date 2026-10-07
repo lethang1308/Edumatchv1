@@ -1,9 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
-  Check,
   CheckCircle2,
   ChevronDown,
   GraduationCap,
@@ -16,17 +15,21 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Star,
+  MessageCircle,
+  UserRound,
   Users,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/feedback/Modal';
+import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ROUTES } from '@/constants/routes';
 import { CourseCard } from '@/components/courses/CourseCard';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
 import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
-import { getCourseRating, getCourses } from '@/features/learning/marketplace';
+import { createConversationId, getCourseRating, getCourses, saveConversation, trackProviderAffinity } from '@/features/learning/marketplace';
+import toast from 'react-hot-toast';
 import heroImage from '@/assets/tutoring-hero.webp';
 import heroImageMobile from '@/assets/tutoring-hero-720.webp';
 import { subjects, tutors, testimonials } from './homeData';
@@ -130,6 +133,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
             : tutor.experience || 'Đang cập nhật kinh nghiệm'}
         <span className="mode-tag">{tutor.mode === 'online' ? 'Trực tuyến' : tutor.mode === 'recorded' ? 'Video quay sẵn' : tutor.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến & trực tiếp'}</span>
       </p>
+      {tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}
       <p className="tutor-description">{tutor.description}</p>
       <div className="tutor-bottom">
         <div>
@@ -146,6 +150,8 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 
 export const Home = () => {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const query = params.get('q') || '';
   const dialog = params.get('dialog');
   const [filters, setFilters] = useState(initialFilters);
@@ -162,7 +168,14 @@ export const Home = () => {
   const [tutorPage, setTutorPage] = useState(1);
   const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
-  const [profile, setProfile] = useState(null);
+const [profile, setProfile] = useState(null);
+const profileCourses = profile
+  ? getCourses().filter(
+      (course) =>
+        (course.teacher?.id === profile.id || course.teacher?.id === `teacher-${profile.id}`) &&
+        course.enrollmentStatus !== 'closed'
+    )
+  : [];
   const [consultationComplete, setConsultationComplete] = useState(false);
   const [consultation, setConsultation] = useState({ name: '', phone: '', subject: '', note: '' });
   const resultsRef = useRef(null);
@@ -240,6 +253,9 @@ export const Home = () => {
         province: '',
         ward: '',
         image: provider.avatar || '',
+        phone: provider.phone || '',
+        isPhonePublic: Boolean(provider.isPhonePublic),
+        courseId: course.id,
         experience: provider.experience || 'Đang cập nhật',
         price: course.price,
         description: provider.bio || course.description,
@@ -317,6 +333,28 @@ export const Home = () => {
     ? filteredTutors.slice((tutorPage - 1) * tutorPageSize, tutorPage * tutorPageSize)
     : filteredTutors.slice(0, 8);
   const wardOptions = useMemo(() => getAdministrativeWards(filters.province), [filters.province]);
+  const registerForTutor = (tutor) => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để đăng ký học.');
+      setProfile(null);
+      navigate(ROUTES.LOGIN);
+      return;
+    }
+    saveConversation({
+      id: createConversationId('conversation'),
+      courseId: tutor.courseId,
+      teacherId: tutor.id,
+      teacherName: [tutor.title, tutor.name].filter(Boolean).join(' '),
+      studentId: user.id,
+      studentName: user.name || 'Học viên EduMatch',
+      senderId: user.id,
+      text: 'Chào thầy/cô, em muốn trao đổi thêm để đăng ký học và sắp xếp lịch phù hợp ạ.',
+      createdAt: 'Vừa xong',
+    });
+    setProfile(null);
+    toast.success('Đã gửi yêu cầu đăng ký học.');
+    navigate(ROUTES.MESSAGES);
+  };
   const updateFilter = (event) => {
     const { name, value } = event.target;
     setFilters((current) => ({
@@ -692,14 +730,15 @@ export const Home = () => {
                 key={tutor.id}
                 tutor={tutor}
                 saved={savedIds.includes(tutor.id)}
-                onSave={() =>
-                  setSavedIds((current) =>
-                    current.includes(tutor.id)
-                      ? current.filter((id) => id !== tutor.id)
-                      : [...current, tutor.id]
-                  )
-                }
-                onOpen={() => setProfile(tutor)}
+                onSave={() => {
+                  const isSaving = !savedIds.includes(tutor.id);
+                  setSavedIds((current) => current.includes(tutor.id) ? current.filter((id) => id !== tutor.id) : [...current, tutor.id]);
+                  if (isSaving && isAuthenticated) trackProviderAffinity(user.id, tutor.id, 'saved-profile', 4);
+                }}
+                onOpen={() => {
+                  if (isAuthenticated) trackProviderAffinity(user.id, tutor.id, 'viewed-profile', 1);
+                  setProfile(tutor);
+                }}
               />
             ))}
           </div>
@@ -890,51 +929,18 @@ export const Home = () => {
                 {profile.reviews ? <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p> : <p>Hồ sơ giáo viên mới</p>}
               </div>
             </div>
-            <div className="profile-facts">
-              <span>
-                <GraduationCap size={19} />
-                <strong>{profile.experience} năm</strong>Kinh nghiệm
-              </span>
-              <span>
-                <Monitor size={19} />
-                <strong>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : 'Linh hoạt'}</strong>Hình thức
-                học
-              </span>
-              <span>
-                <BookOpen size={19} />
-                <strong>{currency(profile.price)}đ</strong>Mỗi giờ học
-              </span>
+            <dl className="profile-detail__info">
+              <div><dt>Lĩnh vực giảng dạy</dt><dd>{profile.subject || 'Đang cập nhật'}</dd></div>
+              <div><dt>Kinh nghiệm</dt><dd>{typeof profile.experience === 'number' ? `${profile.experience} năm` : profile.experience || 'Đang cập nhật'}</dd></div>
+              <div><dt>Hình thức giảng dạy</dt><dd>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : profile.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến và trực tiếp'}</dd></div>
+              {profile.isPhonePublic && profile.phone && <div><dt>Số điện thoại liên hệ</dt><dd><a href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={15} /> {profile.phone}</a></dd></div>}
+            </dl>
+            <div className="profile-detail__bio"><h4>Thông tin giáo viên</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
+            {profileCourses.length > 0 && <section className="profile-detail__courses"><h4>Khóa học đang mở trên EduMatch</h4><div>{profileCourses.map((course) => <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} onClick={() => setProfile(null)}><span><strong>{course.title}</strong><small>{course.description}</small></span><ArrowRight size={17} /></Link>)}</div></section>}
+            <div className="profile-detail__actions">
+              <Link className="profile-detail__profile-link" to={ROUTES.TEACHER_PROFILE(profile.id)} onClick={() => setProfile(null)}><UserRound size={17} /> Xem trang cá nhân</Link>
+              <Button className="edu-button" onClick={() => registerForTutor(profile)}><MessageCircle size={17} /> Đăng Ký Học</Button>
             </div>
-            <h4>Giới thiệu</h4>
-            <p>
-              {profile.description} {profile.bio}
-            </p>
-            <h4>Phương pháp giảng dạy</h4>
-            <ul>
-              {profile.methods.map((method) => (
-                <li key={method}>
-                  <Check size={16} />
-                  {method}
-                </li>
-              ))}
-            </ul>
-            <div className="profile-demo-note">
-              <ShieldCheck size={20} />
-              <span>
-                Đây là hồ sơ minh hoạ. Chức năng đặt lịch sẽ có khi kết nối hệ thống gia sư.
-              </span>
-            </div>
-            <Button
-              className="edu-button w-full"
-              onClick={() => {
-                setProfile(null);
-                openDialog('consultation');
-              }}
-            >
-              <Headphones size={18} />
-              Tìm hiểu nhu cầu học tập
-              <ArrowRight size={16} />
-            </Button>
           </div>
         )}
       </Modal>

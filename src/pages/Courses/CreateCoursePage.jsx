@@ -29,7 +29,7 @@ export function CreateCoursePage() {
   const isEducationProvider = ['teacher', 'center'].includes(user?.role);
   const summary = useMemo(() => ({
     name: user?.name || (isCenter ? 'Trung tâm EduMatch' : 'Giáo viên EduMatch'), role: user?.role, dob: user?.dob, qualifications: user?.qualifications || 'Đang cập nhật',
-    experience: user?.experience || 'Đang cập nhật', bio: user?.bio || 'Đang cập nhật', avatar: user?.avatar || '',
+    experience: user?.experience || 'Đang cập nhật', bio: user?.bio || 'Đang cập nhật', avatar: user?.avatar || '', phone: user?.phone || '', isPhonePublic: Boolean(user?.isPhonePublic),
   }), [isCenter, user]);
   const update = (event) => {
     const { name, value } = event.target;

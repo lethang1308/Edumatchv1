@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock3, LockKeyhole, MessageCircle, Monitor, Pencil, Send, Star, UserRound, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock3, LockKeyhole, MessageCircle, Monitor, Pencil, Phone, Send, Star, UserRound, X } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { addCourseReview, createConversationId, enrollmentLabel, getAge, getCourse, getCourseReviews, modeLabel, paymentLabel, saveConversation, updateCourse } from '@/features/learning/marketplace';
+import { addCourseReview, createConversationId, createNotification, enrollmentLabel, getAge, getCourse, getCourseReviews, modeLabel, paymentLabel, saveConversation, trackProviderAffinity, updateCourse } from '@/features/learning/marketplace';
 import './courses.css';
 
 const formatCurrency = (value) =>
@@ -26,6 +26,7 @@ export function CourseDetailPage() {
   const isCourseOwner = isAuthenticated && user?.id === course.teacher.id;
   const isCenterCourse = course.teacher?.role === 'center';
   const providerType = isCenterCourse ? 'Trung tâm Đào tạo' : 'giáo viên';
+  const publicPhone = Boolean(course.teacher?.isPhonePublic && course.teacher?.phone);
   const isEnrollmentOpen = course.enrollmentStatus !== 'closed';
   const updateEnrollmentStatus = () => {
     const enrollmentStatus = isEnrollmentOpen ? 'closed' : 'open';
@@ -37,8 +38,21 @@ export function CourseDetailPage() {
     event.preventDefault();
     if (!isAuthenticated) { toast.error('Vui lòng đăng nhập với tài khoản học viên để đánh giá.'); return; }
     if (!comment.trim()) { toast.error('Hãy viết nhận xét trước khi gửi.'); return; }
-    const next = { id: `review-${Date.now()}`, courseId, rating, comment: comment.trim(), author: user.name || 'Học viên EduMatch', createdAt: new Date().toISOString() };
-    addCourseReview(next); setReviews((current) => [next, ...current]); setComment(''); toast.success('Cảm ơn đánh giá của bạn!');
+    const next = { id: `review-${Date.now()}`, courseId, rating, comment: comment.trim(), author: user.name || 'Học viên EduMatch', authorId: user.id, createdAt: new Date().toISOString() };
+    addCourseReview(next);
+    trackProviderAffinity(user.id, course.teacher.id, 'reviewed-course', 5);
+    if (course.teacher.id !== user.id) {
+      createNotification({
+        recipientId: course.teacher.id,
+        actorName: user.name || 'Một học viên',
+        actorAvatar: user.avatar || '',
+        type: 'course_rating',
+        title: `${user.name || 'Một học viên'} đã đánh giá ${rating} sao cho khóa học của bạn`,
+        description: comment.trim(),
+        link: ROUTES.COURSE_DETAIL(courseId),
+      });
+    }
+    setReviews((current) => [next, ...current]); setComment(''); toast.success('Cảm ơn đánh giá của bạn!');
   };
   const send = (event) => {
     event.preventDefault();
@@ -55,8 +69,7 @@ export function CourseDetailPage() {
       <div className="course-stat-grid"><span><CalendarDays size={19} /><strong>{course.paymentType === 'monthly' ? `${course.sessionsPerWeek} buổi/tuần` : course.sessions ? `${course.sessions} buổi học` : 'Linh hoạt'}</strong></span><span><Clock3 size={19} /><strong>{course.duration ? `${course.duration} phút/buổi` : paymentLabel(course.paymentType)}</strong></span><span><Monitor size={19} /><strong>{modeLabel(course)}</strong></span></div>
       {course.schedule && <section className="detail-block"><h2>Lịch học dự kiến</h2><p>{course.schedule}</p></section>}
       {course.learningMode === 'in-person' && <section className="detail-block"><h2>Địa điểm</h2><p>{course.inPersonType === 'home' ? 'Nhận dạy tại ' : 'Lớp học tại '}{course.location}</p></section>}
-      <section className="teacher-profile-card"><div className="teacher-profile-card__avatar">{course.teacher.avatar ? <img src={course.teacher.avatar} alt={`Ảnh đại diện của ${course.teacher.name}`} /> : course.teacher.name.slice(0, 1)}</div><div><p>{isCenterCourse ? 'TRUNG TÂM ĐÀO TẠO' : 'GIÁO VIÊN ĐỒNG HÀNH'}</p><h2>{course.teacher.name}</h2><span>{isCenterCourse ? 'Đối tác đào tạo của EduMatch' : `${getAge(course.teacher.dob)} tuổi · ${course.teacher.experience}`}</span></div><Link to={ROUTES.TEACHER_PROFILE(course.teacher.id)}><UserRound size={16} /> Xem trang cá nhân</Link></section>
-      <section className="detail-block"><h2>{isCenterCourse ? 'Thông tin trung tâm' : 'Hồ sơ chuyên môn'}</h2><dl className="teacher-data">{!isCenterCourse && <div><dt>Bằng cấp, chứng chỉ</dt><dd>{course.teacher.qualifications}</dd></div>}<div><dt>{isCenterCourse ? 'Mô tả chi tiết' : 'Giới thiệu'}</dt><dd>{course.teacher.bio}</dd></div></dl></section>
+      <section className="teacher-profile-card"><div className="teacher-profile-card__avatar">{course.teacher.avatar ? <img src={course.teacher.avatar} alt={`Ảnh đại diện của ${course.teacher.name}`} /> : course.teacher.name.slice(0, 1)}</div><div className="teacher-profile-card__info"><p>{isCenterCourse ? 'TRUNG TÂM ĐÀO TẠO' : 'GIÁO VIÊN ĐỒNG HÀNH'}</p><h2>{course.teacher.name}</h2>{course.teacher.bio && <p className="teacher-profile-card__intro">{course.teacher.bio}</p>}</div><Link className="teacher-profile-card__profile" to={ROUTES.TEACHER_PROFILE(course.teacher.id)}><UserRound size={16} /> Xem trang cá nhân</Link><div className="teacher-profile-card__details">{!isCenterCourse && <dl className="teacher-profile-card__facts"><div><dt>Tuổi</dt><dd>{getAge(course.teacher.dob)} tuổi</dd></div><div><dt>Bằng cấp, chứng chỉ</dt><dd>{course.teacher.qualifications || 'Đang cập nhật'}</dd></div><div><dt>Kinh nghiệm giảng dạy</dt><dd>{course.teacher.experience || 'Đang cập nhật'}</dd></div></dl>}{publicPhone && <a className="teacher-profile-card__phone" href={`tel:${course.teacher.phone.replace(/\s/g, '')}`}><Phone size={16} /><span>Số điện thoại liên hệ</span><strong>{course.teacher.phone}</strong></a>}</div></section>
       <section className="review-section"><div className="detail-block__head"><div><h2>Đánh giá khóa học</h2><p>{reviews.length ? `${reviews.length} nhận xét từ học viên` : 'Hãy là người đầu tiên chia sẻ trải nghiệm.'}</p></div>{reviews.length > 0 && <div className="review-summary"><Star size={18} fill="currentColor" /><strong>{averageRating.toFixed(1)}</strong><span>/ 5 · {reviews.length} đánh giá</span></div>}</div>
         {!isCourseOwner && <form className="review-form" onSubmit={review}><div className="star-picker" aria-label="Chọn số sao">{[1,2,3,4,5].map((value) => <button type="button" key={value} onClick={() => setRating(value)} aria-label={`${value} sao`}><Star size={21} fill={value <= rating ? 'currentColor' : 'none'} /></button>)}</div><textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Chia sẻ trải nghiệm của bạn về khóa học..." rows="3" /><button type="submit">Gửi đánh giá</button></form>}
         <div className="review-list">{reviews.map((item) => <article key={item.id}><div><strong>{item.author}</strong><span>{Array.from({length:item.rating},(_,index)=><Star key={index} size={13} fill="currentColor" />)}</span></div><p>{item.comment}</p></article>)}</div>

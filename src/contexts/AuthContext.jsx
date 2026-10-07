@@ -65,7 +65,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authService.register(userData);
       const authToken = res?.token || res?.access_token || 'mock_jwt_token_register';
-      const authUser = res?.user || {
+      const authUser = res?.user ? {
+        ...res.user,
+        phone: res.user.phone || userData.phone,
+        isPhonePublic: res.user.isPhonePublic ?? Boolean(userData.isPhonePublic),
+      } : {
         id: `usr_${Date.now()}`,
         name: userData.fullName || 'Người dùng mới',
         email: userData.email,
@@ -75,6 +79,7 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, authToken);
       storage.set(STORAGE_KEYS.USER_INFO, authUser);
@@ -94,6 +99,7 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
       storage.set(STORAGE_KEYS.USER_INFO, mockUser);

@@ -580,6 +580,21 @@
   text-decoration: underline;
 }
 
+.register-phone-visibility {
+  display: grid;
+  gap: 7px;
+  margin: 2px 0;
+  padding: 14px;
+  border: 1px solid #dce9e4;
+  border-radius: 12px;
+  background: #f7fbf9;
+}
+.register-phone-visibility legend { padding: 0; color: var(--reg-ink); font-size: 13px; font-weight: 700; }
+.register-phone-visibility > p { margin: 0; color: var(--reg-muted); font-size: 11px; line-height: 1.55; }
+.register-phone-visibility > div { display: flex; flex-wrap: wrap; gap: 12px 17px; }
+.register-phone-visibility label { display: inline-flex; align-items: center; gap: 6px; color: var(--reg-ink); font-size: 12px; font-weight: 600; cursor: pointer; }
+.register-phone-visibility input { width: 15px; height: 15px; margin: 0; accent-color: var(--reg-green); }
+
 .register-submit {
   height: 52px;
   width: 100%;
