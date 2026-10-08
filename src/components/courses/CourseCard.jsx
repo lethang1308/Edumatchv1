@@ -1,4 +1,4 @@
-import { CalendarDays, Clock3, Heart, Monitor, Star } from 'lucide-react';
+import { BadgeCheck, CalendarDays, Clock3, Heart, Monitor, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { enrollmentLabel, getCourseRating, getProviderTrustCount, modeLabel, paymentLabel } from '@/features/learning/marketplace';
@@ -25,9 +25,13 @@ export function CourseCard({ course, editable = false, sponsored = false }) {
         <span className="course-card__avatar" aria-hidden="true">
           {course.teacher.avatar ? <img src={course.teacher.avatar} alt="" /> : course.teacher.name.slice(0, 1)}
         </span>
-        <span>{isCenter ? course.teacher.name : `GV. ${course.teacher.name}`}</span>
+        <Link className="course-card__teacher-name" to={ROUTES.TEACHER_PROFILE(course.teacher.id)}>{isCenter ? course.teacher.name : `GV. ${course.teacher.name}`}</Link>
       </div>
-      <span className="course-card__trust"><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</span>
+      <span className={`course-card__trust ${trustCount < 3 ? 'is-new' : ''}`}>
+        {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
+      </span>
+      {isCenter && <span className="course-card__center-meta"><CalendarDays size={13} /> {course.teacher.foundedYear ? `Thành lập ${course.teacher.foundedYear}` : 'Trung tâm đào tạo'}</span>}
+      {isCenter && course.teacher.licenseVerificationStatus === 'verified' && <span className="course-card__verified"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>}
       <p className="course-card__description">{course.description}</p>
       <div className="course-card__facts">
         <span><CalendarDays size={15} /> {paymentLabel(course.paymentType)}</span>

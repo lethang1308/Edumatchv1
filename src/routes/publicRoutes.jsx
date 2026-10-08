@@ -5,6 +5,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { Home } from '@/pages/Home';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
+import { StudentWelcomePage } from '@/pages/StudentWelcome';
 import { Forbidden } from '@/pages/Forbidden';
 import { NotFound } from '@/pages/NotFound';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -62,6 +63,10 @@ export const publicRoutes = [
       {
         path: ROUTES.MESSAGES,
         element: <ProtectedRoute><MessagesPage /></ProtectedRoute>,
+      },
+      {
+        path: ROUTES.STUDENT_WELCOME,
+        element: <ProtectedRoute><StudentWelcomePage /></ProtectedRoute>,
       },
     ],
   },

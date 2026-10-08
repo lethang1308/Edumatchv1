@@ -5,6 +5,7 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  STUDENT_WELCOME: '/chao-mung-hoc-vien',
   PARTNER_TERMS: '/dieu-khoan-giao-vien-doi-tac',
   CENTER_SUPPORT: '/ho-tro-trung-tam-dao-tao',
   CONTACT: '/lien-he',

@@ -76,6 +76,33 @@
   gap: 25px;
 }
 
+.partner-terms__principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.partner-terms__principles article {
+  padding: 20px;
+  border: 1px solid #cfe6dc;
+  border-radius: 14px;
+  background: #f5fbf8;
+}
+
+.partner-terms__principles strong {
+  display: block;
+  color: var(--edu-green);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.partner-terms__principles p {
+  margin-top: 7px;
+  color: var(--edu-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
 .partner-terms__statement,
 .partner-terms__section,
 .partner-terms__closing {
@@ -190,7 +217,8 @@
 .edu-site[data-theme='dark'] .partner-terms__notice { background: #143c33; border-color: #286052; }
 .edu-site[data-theme='dark'] .partner-terms__fee-item,
 .edu-site[data-theme='dark'] .partner-terms__collaboration-grid article,
-.edu-site[data-theme='dark'] .partner-terms__section--collaboration { background: #142a27; border-color: #315148; }
+.edu-site[data-theme='dark'] .partner-terms__section--collaboration,
+.edu-site[data-theme='dark'] .partner-terms__principles article { background: #142a27; border-color: #315148; }
 
 @media (max-width: 680px) {
   .partner-terms { padding: 26px 0 54px; }
@@ -200,7 +228,8 @@
   .partner-terms__statement { grid-template-columns: 1fr; gap: 10px; padding: 23px; }
   .partner-terms__section { padding: 23px; }
   .partner-terms__fee-grid,
-  .partner-terms__collaboration-grid { grid-template-columns: 1fr; }
+  .partner-terms__collaboration-grid,
+  .partner-terms__principles { grid-template-columns: 1fr; }
   .partner-terms__fee-item,
   .partner-terms__collaboration-grid article { padding: 20px; }
   .partner-terms__collaboration-grid article { padding-top: 48px; }

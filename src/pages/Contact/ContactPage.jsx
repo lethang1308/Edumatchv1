@@ -20,16 +20,16 @@ export function ContactPage() {
         </Link>
         <header className="contact-page__hero">
           <span>LIÊN HỆ EDUMATCH</span>
-          <h1>Kết nối để cùng <em>tiến bộ</em></h1>
+          <h1>Kết nối với đội ngũ <em>EduMatch</em></h1>
           <p>
-            EduMatch là nền tảng kết nối học viên với giáo viên và trung tâm đào tạo uy tín. Chúng tôi mang đến thông tin minh bạch, lựa chọn phù hợp và sự đồng hành thiết thực cho mỗi hành trình học tập.
+            EduMatch là nền tảng kết nối giữa học viên với giáo viên và trung tâm đào tạo uy tín. Chúng tôi luôn hướng tới một môi trường giáo dục <strong>an toàn, minh bạch và hiệu quả</strong>, mỗi lựa chọn học tập luôn minh bạch và đầy đủ thông tin. EduMatch xuất hiện để đồng hành và bảo vệ quý học viên/giáo viên và các đơn vị đối tác
           </p>
         </header>
         <div className="contact-page__content">
           <section className="contact-page__intro" aria-labelledby="contact-intro-title">
-            <h2 id="contact-intro-title">Chúng tôi luôn sẵn sàng lắng nghe</h2>
+            <h2 id="contact-intro-title">Đội ngũ EduMatch luôn sẵn sàng hỗ trợ</h2>
             <p>
-              Đội ngũ EduMatch sẵn sàng tiếp nhận nhu cầu, giải đáp thông tin và kết nối bạn với giải pháp học tập hoặc hợp tác phù hợp.
+              Đội ngũ EduMatch sẵn sàng tiếp nhận nhu cầu, giải đáp thông tin và kết nối bạn với giải pháp học tập hoặc cơ hội hợp tác phù hợp. An toàn trong kết nối, minh bạch trong thông tin và hiệu quả trong học tập là ba tiêu chí chúng tôi theo đuổi mỗi ngày.
             </p>
           </section>
           <section className="contact-page__channels" aria-label="Thông tin liên hệ EduMatch">

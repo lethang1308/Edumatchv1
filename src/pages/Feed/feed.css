@@ -27,6 +27,7 @@
 .community-post__header strong { color:var(--edu-ink); font-size:13px; }
 .community-post__author { display:block; color:var(--edu-ink); font-size:13px; font-weight:800; }.community-post__author:hover { color:var(--edu-green); }
 .community-post__header small { color:var(--edu-muted); font-size:10px; }
+.community-post__header .post-verification-badge { display:inline-flex; align-items:center; gap:4px; color:#167762; font-size:10px; font-weight:800; }
 .community-post__header > a { display:inline-flex; align-items:center; gap:5px; margin-left:auto; color:var(--edu-green); font-size:10px; font-weight:700; white-space:nowrap; }
 .community-post__text { margin:16px 0 0; color:var(--edu-ink); font-size:13px; line-height:1.75; white-space:pre-wrap; }
 .community-post__media { margin-top:15px; overflow:hidden; border:1px solid var(--edu-line); border-radius:11px; background:#f3f8f6; }

@@ -56,6 +56,9 @@ export function CenterSupportPage() {
             <p>
               Đội ngũ chuyên viên tại EduMatch sẽ trao đổi trực tiếp cùng quý đối tác để nhận diện vấn đề, đề xuất giải pháp và định hướng phát triển phù hợp, giúp trung tâm nâng cao chất lượng đào tạo và hiệu quả kinh doanh.
             </p>
+            <p>
+              Mọi hoạt động đồng hành đều hướng đến một môi trường giáo dục <strong>an toàn, minh bạch và hiệu quả</strong> cho trung tâm, giáo viên và học viên.
+            </p>
           </div>
         </header>
 

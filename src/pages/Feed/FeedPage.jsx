@@ -16,6 +16,7 @@ const getAuthor = (item, providers) => {
     name: item.authorName || item.author || provider?.name || 'Thành viên EduMatch',
     role: item.authorRole || provider?.role || 'teacher',
     avatar: item.authorAvatar || provider?.avatar || '',
+    licenseVerificationStatus: item.authorLicenseVerificationStatus || provider?.licenseVerificationStatus || '',
   };
 };
 
@@ -203,7 +204,7 @@ export function FeedPage() {
         <header className="feed-page__heading">
           <span><Newspaper size={17} /> BẢNG TIN EDUMATCH</span>
           <h1>Những chia sẻ mới nhất từ cộng đồng</h1>
-          <p>Khám phá bài viết, tài liệu và những câu chuyện học tập từ giáo viên, học viên và trung tâm đào tạo.</p>
+          <p>Khám phá bài viết, tài liệu và những câu chuyện học tập từ cộng đồng EduMatch.</p>
         </header>
         <div className="feed-tabs" role="tablist" aria-label="Loại nội dung Bảng Tin">
           <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => setFeedTab('providers')}>Giáo viên & Trung tâm</button>
@@ -218,7 +219,7 @@ export function FeedPage() {
             return <article className="community-post" id={post.id} key={post.id}>
               <header className="community-post__header">
                 {author.avatar ? <img src={author.avatar} alt={`Ảnh đại diện của ${author.name}`} /> : <span>{author.name.slice(0, 1)}</span>}
-                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}<small>{roleLabel(author.role)} · {shortTime(post.createdAt)}</small></div>
+                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}{author.role === 'center' && author.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{roleLabel(author.role)} · {shortTime(post.createdAt)}</small></div>
               </header>
               {post.text && <p className="community-post__text">{post.text}</p>}
               {post.media && <div className="community-post__media">{post.media.type === 'video' ? <video src={post.media.src} controls preload="metadata" /> : <img src={post.media.src} alt={`Nội dung do ${author.name} chia sẻ`} />}</div>}

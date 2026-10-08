@@ -69,6 +69,7 @@ export const AuthProvider = ({ children }) => {
         ...res.user,
         phone: res.user.phone || userData.phone,
         isPhonePublic: res.user.isPhonePublic ?? Boolean(userData.isPhonePublic),
+        foundedYear: res.user.foundedYear || userData.foundedYear || '',
       } : {
         id: `usr_${Date.now()}`,
         name: userData.fullName || 'Người dùng mới',
@@ -79,6 +80,7 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, authToken);
@@ -99,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);

@@ -58,6 +58,7 @@ export const Register = () => {
   const [qualifications, setQualifications] = useState('');
   const [experience, setExperience] = useState('');
   const [bio, setBio] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
 
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -117,6 +118,10 @@ export const Register = () => {
       nextErrors.bio = 'Vui lòng mô tả chi tiết về trung tâm';
     }
 
+    if (role === 'center' && !/^\d{4}$/.test(foundedYear)) {
+      nextErrors.foundedYear = 'Vui lòng nhập năm thành lập gồm 4 chữ số';
+    }
+
     if (!agreeTerms) {
       nextErrors.agreeTerms = 'Bạn cần đồng ý với điều khoản dịch vụ';
     }
@@ -141,7 +146,7 @@ export const Register = () => {
             bio: bio.trim(),
           }
         : role === 'center'
-          ? { bio: bio.trim() }
+          ? { bio: bio.trim(), foundedYear }
           : {}),
     };
 
@@ -156,7 +161,7 @@ export const Register = () => {
             ? 'Đăng ký tài khoản Trung tâm Đào tạo thành công!'
             : 'Đăng ký tài khoản Học viên thành công!'
       );
-      navigate(ROUTES.HOME, { replace: true });
+      navigate(role === 'student' ? ROUTES.STUDENT_WELCOME : ROUTES.HOME, { replace: true });
       return;
     }
 
@@ -578,6 +583,29 @@ export const Register = () => {
                   <div className="register-role-section__heading">
                     <h2 id="center-details-title">Thông tin Trung tâm Đào tạo</h2>
                     <p>Giới thiệu ngắn gọn để học viên hiểu rõ hơn về đơn vị của bạn.</p>
+                  </div>
+                  <div className="register-field">
+                    <label htmlFor="reg-founded-year" className="register-field__label">
+                      Năm thành lập <span className="is-required">*</span>
+                    </label>
+                    <div className={errors.foundedYear ? 'register-control is-invalid' : 'register-control'}>
+                      <Calendar size={19} className="register-control__icon" aria-hidden="true" />
+                      <input
+                        id="reg-founded-year"
+                        name="foundedYear"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength="4"
+                        placeholder="Ví dụ: 2018"
+                        value={foundedYear}
+                        onChange={(event) => {
+                          setFoundedYear(event.target.value.replace(/\D/g, ''));
+                          if (errors.foundedYear) setErrors((current) => ({ ...current, foundedYear: '' }));
+                        }}
+                        aria-invalid={Boolean(errors.foundedYear)}
+                      />
+                    </div>
+                    {errors.foundedYear && <p className="register-field__error">{errors.foundedYear}</p>}
                   </div>
                   <div className="register-field">
                     <label htmlFor="reg-bio" className="register-field__label">

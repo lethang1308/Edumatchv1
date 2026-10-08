@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
+  BadgeCheck,
   BookOpen,
   CheckCircle2,
   ChevronDown,
@@ -15,7 +16,6 @@ import {
   ShieldCheck,
   Star,
   MessageCircle,
-  UserRound,
   Users,
   X,
 } from 'lucide-react';
@@ -39,6 +39,7 @@ import '@/components/courses/course.css';
 const initialFilters = { subject: '', mode: '', province: '', ward: '', provider: '', description: '' };
 const initialCourseFilters = { subject: '', mode: '', description: '' };
 const communityTeacherPositions = ['0% center', '50% center', '100% center'];
+const sampleCenterOrder = ['center-old-school', 'center-educare', 'center-melody-studio'];
 const currency = (value) => new Intl.NumberFormat('vi-VN').format(value);
 const normalize = (text) =>
   text
@@ -137,9 +138,13 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
         {tutor.image ? <img src={tutor.image} alt={tutor.name} width="68" height="76" loading="lazy" /> : <span className="tutor-avatar-fallback" aria-hidden="true">{tutor.name.slice(0, 1)}</span>}
         <div className="tutor-identity">
           <h3>
-            {[tutor.title, tutor.name].filter(Boolean).join(' ')}
+            <Link className="tutor-name-link" to={ROUTES.TEACHER_PROFILE(tutor.id)}>
+              {[tutor.title, tutor.name].filter(Boolean).join(' ')}
+            </Link>
           </h3>
-          <div className="tutor-rating">{tutor.reviews ? <><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></> : <span>Hồ sơ mới</span>}</div>
+          {tutor.reviews ? (
+            <div className="tutor-rating"><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></div>
+          ) : trustCount < 3 ? <div className="tutor-rating"><span>Hồ sơ mới</span></div> : null}
           <span className="subject-tag">{tutor.subject}</span>
         </div>
         <button
@@ -151,7 +156,12 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
         </button>
       </div>
-      <span className="tutor-trust"><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</span>
+      <span className={`tutor-trust ${trustCount < 3 ? 'is-new' : ''}`}>
+        {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
+      </span>
+      {tutor.providerType === 'center' && tutor.licenseVerificationStatus === 'verified' && (
+        <span className="tutor-verification-badge"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>
+      )}
       <p className="tutor-meta">
         <GraduationCap size={15} />
         {tutor.providerType === 'center'
@@ -311,6 +321,7 @@ const profileCourses = profile
         image: provider.avatar || '',
         phone: provider.phone || '',
         isPhonePublic: Boolean(provider.isPhonePublic),
+        licenseVerificationStatus: provider.licenseVerificationStatus || '',
         courseId: course.id,
         experience: provider.experience || 'Đang cập nhật',
         price: course.price,
@@ -375,6 +386,13 @@ const profileCourses = profile
           (!savedOnly || (isAuthenticated ? hasProviderTrust(user.id, tutor.id) : savedIds.includes(tutor.id)))
         );
     }).sort((first, second) => {
+      const firstSampleCenterIndex = sampleCenterOrder.indexOf(first.id);
+      const secondSampleCenterIndex = sampleCenterOrder.indexOf(second.id);
+      const firstSampleCenterRank = firstSampleCenterIndex === -1 ? Number.MAX_SAFE_INTEGER : firstSampleCenterIndex;
+      const secondSampleCenterRank = secondSampleCenterIndex === -1 ? Number.MAX_SAFE_INTEGER : secondSampleCenterIndex;
+      if (firstSampleCenterRank !== secondSampleCenterRank) {
+        return firstSampleCenterRank - secondSampleCenterRank;
+      }
       const firstHearts = first.heartCount + (savedIds.includes(first.id) ? 1 : 0);
       const secondHearts = second.heartCount + (savedIds.includes(second.id) ? 1 : 0);
       if (trustFirst) {
@@ -1027,10 +1045,15 @@ const profileCourses = profile
               {profile.image ? <img src={profile.image} alt={profile.name} width="84" height="96" /> : <span className="profile-avatar-fallback" aria-hidden="true">{profile.name.slice(0, 1)}</span>}
               <div>
                 <span className="subject-tag">{profile.subject}</span>
-                <h3>
-                  {profile.title} {profile.name}
-                </h3>
-                {profile.reviews ? <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p> : <p>Hồ sơ giáo viên mới</p>}
+                <h3><Link to={ROUTES.TEACHER_PROFILE(profile.id)} onClick={() => setProfile(null)}>{profile.title} {profile.name}</Link></h3>
+                {profile.reviews ? (
+                  <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p>
+                ) : getProviderTrustCount(profile.id, profile.heartCount) >= 3 ? (
+                  <p className="profile-detail__trust"><Heart size={15} fill="currentColor" /> {getProviderTrustCount(profile.id, profile.heartCount)} lượt tin tưởng</p>
+                ) : <p>Hồ sơ giáo viên mới</p>}
+                {profile.providerType === 'center' && profile.licenseVerificationStatus === 'verified' && (
+                  <span className="profile-detail__verification"><BadgeCheck size={15} /> Đã xác thực pháp lý</span>
+                )}
               </div>
             </div>
             <dl className="profile-detail__info">
@@ -1042,7 +1065,6 @@ const profileCourses = profile
             <div className="profile-detail__bio"><h4>Thông tin giáo viên</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
             {profileCourses.length > 0 && <section className="profile-detail__courses"><h4>Khóa học đang mở trên EduMatch</h4><div>{profileCourses.map((course) => <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} onClick={() => setProfile(null)}><span><strong>{course.title}</strong><small>{course.description}</small></span><ArrowRight size={17} /></Link>)}</div></section>}
             <div className="profile-detail__actions">
-              <Link className="profile-detail__profile-link" to={ROUTES.TEACHER_PROFILE(profile.id)} onClick={() => setProfile(null)}><UserRound size={17} /> Xem trang cá nhân</Link>
               <Button className="edu-button" onClick={() => registerForTutor(profile)}><MessageCircle size={17} /> Đăng Ký Học</Button>
             </div>
           </div>
@@ -1195,8 +1217,7 @@ const profileCourses = profile
               />
             </label>
             <p className="dialog-note">
-              Biểu mẫu minh hoạ. Thông tin chỉ được sử dụng để xem trước giao diện, chưa được gửi
-              đến hệ thống.
+              EduMatch hướng tới một môi trường giáo dục an toàn, minh bạch và hiệu quả. Thông tin tư vấn được dùng để kết nối bạn với lựa chọn học tập phù hợp.
             </p>
             <Button type="submit" className="edu-button w-full">
               Hoàn tất biểu mẫu
@@ -1245,8 +1266,8 @@ const profileCourses = profile
             <ShieldCheck size={32} />
             <p>
               {dialog === 'support'
-                ? 'Bạn có thể khám phá câu hỏi thường gặp hoặc điền thử biểu mẫu tư vấn để tìm hiểu trải nghiệm học tập.'
-                : 'Nội dung chính sách chính thức sẽ được cập nhật khi EduMatch đi vào hoạt động. Giao diện hiện tại là bản thiết kế, với hồ sơ và đánh giá minh hoạ.'}
+                ? 'EduMatch luôn hướng đến môi trường giáo dục an toàn, minh bạch và hiệu quả. Bạn có thể khám phá câu hỏi thường gặp hoặc điền biểu mẫu tư vấn để tìm lựa chọn học tập phù hợp.'
+                : 'Chính sách của EduMatch được xây dựng để bảo vệ trải nghiệm học tập an toàn, thông tin minh bạch và kết quả hiệu quả cho mọi thành viên.'}
             </p>
             <Button
               className="edu-button"

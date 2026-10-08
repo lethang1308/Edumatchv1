@@ -655,6 +655,7 @@
   letter-spacing: -0.3px;
   min-height: 18px;
 }
+.tutor-name-link { color:inherit; }.tutor-name-link:hover { color:var(--edu-green); text-decoration:underline; text-underline-offset:3px; }
 .tutor-rating {
   display: flex;
   align-items: center;
@@ -681,7 +682,16 @@
   border-radius: 5px;
   margin-top: 8px;
 }
-.tutor-trust { display:inline-flex; align-items:center; gap:5px; margin-top:8px; color:#bb4d61; font-size:9px; font-weight:800; }
+.tutor-trust { display:inline-flex; align-items:center; gap:5px; margin-top:8px; color:#bb4d61; font-size:9px; font-weight:800; }.tutor-trust.is-new { color:#a66812; }
+.tutor-verification-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  color: var(--edu-green);
+  font-size: 9px;
+  font-weight: 800;
+}
 .save-button {
   position: absolute;
   right: -7px;
@@ -1211,6 +1221,15 @@
 }
 .profile-detail-heading p span {
   color: var(--edu-muted);
+}
+.profile-detail__verification {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: var(--edu-green);
+  font-size: 11px;
+  font-weight: 800;
 }
 .profile-facts {
   display: grid;
