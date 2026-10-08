@@ -1,15 +1,11 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, BookOpen, GraduationCap, Mail, MessageCircle } from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
 
 export const Footer = () => {
   const homeSection = (section) => `${ROUTES.HOME}#${section}`;
-  const [, setParams] = useSearchParams();
-  const openDialog = (name) =>
-    setParams((current) => {
-      current.set('dialog', name);
-      return current;
-    });
+  const navigate = useNavigate();
+  const openDialog = (name) => navigate({ pathname: ROUTES.HOME, search: `?dialog=${name}` });
   return (
     <footer className="edu-footer">
       <div className="edu-container">

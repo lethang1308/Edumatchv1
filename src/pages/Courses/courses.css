@@ -331,3 +331,9 @@
   font-weight:500;
   line-height:1.65;
 }
+.teacher-profile-card__trust { display:inline-flex!important; align-items:center; gap:5px; margin-top:5px; color:#bb4d61!important; font-size:10px!important; font-weight:800; }
+
+.teacher-cover__message { display:inline-flex; align-items:center; gap:7px; margin-left:auto; padding:10px 14px; border:0; border-radius:9px; background:var(--edu-green); color:#fff; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
+.teacher-cover__message:hover { background:var(--edu-green-hover); }.teacher-cover__message:active { transform:scale(.98); }
+.teacher-cover__trust-count { display:inline-flex; align-items:center; gap:5px; margin-top:6px; color:#bb4d61!important; font-size:10px!important; font-weight:800; }.teacher-feed__heading { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:58px; }.teacher-cover__public-actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; margin-left:auto; }.teacher-cover__public-actions button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:10px 14px; border-radius:9px; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }.teacher-cover__public-actions .teacher-cover__message { margin-left:0; }.teacher-cover__trust { border:1px solid #e4b7c0; background:#fff; color:#b74c60; }.teacher-cover__trust:hover { border-color:#c15b6b; background:#fff6f7; }.teacher-cover__trust.is-trusted { border-color:#b74c60; background:#fff1f3; }.teacher-cover__trust:active { transform:scale(.98); }
+@media (max-width:720px) { .teacher-cover__message { margin-left:0; }.teacher-feed__heading { align-items:flex-start; flex-direction:column; }.teacher-cover__public-actions { width:100%; margin-left:0; }.teacher-cover__public-actions button { flex:1; justify-content:center; } }

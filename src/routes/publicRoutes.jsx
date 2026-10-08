@@ -28,6 +28,10 @@ export const publicRoutes = [
         element: <Home />,
       },
       {
+        path: ROUTES.SEARCH_RESULTS,
+        element: <Home />,
+      },
+      {
         path: ROUTES.PARTNER_TERMS,
         element: <PartnerTermsPage />,
       },

@@ -1,18 +1,20 @@
-import { CalendarDays, Clock3, Monitor, Star } from 'lucide-react';
+import { CalendarDays, Clock3, Heart, Monitor, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import { enrollmentLabel, getCourseRating, modeLabel, paymentLabel } from '@/features/learning/marketplace';
+import { enrollmentLabel, getCourseRating, getProviderTrustCount, modeLabel, paymentLabel } from '@/features/learning/marketplace';
 
 const formatCurrency = (value) =>
   Number(value) > 0 ? `${new Intl.NumberFormat('vi-VN').format(value)}đ` : 'Liên hệ';
 
-export function CourseCard({ course, editable = false }) {
+export function CourseCard({ course, editable = false, sponsored = false }) {
   const rating = getCourseRating(course.id);
   const isCenter = course.teacher.role === 'center';
+  const trustCount = getProviderTrustCount(course.teacher.id, course.teacher.heartCount);
   return (
     <article className="course-card">
       <div className="course-card__top">
         <div className="course-card__badges">
+          {sponsored && <span className="course-card__sponsored">Được tài trợ</span>}
           <span className="course-card__mode">{modeLabel(course)}</span>
           <span className={`course-card__status ${course.enrollmentStatus === 'closed' ? 'is-closed' : ''}`}>{enrollmentLabel(course)}</span>
         </div>
@@ -25,6 +27,7 @@ export function CourseCard({ course, editable = false }) {
         </span>
         <span>{isCenter ? course.teacher.name : `GV. ${course.teacher.name}`}</span>
       </div>
+      <span className="course-card__trust"><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</span>
       <p className="course-card__description">{course.description}</p>
       <div className="course-card__facts">
         <span><CalendarDays size={15} /> {paymentLabel(course.paymentType)}</span>

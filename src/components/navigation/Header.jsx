@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   Bell,
@@ -35,8 +35,9 @@ const notificationTime = (value) => {
 
 export const Header = ({ theme, onToggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const locationKey = `${location.pathname}${location.search}${location.hash}`;
   const [notificationPanel, setNotificationPanel] = useState({ open: false, locationKey: '' });
   const { isAuthenticated, user, logout } = useAuth();
@@ -70,30 +71,21 @@ export const Header = ({ theme, onToggleTheme }) => {
   };
   const openDialog = (name) => {
     setMobileMenuOpen(false);
-    setParams((current) => {
-      current.set('dialog', name);
-      return current;
-    });
+    navigate({ pathname: ROUTES.HOME, search: `?dialog=${name}` });
   };
   const search = (event) => {
     event.preventDefault();
-    const value = new FormData(event.currentTarget).get('q').trim();
-    setParams((current) => {
-      if (value) current.set('q', value);
-      else current.delete('q');
-      return current;
+    const value = new FormData(event.currentTarget).get('need-description').trim();
+    navigate({
+      pathname: ROUTES.SEARCH_RESULTS,
+      search: `?need=${encodeURIComponent(value)}`,
     });
     setMobileMenuOpen(false);
-    document.getElementById('giao-vien')?.scrollIntoView({
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ? 'instant'
-        : 'smooth',
-    });
   };
 
   return (
     <header className="edu-header">
-      <a className="skip-link" href="#tim-khoa-hoc">
+      <a className="skip-link" href="#khoa-hoc">
         Đi đến nội dung chính
       </a>
       <div className="edu-container header-inner">
@@ -108,19 +100,19 @@ export const Header = ({ theme, onToggleTheme }) => {
         <form className="header-search" role="search" onSubmit={search}>
           <Search size={16} aria-hidden="true" />
           <input
-            key={params.get('q') || ''}
-            name="q"
-            defaultValue={params.get('q') || ''}
-            aria-label="Tìm giáo viên hoặc môn học"
-            placeholder="Tìm giáo viên, môn học..."
+            key={params.get('need') || ''}
+            name="need-description"
+            defaultValue={params.get('need') || ''}
+            aria-label="Tìm khóa học và giáo viên qua mô tả nhu cầu"
+            placeholder="Mô tả nhu cầu học của bạn..."
           />
           <kbd>↵</kbd>
         </form>
         <nav className="desktop-nav" aria-label="Điều hướng chính">
-          <a href="#tim-khoa-hoc">
+          <Link to={`${ROUTES.HOME}#khoa-hoc`}>
             <GraduationCap size={16} />
             Tìm kiếm lớp học
-          </a>
+          </Link>
           <Link to={ROUTES.FEED}><Newspaper size={16} /> Bảng Tin</Link>
           <Link to={teachingDestination}>{teachingLabel}</Link>
           {isCenterAccount ? (
@@ -222,17 +214,17 @@ export const Header = ({ theme, onToggleTheme }) => {
           <form className="header-search" role="search" onSubmit={search}>
             <Search size={18} />
             <input
-              name="q"
-              aria-label="Tìm kiếm trên điện thoại"
-              placeholder="Tìm giáo viên, môn học..."
+              name="need-description"
+              aria-label="Tìm khóa học và giáo viên qua mô tả trên điện thoại"
+              placeholder="Mô tả nhu cầu học của bạn..."
             />
             <button type="submit" aria-label="Tìm kiếm">
               <ArrowRight size={19} />
             </button>
           </form>
-          <a href="#tim-khoa-hoc" onClick={() => setMobileMenuOpen(false)}>
+          <Link to={`${ROUTES.HOME}#khoa-hoc`} onClick={() => setMobileMenuOpen(false)}>
             Tìm kiếm lớp học
-          </a>
+          </Link>
           <Link to={ROUTES.FEED} onClick={() => setMobileMenuOpen(false)}>Bảng Tin</Link>
           <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
           {isCenterAccount ? (

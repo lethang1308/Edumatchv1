@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Handshake, Heart, ImagePlus, MessageCircle, Pencil, Phone, Plus, Save, Send, Star, Video, X } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { createNotification, getAge, getCourses, getPosts, savePost, syncTeacherCourseProfile, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
+import { createConversationId, createNotification, getAge, getCourses, getPosts, getProviderTrustCount, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
 import { CourseCard } from '@/components/courses/CourseCard';
 import { Modal } from '@/components/feedback/Modal';
 import '@/components/courses/course.css';
@@ -15,7 +15,8 @@ const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024;
 
 export function TeacherProfilePage() {
   const { teacherId } = useParams();
-  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, updateUser } = useAuth();
   const [posts, setPosts] = useState(() => getPosts(teacherId));
   const [postText, setPostText] = useState('');
   const [media, setMedia] = useState(null);
@@ -23,6 +24,7 @@ export function TeacherProfilePage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState({});
   const [profileErrors, setProfileErrors] = useState({});
+  const [, setTrustRefresh] = useState(0);
   const mediaInputRef = useRef(null);
   const courses = getCourses().filter((course) => course.teacher.id === teacherId);
   const ownsProfile = user?.id === teacherId;
@@ -36,12 +38,21 @@ export function TeacherProfilePage() {
     qualifications: 'Đang cập nhật',
     bio: [sampleTutor.description, sampleTutor.bio].filter(Boolean).join(' '),
   } : null;
-  const profile = ownsProfile ? user : courses[0]?.teacher || sampleProfile;
+  const postProfile = getPosts().find((post) => post.authorId === teacherId || post.teacherId === teacherId);
+  const profile = ownsProfile ? user : courses[0]?.teacher || sampleProfile || (postProfile ? {
+    id: postProfile.authorId || postProfile.teacherId,
+    name: postProfile.authorName || postProfile.author || 'Thành viên EduMatch',
+    role: postProfile.authorRole || 'student',
+    avatar: postProfile.authorAvatar || '',
+    bio: 'Thành viên cộng đồng EduMatch',
+  } : null);
   const isCenterProfile = profile?.role === 'center';
   const isTeacherProfile = profile?.role === 'teacher' || (!isCenterProfile && courses.length > 0);
   const isEducationProviderProfile = isTeacherProfile || isCenterProfile;
   const canCreateCourse = ownsProfile && ['teacher', 'center'].includes(user?.role);
   const publicPhone = isEducationProviderProfile && profile?.isPhonePublic && profile?.phone;
+  const trustCount = getProviderTrustCount(profile?.id, profile?.heartCount);
+  const trustedByCurrentUser = hasProviderTrust(user?.id, profile?.id);
 
   useEffect(() => {
     if (user?.id && profile?.id && user.id !== profile.id) trackProviderAffinity(user.id, profile.id, 'viewed-profile', 1);
@@ -149,6 +160,33 @@ export function TeacherProfilePage() {
     setPosts(next.filter((post) => post.teacherId === teacherId));
     setCommentText((current) => ({ ...current, [postId]: '' }));
   };
+  const messageProfile = () => {
+    if (!isAuthenticated) { toast.error('Vui lòng đăng nhập để nhắn tin.'); navigate(ROUTES.LOGIN); return; }
+    if (ownsProfile) return;
+    saveConversation({
+      id: createConversationId('conversation'),
+      courseId: `profile-${profile.id}`,
+      teacherId: profile.id,
+      teacherName: profile.name,
+      studentId: user.id,
+      studentName: user.name || 'Thành viên EduMatch',
+      senderId: user.id,
+      text: `Chào ${profile.name}, mình muốn trao đổi thêm với bạn.`,
+      createdAt: 'Vừa xong',
+    });
+    toast.success('Đã mở cuộc trò chuyện mới.');
+    navigate(ROUTES.MESSAGES);
+  };
+  const trustProfile = () => {
+    if (!isAuthenticated) { toast.error('Vui lòng đăng nhập để tin tưởng hồ sơ này.'); navigate(ROUTES.LOGIN); return; }
+    const added = toggleProviderTrust(user.id, profile.id);
+    if (added) {
+      trackProviderAffinity(user.id, profile.id, 'saved-profile', 4);
+      createNotification({ recipientId: profile.id, actorName: user.name || 'Một thành viên', actorAvatar: user.avatar || '', type: 'profile_like', title: `${user.name || 'Một thành viên'} đã tin tưởng hồ sơ của bạn`, description: 'Uy tín của bạn được cộng đồng EduMatch ghi nhận.', link: ROUTES.TEACHER_PROFILE(profile.id) });
+    }
+    setTrustRefresh((value) => value + 1);
+    toast.success(added ? 'Đã thêm vào danh sách tin tưởng.' : 'Đã bỏ tin tưởng hồ sơ này.');
+  };
 
   const coverStyle = profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined;
   const profileType = isCenterProfile ? 'TRUNG TÂM ĐÀO TẠO' : isTeacherProfile ? 'GIÁO VIÊN' : 'HỌC VIÊN';
@@ -157,11 +195,11 @@ export function TeacherProfilePage() {
   return <><section className="learning-page teacher-public-page"><div className="learning-container">
     <header className={`teacher-cover ${profile.coverImage ? 'has-custom-cover' : ''}`} style={coverStyle}>
       <div className="teacher-cover__avatar">{profile.avatar ? <img src={profile.avatar} alt={`Ảnh đại diện của ${profile.name}`} /> : profile.name?.slice(0, 1)}{ownsProfile && <label className="profile-avatar-upload" title="Cập nhật ảnh đại diện"><Camera size={15} /><input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'avatar')} /></label>}</div>
-      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1><p>{subtitle}</p></div>
+      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1><p>{subtitle}</p><small className="teacher-cover__trust-count"><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</small></div>
       {ownsProfile && <label className="profile-cover-upload teacher-cover__cover-upload"><ImagePlus size={16} /> Ảnh bìa<input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'coverImage')} /></label>}
     </header>
     <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Hồ Sơ Năng Lực' : 'Thông Tin Cá Nhân'}</h2><p>{profile.bio || (isCenterProfile ? 'Trung tâm đang hoàn thiện phần giới thiệu.' : isTeacherProfile ? 'Giáo viên đang hoàn thiện phần giới thiệu.' : 'Học viên đang hoàn thiện phần giới thiệu.')}</p>{isTeacherProfile && <><h3>Kinh nghiệm</h3><p>{profile.experience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p>{profile.qualifications || 'Đang cập nhật'}</p></>}{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions"><button type="button" className="teacher-bio__edit" onClick={openProfileEditor}><Pencil size={15} /> Chỉnh sửa hồ sơ</button>{isCenterProfile && <Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}{ownsProfile && !isEducationProviderProfile && <button type="button" className="teacher-bio__edit" onClick={openProfileEditor}><Pencil size={15} /> {profile.bio ? 'Chỉnh sửa giới thiệu bản thân' : 'Thêm giới thiệu bản thân'}</button>}</aside>
-    <main className="teacher-feed"><section className="feed-heading"><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></section>
+    <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
       {ownsProfile && <form className="post-composer" onSubmit={publish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media && <div className="post-composer__preview">{media.type === 'video' ? <video src={media.src} controls /> : <img src={media.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={clearMedia} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{media.name}</span></div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
       {posts.length ? posts.map((post) => { const likes = post.likes || []; const comments = post.comments || []; return <article className="social-post" key={post.id}><div className="social-post__head"><span>{profile.name.slice(0, 1)}</span><div><strong>{profile.name}</strong><small>Chia sẻ cùng cộng đồng EduMatch</small></div></div>{post.text && <p>{post.text}</p>}{post.media && <div className="social-post__media">{post.media.type === 'video' ? <video src={post.media.src} controls preload="metadata" /> : <img src={post.media.src} alt={`Nội dung do ${profile.name} chia sẻ`} />}</div>}<div className="social-post__actions"><button onClick={() => like(post.id)} className={likes.includes(user?.id) ? 'is-liked' : ''}><Heart size={17} fill={likes.includes(user?.id) ? 'currentColor' : 'none'} /> {likes.length || ''} Thích</button><span><MessageCircle size={16} /> {comments.length} bình luận</span></div>{comments.map((item) => <p className="post-comment" key={item.id}><strong>{item.author}</strong>{item.text}</p>)}<form className="post-comment-form" onSubmit={(event) => comment(event, post.id)}><input value={commentText[post.id] || ''} onChange={(event) => setCommentText((current) => ({ ...current, [post.id]: event.target.value }))} placeholder="Viết bình luận..." /><button type="submit">Gửi</button></form></article>; }) : <div className="feed-empty"><Star size={23} /><p>{isCenterProfile ? 'Trung tâm chưa có bài viết nào.' : isTeacherProfile ? 'Giáo viên chưa có bài viết nào.' : 'Học viên chưa có bài viết nào.'}</p></div>}
     </main></div>

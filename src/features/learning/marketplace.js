@@ -20,6 +20,7 @@ const sampleCourses = [
       dob: '1992-05-16',
       qualifications: 'Cử nhân Ngôn ngữ Anh, IELTS 8.0',
       experience: '7 năm giảng dạy tiếng Anh giao tiếp và IELTS',
+      heartCount: 486,
       bio: 'Tôi ưu tiên môi trường học thân thiện, giúp học viên tự tin sử dụng tiếng Anh trong đời sống.',
     },
   },
@@ -169,6 +170,34 @@ export const trackProviderAffinity = (userId, providerId, action, score = 1) => 
   const entry = { userId, providerId, action, score, updatedAt: new Date().toISOString() };
   const next = existingIndex === -1 ? [entry, ...saved] : saved.map((record, index) => index === existingIndex ? entry : record);
   write(STORAGE_KEYS.FEED_AFFINITY, next);
+};
+
+const trustRecords = () => read(STORAGE_KEYS.PROVIDER_TRUSTS, []);
+
+export const getProviderTrustCount = (providerId, baseCount = 0) =>
+  Number(baseCount || 0) + trustRecords().filter((record) => record.providerId === providerId).length;
+
+export const hasProviderTrust = (userId, providerId) =>
+  Boolean(userId && trustRecords().some((record) => record.userId === userId && record.providerId === providerId && record.source === 'profile'));
+
+export const toggleProviderTrust = (userId, providerId) => {
+  if (!userId || !providerId || userId === providerId) return false;
+  const saved = trustRecords();
+  const index = saved.findIndex((record) => record.userId === userId && record.providerId === providerId && record.source === 'profile');
+  const next = index === -1
+    ? [{ id: `trust-${Date.now()}`, userId, providerId, source: 'profile', createdAt: new Date().toISOString() }, ...saved]
+    : saved.filter((_, recordIndex) => recordIndex !== index);
+  write(STORAGE_KEYS.PROVIDER_TRUSTS, next);
+  return index === -1;
+};
+
+export const addCourseRatingTrust = (userId, providerId, courseId) => {
+  if (!userId || !providerId || !courseId || userId === providerId) return false;
+  const source = `rating:${courseId}`;
+  const saved = trustRecords();
+  if (saved.some((record) => record.userId === userId && record.providerId === providerId && record.source === source)) return false;
+  write(STORAGE_KEYS.PROVIDER_TRUSTS, [{ id: `trust-${Date.now()}`, userId, providerId, source, createdAt: new Date().toISOString() }, ...saved]);
+  return true;
 };
 
 export const saveConversation = (conversation) => {

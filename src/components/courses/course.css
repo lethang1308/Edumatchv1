@@ -3,7 +3,7 @@
 .course-card:hover { border-color:#9fcfbe; box-shadow:0 16px 35px rgb(35 89 72 / 11%); transform:translateY(-2px); }
 .course-card__top,.course-card__facts,.course-card__bottom { display:flex; align-items:center; gap:9px; }
 .course-card__top { justify-content:space-between; font-size:11px; color:var(--edu-green); font-weight:700; }
-.course-card__badges { display:flex; align-items:center; min-width:0; gap:6px; }.course-card__mode,.course-card__status { overflow:hidden; padding:4px 9px; border-radius:999px; background:var(--edu-tag); text-overflow:ellipsis; white-space:nowrap; }.course-card__status { background:#eaf7f1; color:var(--edu-green); }.course-card__status.is-closed { background:#f6eeee; color:#a75656; }.course-card__rating { display:inline-flex; align-items:center; flex:0 0 auto; gap:4px; color:#a66812; }
+.course-card__badges { display:flex; align-items:center; min-width:0; gap:6px; }.course-card__mode,.course-card__status,.course-card__sponsored { overflow:hidden; padding:4px 9px; border-radius:999px; background:var(--edu-tag); text-overflow:ellipsis; white-space:nowrap; }.course-card__status { background:#eaf7f1; color:var(--edu-green); }.course-card__status.is-closed { background:#f6eeee; color:#a75656; }.course-card__sponsored { background:#fff6e5; color:#9a6718; }.course-card__rating { display:inline-flex; align-items:center; flex:0 0 auto; gap:4px; color:#a66812; }
 .course-card h3 { color:var(--edu-green); margin-top:21px; font-size:20px; font-weight:800; line-height:1.42; letter-spacing:-.55px; }
 .course-card__teacher { overflow:hidden; margin:12px 0 0; color:#40535a; font-size:12px; font-weight:700; line-height:1.65; text-overflow:ellipsis; white-space:nowrap; }
 .course-card__description { min-height:44px; margin:16px 0 22px; color:var(--edu-muted); font-size:12px; line-height:1.85; }
@@ -18,6 +18,7 @@
 .course-card__bottom .course-card__edit:hover { border-color:var(--edu-green); background:#eaf7f1; color:var(--edu-green); }
 .course-card__teacher { display:flex; align-items:center; min-width:0; gap:7px; overflow:visible; white-space:normal; }
 .course-card__teacher > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.course-card__trust { display:inline-flex; align-items:center; gap:5px; margin-top:6px; color:#bf4d62; font-size:10px; font-weight:800; }
 .course-card__avatar { display:grid; place-items:center; flex:0 0 auto; width:25px; height:25px; overflow:hidden; border-radius:50%; background:#d8eee5; color:var(--edu-green); font-size:10px; font-weight:800; }
 .course-card__avatar img { width:100%; height:100%; object-fit:cover; }
 @media (max-width: 900px) { .course-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
