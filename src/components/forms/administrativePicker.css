@@ -8,6 +8,7 @@
   color: var(--edu-ink);
   font-size: var(--text-control);
   font-weight: 700;
+  line-height: var(--text-control--line-height);
 }
 .administrative-picker__control {
   display: flex;
@@ -38,6 +39,7 @@
   font: inherit;
   font-size: var(--text-control);
   outline: 0;
+  line-height: var(--text-control--line-height);
 }
 .administrative-picker__control input::placeholder {
   color: var(--edu-faint);
@@ -67,7 +69,7 @@
   margin: 4px 7px 7px;
   color: var(--edu-muted);
   font-size: var(--text-caption-xs);
-  line-height: 1.45;
+  line-height: var(--text-caption-xs--line-height);
 }
 .administrative-picker__empty {
   padding: 9px 0;
@@ -94,11 +96,13 @@
   flex: 1;
   font-size: var(--text-control);
   font-weight: 700;
+  line-height: var(--text-control--line-height);
 }
 .administrative-picker__menu button small {
   color: var(--edu-faint);
   font-size: var(--text-caption-xs);
   font-weight: 500;
+  line-height: var(--text-caption-xs--line-height);
 }
 .administrative-picker__menu button > svg:last-child {
   flex: 0 0 auto;

@@ -2,7 +2,7 @@
    Define values here once; Tailwind, page CSS and JS all consume these tokens.
    `static` keeps every token available to CSS/JS even without a utility class. */
 @theme static {
-  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-sans: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
 
   --color-primary: #087563;
   --color-primary-hover: #065b4d;
@@ -20,6 +20,13 @@
   --color-focus: #51bfa6;
   --color-badge-gold: #946116;
   --color-badge-gold-bg: #fdf7e9;
+  --color-on-primary: #ffffff;
+  --color-on-accent: #ffffff;
+  --color-trust: #b74c60;
+  --color-trust-light: #fff1f3;
+  --color-danger: #a75656;
+  --color-danger-light: #f6eeee;
+  --color-online: #32b779;
 
   --text-display: clamp(31px, 3.28vw, 46px);
   --text-display--line-height: 1.2;
@@ -60,7 +67,10 @@
   --font-family-base: var(--font-sans);
   --app-content-width: 1240px;
   --app-page-gutter: 80px;
-  --app-container-width: min(var(--app-content-width), calc(100% - var(--app-page-gutter)));
+  --app-container-width: min(
+    var(--app-content-width),
+    calc(100% - var(--app-page-gutter))
+  );
   --control-height: 44px;
 
   /* Compatibility aliases keep the approved Home/Login/Register proportions. */
@@ -107,4 +117,44 @@
     --edu-font-auth-heading: 26px;
     --edu-font-auth-hero: 28px;
   }
+}
+
+/* Public pages share the Home palette; aliases also support existing page CSS. */
+.edu-site {
+  --edu-bg: var(--color-bg);
+  --edu-surface: var(--color-surface);
+  --edu-soft: var(--color-soft);
+  --edu-mint: var(--color-mint);
+  --edu-ink: var(--color-ink);
+  --edu-muted: var(--color-muted);
+  --edu-faint: var(--color-faint);
+  --edu-line: var(--color-line);
+  --edu-green: var(--color-primary);
+  --edu-green-hover: var(--color-primary-hover);
+  --edu-tag: var(--color-tag);
+  --edu-shadow: var(--shadow-edu);
+  --edu-on-primary: var(--color-on-primary);
+  --edu-gold: var(--color-badge-gold);
+}
+.edu-site[data-theme="dark"] {
+  --color-on-primary: #15332a;
+  --color-badge-gold: #e6c088;
+  --color-bg: #14221f;
+  --color-surface: #1c2d27;
+  --color-soft: #23372f;
+  --color-mint: #233c32;
+  --color-ink: #e8f1ec;
+  --color-muted: #b0c1b7;
+  --color-faint: #a2b6ab;
+  --color-line: #354b40;
+  --color-primary: #85d6b7;
+  --color-primary-hover: #a4e6ce;
+  --color-tag: #2c493b;
+  --shadow-edu: 0 8px 30px rgb(5 20 12 / 20%);
+  --color-badge-gold-bg: #423622;
+  --color-trust: #efa8b8;
+  --color-trust-light: #422c34;
+  --color-danger: #efaaaa;
+  --color-danger-light: #422d2d;
+  color-scheme: dark;
 }

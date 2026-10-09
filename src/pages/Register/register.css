@@ -14,8 +14,8 @@
   background:
     linear-gradient(110deg, rgb(244 252 248 / 88%), rgb(244 252 248 / 48%)),
     image-set(
-        url('../../assets/backgroup.webp') type('image/webp'),
-        url('../../assets/backgroup.png') type('image/png')
+        url("../../assets/backgroup.webp") type("image/webp"),
+        url("../../assets/backgroup.png") type("image/png")
       )
       center / cover no-repeat fixed;
   overflow-x: clip;
@@ -234,11 +234,11 @@
   color: var(--register-muted);
   opacity: 1;
 }
-.register-control input[type='date'] {
+.register-control input[type="date"] {
   min-height: var(--control-height);
   color-scheme: light;
 }
-.register-control input[type='date']::-webkit-date-and-time-value {
+.register-control input[type="date"]::-webkit-date-and-time-value {
   min-height: 1.6em;
   text-align: left;
 }
@@ -445,7 +445,7 @@
   pointer-events: none;
 }
 .register-hero__photo::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 9% 7% 2% 10%;
   border-radius: 46% 54% 25% 65%;
@@ -571,5 +571,226 @@
   .register-page *::after {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+.register-phone-visibility {
+  display: grid;
+  gap: 7px;
+  margin: 2px 0;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-soft);
+}
+.register-phone-visibility legend {
+  padding: 0;
+  color: var(--color-ink);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.register-phone-visibility > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-caption);
+  line-height: 1.55;
+}
+.register-phone-visibility > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 17px;
+}
+.register-phone-visibility label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-ink);
+  font-size: var(--text-control);
+  font-weight: 600;
+  cursor: pointer;
+}
+.register-phone-visibility input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.teacher-terms-dialog {
+  color: var(--color-ink);
+  font-family:
+    "Be Vietnam Pro",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.teacher-terms-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+}
+
+.teacher-terms-dialog__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 470px;
+  color: var(--color-muted);
+  font-size: var(--text-control);
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.teacher-terms-dialog__consent input {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.teacher-terms-dialog__confirm {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.teacher-terms-dialog__confirm:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.teacher-terms-dialog__confirm:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.teacher-terms-dialog__confirm:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.teacher-terms-document {
+  display: grid;
+  gap: 20px;
+}
+
+.teacher-terms-document > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.teacher-terms-document__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.teacher-terms-document > header p {
+  margin: 0 0 2px;
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.teacher-terms-document h2,
+.teacher-terms-document h3 {
+  margin: 0;
+  color: var(--color-ink);
+}
+.teacher-terms-document h2 {
+  font-size: var(--text-h3);
+  letter-spacing: -0.35px;
+}
+.teacher-terms-document h3 {
+  font-size: var(--text-body);
+}
+
+.teacher-terms-document > p,
+.teacher-terms-document section > p,
+.teacher-terms-document__fees span {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-body);
+  line-height: 1.75;
+}
+
+.teacher-terms-document section {
+  display: grid;
+  gap: 8px;
+  padding: 19px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-bg);
+}
+
+.teacher-terms-document__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary);
+}
+.teacher-terms-document__heading h3 {
+  color: var(--color-ink);
+}
+
+.teacher-terms-document__fees {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teacher-terms-document__fees li {
+  display: grid;
+  grid-template-columns: minmax(155px, auto) minmax(0, 1fr);
+  gap: 9px;
+  padding: 11px 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.teacher-terms-document__fees strong {
+  color: var(--color-ink);
+  font-size: var(--text-control);
+}
+.teacher-terms-document__fees span {
+  font-size: var(--text-control);
+}
+
+.teacher-terms-document__notice {
+  margin-top: 5px !important;
+  padding: 11px 12px;
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-muted) !important;
+  font-size: var(--text-control) !important;
+}
+
+@media (max-width: 767px) {
+  .teacher-terms-dialog__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .teacher-terms-dialog__confirm {
+    width: 100%;
+  }
+  .teacher-terms-document__fees li {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }

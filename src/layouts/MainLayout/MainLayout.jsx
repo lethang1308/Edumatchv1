@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from '@/components/navigation/Header';
 import { Footer } from '@/components/navigation/Footer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export const MainLayout = () => {
+  const { pathname, hash } = useLocation();
   const [theme, setTheme] = useLocalStorage('edumatch:theme', 'system');
   const [systemDark, setSystemDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -15,6 +16,16 @@ export const MainLayout = () => {
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, hash]);
   const resolvedTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
   return (
     <div className="edu-site min-h-dvh flex flex-col" data-theme={resolvedTheme}>

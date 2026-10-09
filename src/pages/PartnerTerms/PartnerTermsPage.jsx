@@ -34,20 +34,36 @@ export function PartnerTermsPage() {
               Sự hiện diện của Quý vị là nền tảng để cộng đồng học tập trở nên phong phú, tử tế và bền vững hơn mỗi ngày.
             </p>
             <p>
-              EduMatch là nền tảng kết nối học tập, tạo cầu nối tin cậy giữa giảng viên và học viên. Chúng tôi luôn nỗ lực
-              xây dựng một môi trường giáo dục chuyên nghiệp, minh bạch và lấy chất lượng học tập làm trọng tâm.
+              EduMatch là nền tảng kết nối học tập, tạo cầu nối tin cậy giữa giáo viên, học viên và các đơn vị đối tác.
+              Chúng tôi xây dựng môi trường giáo dục dựa trên ba nguyên tắc: an toàn trong kết nối, minh bạch về hồ sơ,
+              thông tin và chính sách, hiệu quả trong học tập cũng như hợp tác.
             </p>
           </div>
         </header>
 
         <div className="partner-terms__content">
+          <section className="partner-terms__principles" aria-label="Ba nguyên tắc hoạt động của EduMatch">
+            <article>
+              <strong>An toàn</strong>
+              <p>Bảo vệ trải nghiệm kết nối, tôn trọng quyền chủ động và hỗ trợ xử lý các vấn đề phát sinh.</p>
+            </article>
+            <article>
+              <strong>Minh bạch</strong>
+              <p>Thông tin hồ sơ, khóa học, chính sách và chi phí được trình bày rõ ràng, dễ kiểm tra.</p>
+            </article>
+            <article>
+              <strong>Hiệu quả</strong>
+              <p>Tạo điều kiện để việc giảng dạy, học tập và hợp tác đi đúng nhu cầu, tiết kiệm thời gian.</p>
+            </article>
+          </section>
+
           <article className="partner-terms__statement">
             <Sparkles size={22} aria-hidden="true" />
             <div>
               <h2>Cam kết giai đoạn khởi nghiệp</h2>
               <p>
-                EduMatch là đơn vị khởi nghiệp từ năm 2026, với tinh thần chủ động và quyết tâm phát triển một cộng đồng
-                học tập chất lượng. Đến hết ngày 31/12/2026, EduMatch không thu bất kỳ khoản phí nền tảng nào từ học viên,
+                EduMatch là đơn vị khởi nghiệp từ năm 2026, với tinh thần chủ động xây dựng một cộng đồng học tập an toàn,
+                minh bạch và hiệu quả. Đến hết ngày 31/12/2026, EduMatch không thu bất kỳ khoản phí nền tảng nào từ học viên,
                 giáo viên hoặc đối tác.
               </p>
             </div>
@@ -59,7 +75,8 @@ export function PartnerTermsPage() {
               <div>
                 <h2>Chính sách phí từ năm 2027</h2>
                 <p>
-                  Từ ngày 01/01/2027, EduMatch sẽ áp dụng một khoản phí hợp lý cho việc khởi tạo và duy trì khóa học trên nền tảng.
+                  Từ ngày 01/01/2027, EduMatch sẽ áp dụng khoản phí hợp lý cho việc khởi tạo và duy trì khóa học. Mọi khoản phí
+                  đều được công bố rõ ràng trước khi Giáo viên hoặc Đối tác quyết định sử dụng dịch vụ.
                 </p>
               </div>
             </div>
@@ -79,7 +96,7 @@ export function PartnerTermsPage() {
               <BadgeCheck size={21} aria-hidden="true" />
               <div>
                 <h2>Phương thức hợp tác</h2>
-                <p>Chúng tôi tôn trọng quyền chủ động của Giáo viên và Đối tác trong mọi hình thức hợp tác.</p>
+                <p>Chúng tôi tôn trọng quyền chủ động của Giáo viên và Đối tác, đồng thời bảo đảm thông tin hợp tác được trao đổi rõ ràng trước khi triển khai.</p>
               </div>
             </div>
             <div className="partner-terms__collaboration-grid">
@@ -101,7 +118,7 @@ export function PartnerTermsPage() {
               </article>
             </div>
             <p className="partner-terms__notice">
-              Giáo viên hoặc Đối tác có toàn quyền đồng ý tiếp nhận hoặc từ chối học viên được giới thiệu trước khi việc sắp xếp lớp học bắt đầu.
+              Giáo viên hoặc Đối tác có toàn quyền đồng ý tiếp nhận hoặc từ chối học viên được giới thiệu trước khi việc sắp xếp lớp học bắt đầu. EduMatch chỉ hỗ trợ kết nối khi các bên đã có đủ thông tin cần thiết.
             </p>
           </section>
         </div>
@@ -109,7 +126,7 @@ export function PartnerTermsPage() {
         <footer className="partner-terms__closing">
           <p>Chính sách tính phí sẽ được điều chỉnh theo thời gian. Chúng tôi luôn nỗ lực để tìm ra chính sách phù hợp, có lợi cho Quý Thầy Cô và các đơn vị đối tác.</p>
           <h2>Trân trọng sự đồng hành của Quý Giáo viên và Quý Đối tác.</h2>
-          <p>EduMatch cam kết lắng nghe, hoàn thiện từng ngày và cùng Quý vị kiến tạo một cộng đồng học tập đáng tin cậy.</p>
+          <p>EduMatch cam kết lắng nghe, hoàn thiện từng ngày và cùng Quý vị kiến tạo một cộng đồng học tập an toàn, minh bạch và hiệu quả.</p>
           <Link to={ROUTES.HOME}>Khám phá EduMatch</Link>
         </footer>
       </div>

@@ -58,7 +58,9 @@ export const Login = () => {
 
     if (result.success) {
       toast.success('Đăng nhập thành công');
-      navigate(location.state?.from?.pathname || ROUTES.DASHBOARD, { replace: true });
+      // Luồng Dashboard của base cũ, giữ để đối chiếu khi cần:
+      // navigate(location.state?.from?.pathname || ROUTES.DASHBOARD, { replace: true });
+      navigate(ROUTES.HOME, { replace: true });
       return;
     }
 

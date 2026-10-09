@@ -20,7 +20,148 @@ const sampleCourses = [
       dob: '1992-05-16',
       qualifications: 'Cử nhân Ngôn ngữ Anh, IELTS 8.0',
       experience: '7 năm giảng dạy tiếng Anh giao tiếp và IELTS',
+      heartCount: 486,
       bio: 'Tôi ưu tiên môi trường học thân thiện, giúp học viên tự tin sử dụng tiếng Anh trong đời sống.',
+    },
+  },
+  {
+    id: 'course-old-school-ielts',
+    title: 'IELTS nền tảng đến 6.5',
+    description: 'Lộ trình tiếng Anh có kiểm tra đầu vào, theo sát tiến độ và luyện kỹ năng theo từng tuần.',
+    price: 4200000,
+    paymentType: 'full-course',
+    sessions: 24,
+    duration: 90,
+    schedule: 'Thứ 3, Thứ 5 và Chủ nhật',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Cầu Giấy, Hà Nội',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-06T09:00:00.000Z',
+    teacher: {
+      id: 'center-old-school',
+      name: 'Trung tâm The Old School',
+      role: 'center',
+      foundedYear: '2017',
+      licenseVerificationStatus: 'verified',
+      heartCount: 128,
+      bio: 'Trung tâm ngoại ngữ với chương trình cá nhân hóa và đội ngũ giáo viên giàu kinh nghiệm.',
+    },
+  },
+  {
+    id: 'course-educare-skills',
+    title: 'Kỹ năng thuyết trình tự tin',
+    description: 'Lớp thực hành giúp học viên xây dựng tư duy trình bày, giọng nói và sự tự tin trước đám đông.',
+    price: 2600000,
+    paymentType: 'full-course',
+    sessions: 10,
+    duration: 120,
+    schedule: 'Thứ 7 hằng tuần',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Hải Châu, Đà Nẵng',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-05T09:00:00.000Z',
+    teacher: {
+      id: 'center-educare',
+      name: 'Trung tâm EduCare',
+      role: 'center',
+      foundedYear: '2021',
+      licenseVerificationStatus: 'pending',
+      heartCount: 18,
+      bio: 'Đơn vị đào tạo kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm.',
+    },
+  },
+  {
+    id: 'course-melody-piano',
+    title: 'Piano cho người mới bắt đầu',
+    description: 'Học đọc nhạc và chơi những giai điệu đầu tiên trong lớp quy mô nhỏ, phù hợp người mới.',
+    price: 1800000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 60,
+    schedule: 'Lịch linh hoạt theo lớp',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Quận 3, TP. Hồ Chí Minh',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-04T09:00:00.000Z',
+    teacher: {
+      id: 'center-melody-studio',
+      name: 'Melody Studio',
+      role: 'center',
+      foundedYear: '2023',
+      heartCount: 2,
+      bio: 'Không gian học âm nhạc gần gũi dành cho trẻ em và người lớn.',
+    },
+  },
+  {
+    id: 'course-old-school-ielts-writing',
+    title: 'IELTS Writing chuyên sâu 6.5+',
+    description: 'Lớp luyện viết theo chủ đề với chữa bài cá nhân và chiến lược triển khai ý rõ ràng.',
+    price: 3200000,
+    paymentType: 'full-course',
+    sessions: 16,
+    duration: 120,
+    schedule: 'Thứ 2 và Thứ 6, 19:00 – 21:00',
+    learningMode: 'online',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-07T08:30:00.000Z',
+    teacher: {
+      id: 'center-old-school',
+      name: 'Trung tâm The Old School',
+      role: 'center',
+      foundedYear: '2017',
+      licenseVerificationStatus: 'verified',
+      heartCount: 128,
+      bio: 'Trung tâm ngoại ngữ với chương trình cá nhân hóa và đội ngũ giáo viên giàu kinh nghiệm.',
+    },
+  },
+  {
+    id: 'course-educare-excel',
+    title: 'Excel thực hành cho công việc',
+    description: 'Thực hành công thức, báo cáo và xử lý dữ liệu với các tình huống công việc phổ biến.',
+    price: 1950000,
+    paymentType: 'full-course',
+    sessions: 8,
+    duration: 120,
+    schedule: 'Chủ nhật hằng tuần',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Hải Châu, Đà Nẵng',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-07T10:00:00.000Z',
+    teacher: {
+      id: 'center-educare',
+      name: 'Trung tâm EduCare',
+      role: 'center',
+      foundedYear: '2021',
+      licenseVerificationStatus: 'pending',
+      heartCount: 18,
+      bio: 'Đơn vị đào tạo kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm.',
+    },
+  },
+  {
+    id: 'course-melody-guitar',
+    title: 'Guitar đệm hát cho người mới',
+    description: 'Bắt đầu từ hợp âm cơ bản đến tự tin đệm hát những ca khúc yêu thích.',
+    price: 2100000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 75,
+    schedule: 'Tối thứ 4 và thứ 7',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Quận 3, TP. Hồ Chí Minh',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-07T11:00:00.000Z',
+    teacher: {
+      id: 'center-melody-studio',
+      name: 'Melody Studio',
+      role: 'center',
+      foundedYear: '2023',
+      heartCount: 2,
+      bio: 'Không gian học âm nhạc gần gũi dành cho trẻ em và người lớn.',
     },
   },
 ];
@@ -32,8 +173,20 @@ export const getCourses = () => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const currentUser = read(STORAGE_KEYS.USER_INFO, null);
   const hydratedSavedCourses = saved.map((course) =>
-    course.teacher?.id === currentUser?.id && currentUser?.avatar
-      ? { ...course, teacher: { ...course.teacher, avatar: currentUser.avatar } }
+    course.teacher?.id === currentUser?.id
+      ? {
+          ...course,
+          teacher: {
+            ...course.teacher,
+            ...(currentUser.avatar ? { avatar: currentUser.avatar } : {}),
+            ...(currentUser.phone ? { phone: currentUser.phone } : {}),
+            ...(typeof currentUser.isPhonePublic === 'boolean'
+              ? { isPhonePublic: currentUser.isPhonePublic }
+              : {}),
+            ...(currentUser.foundedYear ? { foundedYear: currentUser.foundedYear } : {}),
+            ...(currentUser.licenseVerificationStatus ? { licenseVerificationStatus: currentUser.licenseVerificationStatus } : {}),
+          },
+        }
       : course
   );
   return [...hydratedSavedCourses, ...sampleCourses];
@@ -86,8 +239,10 @@ export const getCourseRating = (courseId) => {
   return { total, average };
 };
 
-export const getPosts = (teacherId) =>
-  read(STORAGE_KEYS.TEACHER_POSTS, []).filter((post) => post.teacherId === teacherId);
+export const getPosts = (authorId) => {
+  const posts = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  return authorId ? posts.filter((post) => post.teacherId === authorId || post.authorId === authorId) : posts;
+};
 
 export const savePost = (post) => {
   const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
@@ -100,6 +255,91 @@ export const updatePost = (postId, updater) => {
   );
   write(STORAGE_KEYS.TEACHER_POSTS, next);
   return next;
+};
+
+const notifyNotificationChange = () => {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:notifications-updated'));
+};
+
+export const getNotifications = (recipientId) =>
+  read(STORAGE_KEYS.NOTIFICATIONS, [])
+    .filter((notification) => notification.recipientId === recipientId)
+    .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
+
+export const createNotification = (notification) => {
+  if (!notification.recipientId) return null;
+  const nextNotification = {
+    id: `notification-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+    ...notification,
+  };
+  const saved = read(STORAGE_KEYS.NOTIFICATIONS, []);
+  write(STORAGE_KEYS.NOTIFICATIONS, [nextNotification, ...saved]);
+  notifyNotificationChange();
+  return nextNotification;
+};
+
+export const markNotificationRead = (notificationId) => {
+  const next = read(STORAGE_KEYS.NOTIFICATIONS, []).map((notification) =>
+    notification.id === notificationId ? { ...notification, isRead: true } : notification
+  );
+  write(STORAGE_KEYS.NOTIFICATIONS, next);
+  notifyNotificationChange();
+  return next;
+};
+
+export const markAllNotificationsRead = (recipientId) => {
+  const next = read(STORAGE_KEYS.NOTIFICATIONS, []).map((notification) =>
+    notification.recipientId === recipientId ? { ...notification, isRead: true } : notification
+  );
+  write(STORAGE_KEYS.NOTIFICATIONS, next);
+  notifyNotificationChange();
+  return next;
+};
+
+export const getProviderAffinity = (userId) => {
+  if (!userId) return {};
+  return read(STORAGE_KEYS.FEED_AFFINITY, [])
+    .filter((record) => record.userId === userId)
+    .reduce((scores, record) => ({ ...scores, [record.providerId]: (scores[record.providerId] || 0) + Number(record.score || 0) }), {});
+};
+
+export const trackProviderAffinity = (userId, providerId, action, score = 1) => {
+  if (!userId || !providerId || userId === providerId) return;
+  const saved = read(STORAGE_KEYS.FEED_AFFINITY, []);
+  const existingIndex = saved.findIndex((record) => record.userId === userId && record.providerId === providerId && record.action === action);
+  const entry = { userId, providerId, action, score, updatedAt: new Date().toISOString() };
+  const next = existingIndex === -1 ? [entry, ...saved] : saved.map((record, index) => index === existingIndex ? entry : record);
+  write(STORAGE_KEYS.FEED_AFFINITY, next);
+};
+
+const trustRecords = () => read(STORAGE_KEYS.PROVIDER_TRUSTS, []);
+
+export const getProviderTrustCount = (providerId, baseCount = 0) =>
+  Number(baseCount || 0) + trustRecords().filter((record) => record.providerId === providerId).length;
+
+export const hasProviderTrust = (userId, providerId) =>
+  Boolean(userId && trustRecords().some((record) => record.userId === userId && record.providerId === providerId && record.source === 'profile'));
+
+export const toggleProviderTrust = (userId, providerId) => {
+  if (!userId || !providerId || userId === providerId) return false;
+  const saved = trustRecords();
+  const index = saved.findIndex((record) => record.userId === userId && record.providerId === providerId && record.source === 'profile');
+  const next = index === -1
+    ? [{ id: `trust-${Date.now()}`, userId, providerId, source: 'profile', createdAt: new Date().toISOString() }, ...saved]
+    : saved.filter((_, recordIndex) => recordIndex !== index);
+  write(STORAGE_KEYS.PROVIDER_TRUSTS, next);
+  return index === -1;
+};
+
+export const addCourseRatingTrust = (userId, providerId, courseId) => {
+  if (!userId || !providerId || !courseId || userId === providerId) return false;
+  const source = `rating:${courseId}`;
+  const saved = trustRecords();
+  if (saved.some((record) => record.userId === userId && record.providerId === providerId && record.source === source)) return false;
+  write(STORAGE_KEYS.PROVIDER_TRUSTS, [{ id: `trust-${Date.now()}`, userId, providerId, source, createdAt: new Date().toISOString() }, ...saved]);
+  return true;
 };
 
 export const saveConversation = (conversation) => {

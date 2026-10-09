@@ -1,0 +1,156 @@
+.student-welcome {
+  display: grid;
+  min-height: calc(100dvh - 76px);
+  place-items: center;
+  padding: 56px 24px;
+  background:
+    radial-gradient(circle at 14% 10%, var(--edu-tag) 0, transparent 30%),
+    var(--edu-bg);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  color: var(--edu-ink);
+}
+.student-welcome__card {
+  width: min(720px, 100%);
+  padding: clamp(28px, 5vw, 50px);
+  border: 1px solid var(--color-line);
+  border-radius: 22px;
+  background: var(--edu-surface);
+  box-shadow: 0 24px 60px rgb(25 88 69 / 12%);
+}
+.student-welcome__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--edu-mint);
+  color: var(--edu-green);
+}
+.student-welcome__eyebrow {
+  margin: 22px 0 0;
+  color: var(--edu-green);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: var(--text-caption--line-height);
+}
+.student-welcome h1 {
+  max-width: 600px;
+  margin: 10px 0 0;
+  color: var(--edu-ink);
+  font-size: var(--text-h1);
+  letter-spacing: var(--text-h1--letter-spacing);
+  line-height: var(--text-h1--line-height);
+  font-weight: var(--text-h1--font-weight);
+}
+.student-welcome h1 em {
+  color: var(--edu-green);
+  font-style: normal;
+}
+.student-welcome__lead {
+  max-width: 620px;
+  margin: 18px 0 0;
+  color: var(--edu-muted);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.student-welcome__lead strong {
+  color: var(--edu-ink);
+}
+.student-welcome__contribution {
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid var(--color-line);
+  border-radius: 15px;
+  background: var(--edu-mint);
+}
+.student-welcome__contribution h2 {
+  color: var(--edu-ink);
+  font-size: var(--text-h2);
+  font-weight: var(--text-h2--font-weight);
+  line-height: var(--text-h2--line-height);
+  letter-spacing: var(--text-h2--letter-spacing);
+}
+.student-welcome__contribution p {
+  margin: 9px 0 0;
+  color: var(--edu-muted);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+.student-welcome__contribution ul {
+  display: grid;
+  gap: 10px;
+  margin: 17px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.student-welcome__contribution li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--edu-ink);
+  font-size: var(--text-control);
+  font-weight: 700;
+  line-height: var(--text-control--line-height);
+}
+.student-welcome__contribution li svg {
+  color: var(--edu-green);
+}
+.student-welcome__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 25px;
+  color: var(--edu-ink);
+  font-size: var(--text-control);
+  font-weight: 600;
+  line-height: var(--text-control--line-height);
+  cursor: pointer;
+}
+.student-welcome__consent input {
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  accent-color: var(--edu-green);
+}
+.student-welcome > .student-welcome__card > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 22px;
+  border: 1px solid var(--edu-green);
+  border-radius: 10px;
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 800;
+  cursor: pointer;
+  line-height: var(--text-control--line-height);
+}
+.student-welcome > .student-welcome__card > button:hover:not(:disabled) {
+  background: var(--edu-green-hover);
+}
+.student-welcome > .student-welcome__card > button:disabled {
+  border-color: var(--color-line);
+  background: var(--edu-soft);
+  color: var(--edu-faint);
+  cursor: not-allowed;
+}
+@media (max-width: 620px) {
+  .student-welcome {
+    padding: 30px 16px;
+  }
+  .student-welcome__card {
+    padding: 28px 21px;
+    border-radius: 17px;
+  }
+  .student-welcome__contribution {
+    padding: 18px;
+  }
+}
