@@ -177,6 +177,11 @@ console.log(APP_CONFIG.apiBaseUrl);
 
 Tất cả component đều tuân thủ nguyên tắc **Reusable, Accessible và Clean Code**.
 
+Theme EduMatch dùng chung nằm ở [`src/styles/theme.css`](src/styles/theme.css),
+lấy Home làm chuẩn font, cỡ chữ và màu. Hướng dẫn tạo màn mới bằng các class
+Tailwind, biến CSS và hằng số JavaScript nằm ở
+[`src/styles/README.md`](src/styles/README.md).
+
 ### 1. Button (`@/components/common/Button`)
 
 ```jsx

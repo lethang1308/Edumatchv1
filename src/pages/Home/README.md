@@ -38,4 +38,4 @@ Final prompt:
 
 `npm run dev` starts the development server. `npm run build` creates the production bundle and `npm run lint` checks the source.
 
-The homepage is implemented in `Home.jsx`, its sample data in `homeData.js`, and its semantic palette and responsive layouts in `home.css`.
+The homepage is implemented in `Home.jsx`, its sample data in `homeData.js`, and its responsive layouts and dark palette in `home.css`. The shared light palette, typography scale and container tokens live in `src/styles/theme.css`; see `src/styles/README.md` for use in new screens.

@@ -4,10 +4,10 @@ import { cn } from '@/utils/cn';
 
 const variants = {
   primary:
-    'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 focus-visible:ring-blue-500',
-  secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800 focus-visible:ring-slate-400',
-  outline: 'border border-slate-300 hover:bg-slate-50 text-slate-700 focus-visible:ring-slate-400',
-  ghost: 'hover:bg-slate-100 text-slate-700 focus-visible:ring-slate-400',
+    'bg-primary hover:bg-primary-hover text-white shadow-sm shadow-primary/20 focus-visible:ring-focus',
+  secondary: 'bg-soft hover:bg-tag text-ink focus-visible:ring-focus',
+  outline: 'border border-line-strong hover:bg-tag text-primary focus-visible:ring-focus',
+  ghost: 'hover:bg-soft text-ink focus-visible:ring-focus',
   danger:
     'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-500/20 focus-visible:ring-rose-500',
   success:
@@ -15,9 +15,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'h-8 px-3 text-xs gap-1.5',
-  md: 'h-10 px-4 text-sm gap-2',
-  lg: 'h-11 px-6 text-base gap-2.5',
+  sm: 'h-8 px-3 text-caption gap-1.5',
+  md: 'h-[var(--control-height)] px-4 text-control gap-2',
+  lg: 'h-[var(--control-height)] px-6 text-body gap-2.5',
 };
 
 export const Button = React.forwardRef(
@@ -45,7 +45,7 @@ export const Button = React.forwardRef(
         type={type}
         disabled={disabled || isBtnLoading}
         className={cn(
-          'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 outline-none select-none disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-offset-2',
+          'inline-flex items-center justify-center font-semibold rounded-control transition-all duration-150 outline-none select-none disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-offset-2',
           variants[variant] || variants.primary,
           sizes[size] || sizes.md,
           className
