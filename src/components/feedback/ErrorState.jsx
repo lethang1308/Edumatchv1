@@ -12,15 +12,15 @@ export const ErrorState = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center p-8 text-center rounded-xl border border-rose-200 bg-rose-50/40',
+        'flex flex-col items-center justify-center p-8 text-center rounded-surface border border-danger/25 bg-danger-light/50',
         className
       )}
     >
-      <div className="p-3 bg-rose-100 rounded-full text-rose-600 mb-3">
+      <div className="p-3 bg-danger-light rounded-full text-danger mb-3">
         <AlertCircle className="w-8 h-8" />
       </div>
-      <h4 className="text-base font-semibold text-rose-900">{title}</h4>
-      <p className="text-sm text-rose-600 max-w-sm mt-1 mb-4 leading-relaxed">{message}</p>
+      <h4 className="text-h4 font-semibold text-danger">{title}</h4>
+      <p className="text-body text-danger max-w-sm mt-1 mb-4 leading-relaxed">{message}</p>
       {onRetry && (
         <Button
           variant="outline"

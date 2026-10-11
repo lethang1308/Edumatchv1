@@ -95,7 +95,7 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-dvh bg-bg text-ink flex">
       {/* Sidebar Navigation */}
       <Sidebar
         isCollapsed={isCollapsed}
@@ -112,14 +112,14 @@ export const Dashboard = () => {
         )}
       >
         {/* Mobile Header Toggle */}
-        <div className="lg:hidden p-4 bg-white border-b border-slate-200 flex items-center justify-between">
+        <div className="lg:hidden p-4 bg-surface border-b border-line flex items-center justify-between">
           <Button variant="outline" size="sm" onClick={() => setIsMobileOpen(true)}>
             Menu
           </Button>
-          <span className="font-semibold text-sm">Dashboard</span>
+          <span className="font-semibold text-control text-ink">Dashboard</span>
         </div>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[var(--app-content-width)] w-full mx-auto">
           {/* Dashboard Header with Breadcrumb */}
           <DashboardHeader
             title="Bảng điều khiển tổng quan"
@@ -141,11 +141,11 @@ export const Dashboard = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="p-5 rounded-xl border border-slate-200 bg-white space-y-3">
-                <h4 className="font-semibold text-slate-800 text-sm">
+              <div className="p-5 rounded-surface border border-line bg-surface space-y-3">
+                <h4 className="font-semibold text-ink text-control">
                   Kiểm tra Reusable Components
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-caption text-muted leading-relaxed">
                   Các component Modal, ConfirmDialog và Toast đã được tích hợp sẵn sàng để sử dụng.
                 </p>
                 <div className="flex flex-col gap-2 pt-1">

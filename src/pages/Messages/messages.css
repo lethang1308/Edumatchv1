@@ -299,7 +299,7 @@
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  background: #e7f5ef;
+  background: var(--edu-tag);
   color: var(--edu-green);
 }
 .chat-window__empty h2 {

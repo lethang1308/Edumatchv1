@@ -83,7 +83,7 @@ export const Modal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-ink/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
@@ -96,21 +96,21 @@ export const Modal = ({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descriptionId : undefined}
         className={cn(
-          'relative w-full rounded-2xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh] z-10 animate-in fade-in zoom-in-95 duration-150',
+          'relative w-full rounded-surface bg-surface text-ink shadow-2xl border border-line flex flex-col max-h-[90vh] z-10 animate-in fade-in zoom-in-95 duration-150',
           modalSizes[size] || modalSizes.md,
           className
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <div>
             {title && (
-              <h3 id={titleId} className="text-lg font-semibold text-slate-900">
+              <h3 id={titleId} className="text-h3 font-semibold text-ink">
                 {title}
               </h3>
             )}
             {description && (
-              <p id={descriptionId} className="text-sm text-slate-500 mt-0.5">
+              <p id={descriptionId} className="text-body text-muted mt-0.5">
                 {description}
               </p>
             )}
@@ -119,7 +119,7 @@ export const Modal = ({
             type="button"
             onClick={onClose}
             aria-label="Đóng hộp thoại"
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1.5 text-faint hover:text-ink rounded-control hover:bg-soft transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -130,7 +130,7 @@ export const Modal = ({
 
         {/* Footer Actions */}
         {footer && (
-          <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5 rounded-b-2xl">
+          <div className="px-6 py-3.5 border-t border-line bg-soft/50 flex items-center justify-end gap-2.5 rounded-b-surface">
             {footer}
           </div>
         )}

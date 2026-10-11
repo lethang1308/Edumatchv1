@@ -127,9 +127,9 @@
   margin: 18px 0 0;
   padding: 11px 14px;
   border-radius: 10px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+  background: var(--color-danger-light);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, var(--login-surface));
+  color: var(--color-danger);
   font-size: var(--edu-font-copy);
 }
 
@@ -159,13 +159,13 @@
 
 .login-control:focus-within {
   border-color: var(--login-green);
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 0 0 3.5px rgba(8, 123, 104, 0.12);
 }
 
 .login-control.is-invalid {
-  border-color: #ef4444;
-  background: #fffbfa;
+  border-color: var(--color-danger);
+  background: var(--color-danger-light);
 }
 
 .login-control__icon {
@@ -209,13 +209,13 @@
 }
 
 .login-control__toggle:hover {
-  color: #475569;
+  color: var(--login-ink);
 }
 
 .login-field__error {
   margin: 0;
-  color: #dc2626;
-  font-size: 11px;
+  color: var(--color-danger);
+  font-size: var(--text-caption);
 }
 
 .login-form__options {
@@ -248,9 +248,9 @@
   height: 17px;
   display: grid;
   place-items: center;
-  border: 1.8px solid #94a3b8;
+  border: 1.8px solid var(--color-line-strong);
   border-radius: 5px;
-  background: #ffffff;
+  background: var(--color-surface);
   color: transparent;
   transition: 140ms ease;
 }
@@ -262,7 +262,7 @@
 .login-checkbox input:checked + .login-checkbox__box {
   border-color: var(--login-green);
   background: var(--login-green);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 .login-checkbox__label {
@@ -293,7 +293,7 @@
   border: 0;
   border-radius: var(--edu-radius-control);
   background: var(--login-green);
-  color: #ffffff;
+  color: var(--color-on-primary);
   font: inherit;
   font-size: var(--edu-font-control);
   font-weight: 600;
@@ -323,7 +323,7 @@
   gap: 14px;
   margin: 20px 0 16px;
   color: var(--login-muted);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 
 .login-divider::before,
@@ -331,7 +331,7 @@
   content: '';
   height: 1px;
   flex: 1;
-  background: #e2e8f0;
+  background: var(--color-line);
 }
 
 .login-socials {
@@ -348,7 +348,7 @@
   gap: 6px;
   border: 1px solid var(--login-line);
   border-radius: var(--edu-radius-control);
-  background: #ffffff;
+  background: var(--color-surface);
   color: var(--login-ink);
   font: inherit;
   font-size: var(--edu-font-control);
@@ -358,8 +358,8 @@
 }
 
 .login-socials button:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: var(--color-line-strong);
+  background: var(--color-soft);
   transform: translateY(-1px);
 }
 .login-socials svg {
@@ -429,6 +429,7 @@
   right: 80px;
   z-index: 1;
   pointer-events: none;
+  color: var(--login-green);
 }
 
 /* Left content within hero */
@@ -449,9 +450,9 @@
   align-items: center;
   gap: 8px;
   padding: 5px 12px 5px 6px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-line) 90%, transparent);
   border-radius: 9999px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow:
     0 10px 24px -4px rgba(0, 0, 0, 0.06),
     0 2px 6px rgba(0, 0, 0, 0.03);
@@ -471,7 +472,7 @@
 }
 
 .login-badge__text {
-  font-size: 10px;
+  font-size: var(--text-caption-xs);
   font-weight: 600;
   color: var(--login-ink);
   line-height: 1.35;
@@ -506,7 +507,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 500;
   color: var(--login-ink);
 }
@@ -519,7 +520,7 @@
   flex: 0 0 20px;
   border-radius: 50%;
   background: var(--login-check);
-  color: #ffffff;
+  color: var(--color-on-primary);
 }
 
 /* Paper airplane box */
@@ -529,6 +530,7 @@
   position: relative;
   margin-left: 28px;
   margin-top: 4px;
+  color: var(--login-green);
 }
 
 .login-hero__plane-trail {
@@ -645,7 +647,7 @@
   }
   .login-hero__list li {
     gap: 7px;
-    font-size: 12px;
+    font-size: var(--text-control);
     line-height: 1.5;
     text-align: left;
   }

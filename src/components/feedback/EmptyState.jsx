@@ -15,16 +15,16 @@ export const EmptyState = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center p-8 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50',
+        'flex flex-col items-center justify-center p-8 text-center rounded-surface border border-dashed border-line bg-soft/50',
         className
       )}
     >
-      <div className="p-3 bg-white rounded-full shadow-sm border border-slate-100 text-slate-400 mb-3">
+      <div className="p-3 bg-surface rounded-full shadow-sm border border-line text-faint mb-3">
         <Icon className="w-8 h-8" />
       </div>
-      <h4 className="text-base font-semibold text-slate-800">{title}</h4>
+      <h4 className="text-h4 font-semibold text-ink">{title}</h4>
       {description && (
-        <p className="text-sm text-slate-500 max-w-sm mt-1 mb-4 leading-relaxed">{description}</p>
+        <p className="text-body text-muted max-w-sm mt-1 mb-4 leading-relaxed">{description}</p>
       )}
 
       {action ||
