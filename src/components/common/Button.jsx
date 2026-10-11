@@ -4,14 +4,14 @@ import { cn } from '@/utils/cn';
 
 const variants = {
   primary:
-    'bg-primary hover:bg-primary-hover text-white shadow-sm shadow-primary/20 focus-visible:ring-focus',
+    'bg-primary hover:bg-primary-hover text-on-primary shadow-sm shadow-primary/20 focus-visible:ring-focus',
   secondary: 'bg-soft hover:bg-tag text-ink focus-visible:ring-focus',
   outline: 'border border-line-strong hover:bg-tag text-primary focus-visible:ring-focus',
   ghost: 'hover:bg-soft text-ink focus-visible:ring-focus',
   danger:
-    'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-500/20 focus-visible:ring-rose-500',
+    'bg-danger hover:brightness-95 text-on-primary shadow-sm shadow-danger/20 focus-visible:ring-danger',
   success:
-    'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-500/20 focus-visible:ring-emerald-500',
+    'bg-online hover:brightness-95 text-on-primary shadow-sm shadow-online/20 focus-visible:ring-online',
 };
 
 const sizes = {

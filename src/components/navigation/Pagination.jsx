@@ -19,9 +19,9 @@ export const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange, clas
 
   return (
     <div className={`flex items-center justify-between gap-4 py-3 ${className || ''}`}>
-      <div className="text-xs text-slate-500">
-        Trang <span className="font-semibold text-slate-700">{currentPage}</span> /{' '}
-        <span className="font-semibold text-slate-700">{totalPages}</span>
+      <div className="text-caption text-muted">
+        Trang <span className="font-semibold text-ink">{currentPage}</span> /{' '}
+        <span className="font-semibold text-ink">{totalPages}</span>
       </div>
 
       <div className="flex items-center gap-1.5">
@@ -38,7 +38,7 @@ export const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange, clas
 
         {getPageNumbers().map((page, index) =>
           page === '...' ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-slate-400 text-xs select-none">
+            <span key={`ellipsis-${index}`} className="px-2 text-faint text-caption select-none">
               ...
             </span>
           ) : (

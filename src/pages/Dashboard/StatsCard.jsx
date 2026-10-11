@@ -7,32 +7,32 @@ export const StatsCard = ({ title, value, change, isPositive, icon: Icon }) => {
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-caption font-semibold text-muted uppercase tracking-wider">
             {title}
           </span>
           {Icon && (
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-control bg-mint text-primary">
               <Icon className="w-4 h-4" />
             </div>
           )}
         </div>
 
         <div className="mt-3">
-          <div className="text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
+          <div className="text-h2 font-bold text-ink tracking-tight">{value}</div>
           {change && (
-            <div className="flex items-center gap-1 mt-1 text-xs font-medium">
+            <div className="flex items-center gap-1 mt-1 text-caption font-medium">
               {isPositive ? (
-                <span className="text-emerald-600 flex items-center">
+                <span className="text-primary flex items-center">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                   {change}
                 </span>
               ) : (
-                <span className="text-rose-600 flex items-center">
+                <span className="text-danger flex items-center">
                   <ArrowDownRight className="w-3.5 h-3.5" />
                   {change}
                 </span>
               )}
-              <span className="text-slate-400">so với tháng trước</span>
+              <span className="text-faint">so với tháng trước</span>
             </div>
           )}
         </div>

@@ -12,8 +12,8 @@ const sizes = {
 export const Spinner = ({ size = 'md', className, text }) => {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-2', className)}>
-      <Loader2 className={cn('animate-spin text-blue-600', sizes[size] || sizes.md)} />
-      {text && <p className="text-xs text-slate-500 font-medium">{text}</p>}
+      <Loader2 className={cn('animate-spin text-primary', sizes[size] || sizes.md)} />
+      {text && <p className="text-caption text-muted font-medium">{text}</p>}
     </div>
   );
 };

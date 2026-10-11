@@ -8,11 +8,11 @@ export const FormError = ({ message, className }) => {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 p-3 text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg',
+        'flex items-center gap-2 p-3 text-caption font-medium text-danger bg-danger-light border border-danger/25 rounded-control',
         className
       )}
     >
-      <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+      <AlertCircle className="w-4 h-4 shrink-0 text-danger" />
       <span>{message}</span>
     </div>
   );

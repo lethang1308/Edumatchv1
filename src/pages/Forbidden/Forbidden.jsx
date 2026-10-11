@@ -8,14 +8,14 @@ export const Forbidden = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-6 shadow-inner">
+    <div className="min-h-dvh bg-bg text-ink flex flex-col items-center justify-center p-4 text-center">
+      <div className="w-16 h-16 rounded-surface bg-danger-light text-danger flex items-center justify-center mb-6 shadow-inner">
         <ShieldAlert className="w-8 h-8" />
       </div>
 
-      <div className="text-6xl font-black text-slate-800 tracking-tight mb-2">403</div>
-      <h1 className="text-xl font-bold text-slate-900 mb-2">Truy cập bị từ chối</h1>
-      <p className="text-sm text-slate-500 max-w-sm mb-8 leading-relaxed">
+      <div className="text-display font-black text-ink tracking-tight mb-2">403</div>
+      <h1 className="text-h2 font-bold text-ink mb-2">Truy cập bị từ chối</h1>
+      <p className="text-body text-muted max-w-sm mb-8 leading-relaxed">
         Bạn không có quyền hạn cần thiết để truy cập tài nguyên này. Vui lòng liên hệ quản trị viên.
       </p>
 

@@ -257,7 +257,7 @@ export const Login = () => {
               <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
                 <path
                   d="M 12 76 A 52 52 0 0 1 76 12"
-                  stroke="#087b68"
+                  stroke="currentColor"
                   strokeWidth="2.5"
                   strokeDasharray="6 6"
                   strokeLinecap="round"
@@ -309,7 +309,7 @@ export const Login = () => {
                 >
                   <path
                     d="M 8 52 C 45 56, 80 46, 108 20"
-                    stroke="#087b68"
+                    stroke="currentColor"
                     strokeWidth="2"
                     strokeDasharray="5 5"
                     strokeLinecap="round"
@@ -321,7 +321,7 @@ export const Login = () => {
                     height="38"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#087b68"
+                    stroke="currentColor"
                     strokeWidth="1.9"
                     strokeLinecap="round"
                     strokeLinejoin="round"

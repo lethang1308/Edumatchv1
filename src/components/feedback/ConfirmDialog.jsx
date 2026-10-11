@@ -40,7 +40,7 @@ export const ConfirmDialog = ({
       <div className="flex items-start gap-4">
         <div
           className={`p-2.5 rounded-full shrink-0 ${
-            variant === 'danger' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
+            variant === 'danger' ? 'bg-danger-light text-danger' : 'bg-mint text-primary'
           }`}
         >
           {variant === 'danger' ? (
@@ -49,7 +49,7 @@ export const ConfirmDialog = ({
             <HelpCircle className="w-5 h-5" />
           )}
         </div>
-        <div className="text-sm text-slate-600 leading-relaxed pt-0.5">
+        <div className="text-body text-muted leading-relaxed pt-0.5">
           {message || children || 'Bạn có chắc chắn muốn thực hiện thao tác này?'}
         </div>
       </div>

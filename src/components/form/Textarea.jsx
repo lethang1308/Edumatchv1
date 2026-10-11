@@ -11,9 +11,9 @@ export const Textarea = React.forwardRef(
     return (
       <div className="w-full space-y-1.5 text-left">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+          <label htmlFor={inputId} className="block text-control font-medium text-ink">
             {label}
-            {required && <span className="text-rose-500 ml-1">*</span>}
+            {required && <span className="text-danger ml-1">*</span>}
           </label>
         )}
 
@@ -24,19 +24,19 @@ export const Textarea = React.forwardRef(
           rows={rows}
           disabled={disabled}
           className={cn(
-            'w-full rounded-lg border bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors resize-y',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-            'disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed',
+            'w-full rounded-control border bg-surface px-3.5 py-2 text-control text-ink placeholder:text-faint transition-colors resize-y',
+            'focus:outline-none focus:ring-2 focus:ring-focus focus:border-transparent',
+            'disabled:bg-soft disabled:text-muted disabled:cursor-not-allowed',
             error
-              ? 'border-rose-400 focus:ring-rose-500'
-              : 'border-slate-300 hover:border-slate-400',
+              ? 'border-danger focus:ring-danger'
+              : 'border-line hover:border-line-strong',
             className
           )}
           {...props}
         />
 
-        {error && <p className="text-xs text-rose-500 font-medium">{error}</p>}
-        {!error && helperText && <p className="text-xs text-slate-500">{helperText}</p>}
+        {error && <p className="text-caption text-danger font-medium">{error}</p>}
+        {!error && helperText && <p className="text-caption text-muted">{helperText}</p>}
       </div>
     );
   }

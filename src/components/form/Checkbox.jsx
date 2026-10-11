@@ -10,7 +10,7 @@ export const Checkbox = React.forwardRef(
         <label
           htmlFor={inputId}
           className={cn(
-            'inline-flex items-center gap-2.5 cursor-pointer select-none text-sm text-slate-700',
+            'inline-flex items-center gap-2.5 cursor-pointer select-none text-control text-ink',
             disabled && 'opacity-50 cursor-not-allowed',
             className
           )}
@@ -23,12 +23,12 @@ export const Checkbox = React.forwardRef(
             checked={checked}
             disabled={disabled}
             onChange={onChange}
-            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors"
+            className="w-4 h-4 rounded border-line-strong text-primary focus:ring-focus transition-colors"
             {...props}
           />
           {label && <span>{label}</span>}
         </label>
-        {error && <p className="text-xs text-rose-500 font-medium">{error}</p>}
+        {error && <p className="text-caption text-danger font-medium">{error}</p>}
       </div>
     );
   }

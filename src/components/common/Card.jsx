@@ -5,7 +5,7 @@ export const Card = ({ className, children, ...props }) => {
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-200/80 bg-white text-slate-900 shadow-sm transition-shadow',
+        'rounded-surface border border-line bg-surface text-ink shadow-sm transition-shadow',
         className
       )}
       {...props}
@@ -18,7 +18,7 @@ export const Card = ({ className, children, ...props }) => {
 export const CardHeader = ({ className, children, ...props }) => {
   return (
     <div
-      className={cn('flex flex-col space-y-1.5 p-6 border-b border-slate-100', className)}
+      className={cn('flex flex-col space-y-1.5 p-6 border-b border-line', className)}
       {...props}
     >
       {children}
@@ -29,7 +29,7 @@ export const CardHeader = ({ className, children, ...props }) => {
 export const CardTitle = ({ className, children, ...props }) => {
   return (
     <h3
-      className={cn('font-semibold text-lg leading-none tracking-tight text-slate-900', className)}
+      className={cn('font-semibold text-h3 leading-none tracking-tight text-ink', className)}
       {...props}
     >
       {children}
@@ -39,7 +39,7 @@ export const CardTitle = ({ className, children, ...props }) => {
 
 export const CardDescription = ({ className, children, ...props }) => {
   return (
-    <p className={cn('text-sm text-slate-500', className)} {...props}>
+    <p className={cn('text-body text-muted', className)} {...props}>
       {children}
     </p>
   );
@@ -56,7 +56,7 @@ export const CardContent = ({ className, children, ...props }) => {
 export const CardFooter = ({ className, children, ...props }) => {
   return (
     <div
-      className={cn('flex items-center p-6 pt-0 border-t border-slate-100 mt-6', className)}
+      className={cn('flex items-center p-6 pt-0 border-t border-line mt-6', className)}
       {...props}
     >
       {children}
