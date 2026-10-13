@@ -80,6 +80,8 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        detailedProfile: userData.detailedProfile || '',
+        profilePortfolioImages: userData.profilePortfolioImages || [],
         foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };
@@ -101,6 +103,8 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        detailedProfile: userData.detailedProfile || '',
+        profilePortfolioImages: userData.profilePortfolioImages || [],
         foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };

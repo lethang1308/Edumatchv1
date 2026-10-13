@@ -17,6 +17,8 @@ import {
   Users,
 } from "lucide-react";
 
+export const SHORT_BIO_MAX_LENGTH = 500;
+
 export const registrationRoles = [
   {
     value: "student",
@@ -149,7 +151,7 @@ export const teacherFields = [
     label: "Bằng cấp, chứng chỉ",
     placeholder: "VD: Cử nhân ĐH Sư phạm, IELTS 8.0...",
     icon: Award,
-    maxLength: 200,
+    maxLength: 500,
   },
   {
     name: "experience",
@@ -160,12 +162,12 @@ export const teacherFields = [
   },
   {
     name: "biography",
-    label: "Giới thiệu về bản thân",
+    label: "Thông tin tổng quan",
     placeholder:
-      "Chia sẻ về chuyên môn, phong cách giảng dạy và thông điệp gửi gắm tới học viên...",
+      "Nêu sơ lược chuyên môn, phong cách giảng dạy hoặc điều bạn muốn học viên biết...",
     icon: FileText,
     multiline: true,
-    maxLength: 500,
+    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -179,12 +181,12 @@ export const centerFields = [
   },
   {
     name: "centerDescription",
-    label: "Mô tả về trung tâm",
+    label: "Thông tin tổng quan",
     placeholder:
-      "Chia sẻ về chương trình đào tạo, đội ngũ giảng dạy và giá trị mà trung tâm mang đến...",
+      "Nêu sơ lược lĩnh vực đào tạo, điểm nổi bật và giá trị trung tâm mang đến...",
     icon: FileText,
     multiline: true,
-    maxLength: 1000,
+    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -257,6 +259,13 @@ export function validateRegistration(form, role, today = new Date()) {
     });
   } else if (role === "center" && !form.centerDescription.trim()) {
     errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
+  }
+  if (
+    (role === "teacher" && form.biography.length > SHORT_BIO_MAX_LENGTH) ||
+    (role === "center" && form.centerDescription.length > SHORT_BIO_MAX_LENGTH)
+  ) {
+    errors[role === "teacher" ? "biography" : "centerDescription"] =
+      `Thông tin tổng quan tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`;
   }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";

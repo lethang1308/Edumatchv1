@@ -381,6 +381,10 @@
   font-size: var(--text-caption-xs);
   font-variant-numeric: tabular-nums;
 }
+.register-count.is-limit {
+  color: var(--color-danger);
+  font-weight: 700;
+}
 
 .register-hero {
   position: relative;

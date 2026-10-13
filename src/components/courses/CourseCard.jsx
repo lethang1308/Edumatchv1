@@ -30,9 +30,7 @@ export function CourseCard({ course, editable = false, sponsored = false }) {
       <span className={`course-card__trust ${trustCount < 3 ? 'is-new' : ''}`}>
         {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
       </span>
-      {isCenter && <span className="course-card__center-meta"><CalendarDays size={13} /> {course.teacher.foundedYear ? `Thành lập ${course.teacher.foundedYear}` : 'Trung tâm đào tạo'}</span>}
       {isCenter && course.teacher.licenseVerificationStatus === 'verified' && <span className="course-card__verified"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>}
-      <p className="course-card__description">{course.description}</p>
       <div className="course-card__facts">
         <span><CalendarDays size={15} /> {paymentLabel(course.paymentType)}</span>
         {course.sessions && <span><Clock3 size={15} /> {course.sessions} buổi</span>}

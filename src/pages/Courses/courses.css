@@ -833,6 +833,38 @@
   font-weight: 700;
   line-height: var(--text-caption-xs--line-height);
 }
+.teacher-bio__overview {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+.teacher-bio__overview h3 {
+  margin: 0;
+}
+.teacher-bio__edit-link {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--edu-green);
+  font: inherit;
+  font-size: var(--text-caption-xs);
+  font-weight: 700;
+  line-height: var(--text-caption-xs--line-height);
+  cursor: pointer;
+}
+.teacher-bio__edit-link:hover {
+  color: var(--edu-green-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.teacher-bio__edit-link:focus-visible {
+  outline: 2px solid var(--edu-green);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 .teacher-bio p {
   margin: 7px 0 0;
   color: var(--edu-muted);
@@ -1251,6 +1283,15 @@
   font-weight: 600;
   line-height: var(--text-caption-xs--line-height);
 }
+.teacher-profile-editor .teacher-profile-editor__counter {
+  justify-self: end;
+  color: var(--edu-muted);
+  font-weight: 500;
+}
+.teacher-profile-editor .teacher-profile-editor__counter.is-limit {
+  color: var(--color-danger);
+  font-weight: 700;
+}
 .teacher-profile-editor__full,
 .teacher-profile-editor__actions {
   grid-column: 1 / -1;
@@ -1359,6 +1400,10 @@
     justify-content: center;
   }
   .teacher-profile-editor {
+    grid-template-columns: 1fr;
+  }
+  .profile-portfolio-editor__gallery,
+  .profile-portfolio-view__gallery {
     grid-template-columns: 1fr;
   }
 }
@@ -1670,7 +1715,8 @@
 }
 .teacher-bio__edit,
 .teacher-bio__add-course,
-.teacher-bio__support {
+.teacher-bio__support,
+.teacher-bio__portfolio {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1695,6 +1741,25 @@
 .teacher-bio__edit:hover {
   background: var(--edu-tag);
 }
+.teacher-bio__portfolio {
+  margin-top: 18px;
+  background: var(--edu-mint);
+  border-color: var(--edu-line);
+}
+.teacher-bio__actions .teacher-bio__portfolio {
+  margin-top: 0;
+}
+.teacher-bio__portfolio:hover {
+  background: var(--edu-tag);
+}
+.teacher-bio__portfolio-status {
+  margin-top: 18px !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--edu-line);
+  color: var(--edu-muted) !important;
+  font-size: var(--text-caption) !important;
+  font-style: italic;
+}
 .teacher-bio__support {
   background: var(--edu-mint);
   border-color: var(--edu-line);
@@ -1709,6 +1774,119 @@
 }
 .teacher-bio__add-course:hover {
   background: var(--edu-green-hover);
+}
+
+.profile-portfolio-editor {
+  display: grid;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-soft);
+}
+.profile-portfolio-editor > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+.profile-portfolio-editor strong {
+  color: var(--edu-ink);
+  font-size: var(--text-control);
+  line-height: var(--text-control--line-height);
+}
+.profile-portfolio-editor small {
+  color: var(--edu-muted) !important;
+  font-weight: 500;
+}
+.profile-portfolio-editor__gallery,
+.profile-portfolio-view__gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.profile-portfolio-editor__gallery figure {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 9px;
+  aspect-ratio: 4 / 3;
+  background: var(--edu-mint);
+}
+.profile-portfolio-editor__gallery img,
+.profile-portfolio-view__gallery img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-portfolio-editor__gallery button {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(20 45 38 / 82%);
+  color: var(--edu-on-primary);
+  cursor: pointer;
+}
+.profile-portfolio-editor__upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: max-content;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-control);
+  background: var(--edu-surface);
+  color: var(--edu-green);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  cursor: pointer;
+  line-height: var(--text-caption--line-height);
+}
+.profile-portfolio-editor__upload input {
+  position: absolute;
+  width: 1px !important;
+  min-height: 1px !important;
+  opacity: 0;
+  pointer-events: none;
+}
+.profile-portfolio-view {
+  display: grid;
+  gap: 20px;
+}
+.profile-portfolio-view > p {
+  margin: 0;
+  color: var(--edu-muted);
+  font-size: var(--text-body);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.profile-portfolio-view__gallery img {
+  min-height: 150px;
+  max-height: 280px;
+  border-radius: var(--radius-control);
+}
+.profile-portfolio-view__empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  border: 1px dashed var(--edu-line);
+  border-radius: var(--radius-control);
+  color: var(--edu-muted);
+  text-align: center;
+}
+.profile-portfolio-view__empty p {
+  margin: 0;
+  font-size: var(--text-control);
+  line-height: var(--text-control--line-height);
 }
 
 @media (max-width: 980px) {

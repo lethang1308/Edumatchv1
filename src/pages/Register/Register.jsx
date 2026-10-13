@@ -30,6 +30,9 @@ function FieldError({ name, errors }) {
 
 function ProfileField({ field, form, errors, onChange }) {
   const { name, label, placeholder, icon: Icon, multiline, maxLength } = field;
+  const isAtCharacterLimit = Boolean(
+    multiline && maxLength && form[name].length >= maxLength,
+  );
   const describedBy = [
     errors[name] && `register-${name}-error`,
     multiline && `register-${name}-count`,
@@ -59,7 +62,10 @@ function ProfileField({ field, form, errors, onChange }) {
         {multiline ? (
           <div className="register-textarea-body">
             <textarea {...sharedProps} rows={3} />
-            <span className="register-count" id={`register-${name}-count`}>
+            <span
+              className={`register-count ${isAtCharacterLimit ? "is-limit" : ""}`}
+              id={`register-${name}-count`}
+            >
               {form[name].length}/{maxLength}
             </span>
           </div>
@@ -365,9 +371,9 @@ export function Register() {
                       : "Thông tin trung tâm đào tạo"}
                   </h2>
                   <p>
-                    {role === "teacher"
-                      ? "Hoàn thiện hồ sơ chuyên môn để học viên hiểu hơn về bạn."
-                      : "Giới thiệu ngắn gọn để học viên hiểu rõ hơn về đơn vị của bạn."}
+                      {role === "teacher"
+                        ? "Nêu thông tin tổng quan để học viên hiểu về bạn. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực chi tiết sau khi đăng ký."
+                        : "Nêu thông tin tổng quan để học viên hiểu về trung tâm. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực chi tiết sau khi đăng ký."}
                   </p>
                 </div>
                 {(role === "teacher" ? teacherFields : centerFields).map(

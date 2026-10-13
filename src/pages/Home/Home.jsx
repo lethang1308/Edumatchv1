@@ -39,7 +39,13 @@ import '@/components/courses/course.css';
 const initialFilters = { subject: '', mode: '', province: '', ward: '', provider: '', description: '' };
 const initialCourseFilters = { subject: '', mode: '', description: '' };
 const communityTeacherPositions = ['0% center', '50% center', '100% center'];
-const sampleCenterOrder = ['center-old-school', 'center-educare', 'center-melody-studio'];
+const sampleCenterOrder = [
+  'center-old-school',
+  'center-horizon-learning',
+  'center-educare',
+  'center-bright-path',
+  'center-melody-studio',
+];
 const currency = (value) => new Intl.NumberFormat('vi-VN').format(value);
 const normalize = (text) =>
   text
@@ -166,9 +172,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
         <GraduationCap size={15} />
         {tutor.providerType === 'center'
           ? 'Trung tâm đào tạo'
-          : typeof tutor.experience === 'number'
-            ? `${tutor.experience} năm kinh nghiệm`
-            : tutor.experience || 'Đang cập nhật kinh nghiệm'}
+          : 'Giáo viên'}
         <span className="mode-tag">{tutor.mode === 'online' ? 'Trực tuyến' : tutor.mode === 'recorded' ? 'Video quay sẵn' : tutor.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến & trực tiếp'}</span>
       </p>
       {tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}
