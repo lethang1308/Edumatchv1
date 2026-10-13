@@ -422,6 +422,19 @@
   font-size: var(--text-caption);
   line-height: var(--text-caption--line-height);
 }
+.feed-comment__author {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--edu-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  line-height: var(--text-caption--line-height);
+}
+.feed-comment__author:hover {
+  color: var(--edu-green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .feed-comment__bubble p {
   margin: 0;
   font-size: var(--text-control);
@@ -438,6 +451,9 @@
   line-height: var(--text-caption-xs--line-height);
 }
 .feed-comment__meta button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   padding: 0;
   border: 0;
   background: none;
@@ -445,6 +461,10 @@
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+.feed-comment__meta button.is-liked,
+.feed-comment__meta button:hover {
+  color: var(--color-trust);
 }
 .feed-comment__reply {
   display: flex;
@@ -464,6 +484,9 @@
   color: var(--edu-muted);
   font-size: var(--text-micro);
   line-height: var(--text-micro--line-height);
+}
+.feed-comment__meta--reply {
+  margin-left: 2px;
 }
 .feed-reply-form,
 .feed-comment-form {

@@ -111,6 +111,7 @@ export function FeedPage() {
       text,
       createdAt: new Date().toISOString(),
       replies: [],
+      likes: [],
     };
     const postAuthorId = getPosts().find((post) => post.id === postId)?.authorId || getPosts().find((post) => post.id === postId)?.teacherId;
     trackProviderAffinity(user.id, postAuthorId, 'commented-post', 2);
@@ -149,6 +150,7 @@ export function FeedPage() {
       authorAvatar: user.avatar || '',
       text,
       createdAt: new Date().toISOString(),
+      likes: [],
     };
     const post = getPosts().find((item) => item.id === replyTarget.postId);
     const parentComment = post?.comments?.find((comment) => comment.id === replyTarget.commentId);
@@ -169,6 +171,42 @@ export function FeedPage() {
     }));
     setReplyTarget(null);
     setReplyText('');
+  };
+  const toggleCommentLike = (postId, commentId, replyId = null) => {
+    if (!requireAuth()) return;
+    const post = getPosts().find((item) => item.id === postId);
+    const comment = post?.comments?.find((item) => item.id === commentId);
+    const reply = comment?.replies?.find((item) => item.id === replyId);
+    const target = reply || comment;
+    if (!target) return;
+    const likes = target.likes || [];
+    const hasLiked = likes.includes(user.id);
+    if (!hasLiked && target.authorId && target.authorId !== user.id) {
+      createNotification({
+        recipientId: target.authorId,
+        actorName: user.name || 'Một thành viên',
+        actorAvatar: user.avatar || '',
+        type: 'post_comment',
+        title: `${user.name || 'Một thành viên'} đã thích bình luận của bạn`,
+        description: 'Bấm để xem cuộc trò chuyện trong Bảng Tin.',
+        link: `${ROUTES.FEED}#${postId}`,
+      });
+    }
+    saveInteraction(postId, (currentPost) => ({
+      ...currentPost,
+      comments: (currentPost.comments || []).map((currentComment) => {
+        if (currentComment.id !== commentId) return currentComment;
+        if (!replyId) return { ...currentComment, likes: hasLiked ? likes.filter((id) => id !== user.id) : [...likes, user.id] };
+        return {
+          ...currentComment,
+          replies: (currentComment.replies || []).map((currentReply) =>
+            currentReply.id === replyId
+              ? { ...currentReply, likes: hasLiked ? likes.filter((id) => id !== user.id) : [...likes, user.id] }
+              : currentReply,
+          ),
+        };
+      }),
+    }));
   };
 
   return (
@@ -208,7 +246,7 @@ export function FeedPage() {
         </header>
         <div className="feed-tabs" role="tablist" aria-label="Loại nội dung Bảng Tin">
           <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => setFeedTab('providers')}>Giáo viên & Trung tâm</button>
-          <button type="button" role="tab" aria-selected={feedTab === 'students'} className={feedTab === 'students' ? 'is-active' : ''} onClick={() => setFeedTab('students')}>Review từ học viên</button>
+          <button type="button" role="tab" aria-selected={feedTab === 'students'} className={feedTab === 'students' ? 'is-active' : ''} onClick={() => setFeedTab('students')}>Chia sẻ từ học viên</button>
         </div>
         <div className="feed-page__list">
           {visiblePosts.length ? visiblePosts.map((post) => {
@@ -235,16 +273,18 @@ export function FeedPage() {
                 {comments.map((comment) => {
                   const commentAuthor = getAuthor(comment, providers);
                   const isReplying = replyTarget?.postId === post.id && replyTarget?.commentId === comment.id;
+                  const isCommentLiked = (comment.likes || []).includes(user?.id);
                   return <div className="feed-comment" key={comment.id}>
                     {commentAuthor.avatar ? <img src={commentAuthor.avatar} alt="" /> : <span>{commentAuthor.name.slice(0, 1)}</span>}
                     <div className="feed-comment__body">
-                      <div className="feed-comment__bubble"><strong>{commentAuthor.name}</strong><p>{comment.text}</p></div>
-                      <div className="feed-comment__meta"><span>{shortTime(comment.createdAt)}</span><button type="button" onClick={() => openReply(post.id, comment.id)}>Trả lời</button></div>
+                      <div className="feed-comment__bubble">{commentAuthor.id ? <Link className="feed-comment__author" to={ROUTES.TEACHER_PROFILE(commentAuthor.id)}>{commentAuthor.name}</Link> : <strong>{commentAuthor.name}</strong>}<p>{comment.text}</p></div>
+                      <div className="feed-comment__meta"><span>{shortTime(comment.createdAt)}</span><button type="button" className={isCommentLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id)}><Heart size={13} fill={isCommentLiked ? 'currentColor' : 'none'} /> {comment.likes?.length || ''} Thích</button><button type="button" onClick={() => openReply(post.id, comment.id)}>Trả lời</button></div>
                       {(comment.replies || []).map((reply) => {
                         const replyAuthor = getAuthor(reply, providers);
+                        const isReplyLiked = (reply.likes || []).includes(user?.id);
                         return <div className="feed-comment__reply" key={reply.id}>
                           {replyAuthor.avatar ? <img src={replyAuthor.avatar} alt="" /> : <span>{replyAuthor.name.slice(0, 1)}</span>}
-                          <div><div className="feed-comment__bubble"><strong>{replyAuthor.name}</strong><p>{reply.text}</p></div><small>{shortTime(reply.createdAt)}</small></div>
+                          <div><div className="feed-comment__bubble">{replyAuthor.id ? <Link className="feed-comment__author" to={ROUTES.TEACHER_PROFILE(replyAuthor.id)}>{replyAuthor.name}</Link> : <strong>{replyAuthor.name}</strong>}<p>{reply.text}</p></div><div className="feed-comment__meta feed-comment__meta--reply"><span>{shortTime(reply.createdAt)}</span><button type="button" className={isReplyLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id, reply.id)}><Heart size={13} fill={isReplyLiked ? 'currentColor' : 'none'} /> {reply.likes?.length || ''} Thích</button></div></div>
                         </div>;
                       })}
                       {isReplying && <form className="feed-reply-form" onSubmit={submitReply}><CornerDownRight size={15} /><input autoFocus value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`Trả lời ${commentAuthor.name}...`} /><button type="submit">Gửi</button></form>}

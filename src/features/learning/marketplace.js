@@ -383,7 +383,39 @@ export const getCourseReviews = (courseId) =>
 
 export const addCourseReview = (review) => {
   const saved = read(STORAGE_KEYS.COURSE_REVIEWS, []);
-  write(STORAGE_KEYS.COURSE_REVIEWS, [review, ...saved]);
+  write(STORAGE_KEYS.COURSE_REVIEWS, [{ ...review, replies: review.replies || [] }, ...saved]);
+};
+
+export const addCourseReviewReply = (reviewId, reply) => {
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) =>
+    review.id === reviewId
+      ? { ...review, replies: [...(review.replies || []), reply] }
+      : review,
+  );
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return next.find((review) => review.id === reviewId);
+};
+
+export const toggleCourseReviewLike = (reviewId, userId, replyId = null) => {
+  let updatedReview = null;
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) => {
+    if (review.id !== reviewId) return review;
+    if (replyId) {
+      const replies = (review.replies || []).map((reply) => {
+        if (reply.id !== replyId) return reply;
+        const likes = reply.likes || [];
+        const nextReply = { ...reply, likes: likes.includes(userId) ? likes.filter((id) => id !== userId) : [...likes, userId] };
+        updatedReview = { ...review, replies: (review.replies || []).map((item) => item.id === replyId ? nextReply : item) };
+        return nextReply;
+      });
+      return { ...review, replies };
+    }
+    const likes = review.likes || [];
+    updatedReview = { ...review, likes: likes.includes(userId) ? likes.filter((id) => id !== userId) : [...likes, userId] };
+    return updatedReview;
+  });
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return updatedReview;
 };
 
 export const getCourseRating = (courseId) => {

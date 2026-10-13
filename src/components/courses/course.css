@@ -82,7 +82,7 @@
 }
 .course-card__teacher {
   overflow: hidden;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--edu-ink);
   font-size: var(--text-control);
   font-weight: 700;
@@ -91,10 +91,12 @@
   white-space: nowrap;
 }
 .course-card__facts {
+  min-height: 42px;
+  align-content: center;
   flex-wrap: wrap;
   gap: 10px 14px;
-  margin-top: 17px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--edu-line);
   color: var(--edu-muted);
   font-size: var(--text-caption);
@@ -108,7 +110,7 @@
 .course-card__bottom {
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 24px;
+  padding-top: 16px;
 }
 .course-card__bottom strong {
   color: var(--edu-green);
@@ -168,6 +170,42 @@
 }
 .course-card__teacher-name:hover {
   color: var(--edu-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.course-card__provider {
+  min-height: 64px;
+}
+.course-card__description {
+  display: flex;
+  flex-direction: column;
+  min-height: 76px;
+  margin-top: 10px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption);
+  line-height: var(--text-caption--line-height);
+}
+.course-card__description p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  white-space: pre-line;
+  min-height: 46px;
+}
+.course-card__description a,
+.tutor-description > a {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--edu-green);
+  font-size: var(--text-caption-xs);
+  font-weight: 700;
+}
+.course-card__description a:hover,
+.tutor-description > a:hover {
+  color: var(--edu-green-hover);
   text-decoration: underline;
   text-underline-offset: 3px;
 }

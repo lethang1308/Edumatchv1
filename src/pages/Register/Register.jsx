@@ -100,14 +100,19 @@ export function Register() {
 
   const updateField = (event) => {
     const { name, value, type, checked } = event.target;
+    const maxLength = Number(event.target.maxLength);
+    const limitedValue =
+      Number.isInteger(maxLength) && maxLength >= 0
+        ? value.slice(0, maxLength)
+        : value;
     setForm((current) => ({
       ...current,
       [name]:
         type === "checkbox"
           ? checked
           : name === "foundedYear"
-            ? value.replace(/\D/g, "")
-            : value,
+            ? value.replace(/\D/g, "").slice(0, 4)
+            : limitedValue,
     }));
     setErrors((current) => ({ ...current, [name]: "" }));
     setFormError("");
@@ -372,8 +377,8 @@ export function Register() {
                   </h2>
                   <p>
                       {role === "teacher"
-                        ? "Nêu thông tin tổng quan để học viên hiểu về bạn. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực chi tiết sau khi đăng ký."
-                        : "Nêu thông tin tổng quan để học viên hiểu về trung tâm. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực chi tiết sau khi đăng ký."}
+                        ? "Nêu thông tin tổng quan để học viên hiểu về bạn. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực sau khi đăng ký."
+                        : "Nêu thông tin tổng quan để học viên hiểu về trung tâm. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực sau khi đăng ký."}
                   </p>
                 </div>
                 {(role === "teacher" ? teacherFields : centerFields).map(

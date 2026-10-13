@@ -46,7 +46,6 @@ const sampleCenterOrder = [
   'center-bright-path',
   'center-melody-studio',
 ];
-const currency = (value) => new Intl.NumberFormat('vi-VN').format(value);
 const normalize = (text) =>
   text
     .normalize('NFD')
@@ -150,7 +149,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           </h3>
           {tutor.reviews ? (
             <div className="tutor-rating"><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></div>
-          ) : trustCount < 3 ? <div className="tutor-rating"><span>Hồ sơ mới</span></div> : null}
+          ) : null}
           <span className="subject-tag">{tutor.subject}</span>
         </div>
         <button
@@ -162,12 +161,14 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
         </button>
       </div>
-      <span className={`tutor-trust ${trustCount < 3 ? 'is-new' : ''}`}>
-        {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
-      </span>
-      {tutor.providerType === 'center' && tutor.licenseVerificationStatus === 'verified' && (
-        <span className="tutor-verification-badge"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>
-      )}
+      <div className="tutor-credibility">
+        {tutor.providerType !== 'student' && <span className={`tutor-trust ${trustCount < 3 ? 'is-new' : ''}`}>
+          {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
+        </span>}
+        {tutor.providerType === 'center' && tutor.licenseVerificationStatus === 'verified' && (
+          <span className="tutor-verification-badge"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>
+        )}
+      </div>
       <p className="tutor-meta">
         <GraduationCap size={15} />
         {tutor.providerType === 'center'
@@ -175,15 +176,11 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           : 'Giáo viên'}
         <span className="mode-tag">{tutor.mode === 'online' ? 'Trực tuyến' : tutor.mode === 'recorded' ? 'Video quay sẵn' : tutor.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến & trực tiếp'}</span>
       </p>
-      {tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}
-      <p className="tutor-description">{tutor.description}</p>
+      <div className="tutor-contact">{tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}</div>
+      <div className="tutor-description"><p>{tutor.description}</p></div>
       <div className="tutor-bottom">
-        <div>
-          <strong>{tutor.price ? `${currency(tutor.price)}đ` : 'Liên hệ'}</strong>
-          {tutor.price && <span> / giờ</span>}
-        </div>
         <Button className="edu-button profile-button" size="sm" onClick={onOpen}>
-          Xem hồ sơ <ArrowRight size={14} />
+          Xem chi tiết <ArrowRight size={14} />
         </Button>
       </div>
     </article>

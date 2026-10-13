@@ -113,6 +113,7 @@
 .form-field input,
 .form-field textarea,
 .review-form textarea,
+.review-reply-form input,
 .post-composer textarea,
 .post-comment-form input,
 .message-panel textarea {
@@ -133,6 +134,7 @@
 }
 .form-field :is(input, textarea):focus,
 .review-form textarea:focus,
+.review-reply-form input:focus,
 .post-composer textarea:focus,
 .post-comment-form input:focus,
 .message-panel textarea:focus {
@@ -482,6 +484,16 @@
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
 }
+.review-form__notice {
+  margin: 17px 0;
+  padding: 12px 15px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-soft);
+  color: var(--edu-muted);
+  font-size: var(--text-control);
+  line-height: var(--text-control--line-height);
+}
 .review-list {
   display: grid;
   gap: 11px;
@@ -491,20 +503,93 @@
   border: 1px solid var(--edu-line);
   border-radius: var(--radius-control);
 }
-.review-list article > div {
+.review-item__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.review-list span {
+.review-item__head > span {
   display: flex;
   color: var(--edu-gold);
+}
+.review-author-link {
+  color: var(--edu-ink);
+  font-weight: 700;
+}
+.review-author-link:hover {
+  color: var(--edu-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .review-list p {
   margin: 5px 0 0;
   color: var(--edu-muted);
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
+}
+.review-replies {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-left: 14px;
+  border-left: 2px solid var(--edu-line);
+}
+.review-reply {
+  padding: 9px 11px;
+  border-radius: var(--radius-control);
+  background: var(--edu-soft);
+}
+.review-reply strong {
+  color: var(--edu-ink);
+  font-size: var(--text-caption);
+}
+.review-reply p {
+  white-space: pre-line;
+}
+.review-item__actions,
+.review-reply > button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption-xs);
+  font-weight: 700;
+}
+.review-item__actions button,
+.review-reply > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+}
+.review-item__actions button:hover,
+.review-item__actions button.is-liked,
+.review-reply > button:hover,
+.review-reply > button.is-liked {
+  color: var(--color-trust);
+}
+.review-reply-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.review-reply-form input {
+  min-width: 0;
+  flex: 1;
+}
+.review-reply-form button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: var(--radius-control);
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+  font-size: var(--text-caption);
+  font-weight: 700;
 }
 .course-enroll-card {
   position: sticky;
@@ -870,6 +955,7 @@
   color: var(--edu-muted);
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
+  white-space: pre-line;
 }
 .teacher-feed {
   min-width: 0;
@@ -1936,6 +2022,12 @@
 .teacher-data dd {
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
+  white-space: pre-line;
+}
+.social-post > p,
+.post-comment,
+.review-list > article > p {
+  white-space: pre-line;
 }
 .learning-page :is(input, textarea)::placeholder {
   color: var(--edu-faint);
@@ -2080,6 +2172,7 @@
   font-size: var(--text-body);
   font-weight: 500;
   line-height: var(--text-body--line-height);
+  white-space: pre-line;
 }
 .teacher-profile-card__trust {
   display: inline-flex !important;

@@ -13,4 +13,5 @@ export const STORAGE_KEYS = {
   FEED_AFFINITY: 'edumatch:feed-affinity',
   PROVIDER_TRUSTS: 'edumatch:provider-trusts',
   CONVERSATIONS: 'edumatch:conversations',
+  REGISTERED_ACCOUNTS: 'edumatch:registered-accounts',
 };

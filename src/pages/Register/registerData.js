@@ -274,6 +274,8 @@ export function validateRegistration(form, role, today = new Date()) {
 
 // Only include the active role's fields; hidden profile values never reach the API.
 export function buildRegistrationPayload(form, role) {
+  const limitProfileText = (value) =>
+    String(value || "").slice(0, SHORT_BIO_MAX_LENGTH).trim();
   const data = {
     name: (role === "center" ? form.centerName : form.name).trim(),
     phone: form.phone.replace(/[\s.-]/g, ""),
@@ -285,10 +287,10 @@ export function buildRegistrationPayload(form, role) {
   if (role === "center") {
     return {
       ...data,
-      bio: form.centerDescription.trim(),
+      bio: limitProfileText(form.centerDescription),
       foundedYear: form.foundedYear,
       centerProfile: {
-        description: form.centerDescription.trim(),
+        description: limitProfileText(form.centerDescription),
         foundedYear: form.foundedYear,
       },
     };
@@ -299,11 +301,11 @@ export function buildRegistrationPayload(form, role) {
     dateOfBirth: form.dateOfBirth,
     dob: form.dateOfBirth,
     ...(role === "teacher" && {
-      qualifications: form.qualification.trim(),
-      experience: form.experience.trim(),
-      bio: form.biography.trim(),
+      qualifications: limitProfileText(form.qualification),
+      experience: limitProfileText(form.experience),
+      bio: limitProfileText(form.biography),
       teacherProfile: Object.fromEntries(
-        teacherFields.map(({ name }) => [name, form[name].trim()]),
+        teacherFields.map(({ name }) => [name, limitProfileText(form[name])]),
       ),
     }),
   };
