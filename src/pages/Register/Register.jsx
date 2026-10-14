@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BadgeCheck, Eye, EyeOff, Handshake, Landmark } from "lucide-react";
 import toast from "react-hot-toast";
@@ -52,7 +52,7 @@ function ProfileField({ field, form, errors, onChange }) {
   };
   return (
     <div className="register-field">
-      <label htmlFor={`register-${name}`} className="register-field-label">
+      <label htmlFor={`register-${name}`} className="register-sr-only">
         {label} <span aria-hidden="true">*</span>
       </label>
       <div
@@ -78,6 +78,45 @@ function ProfileField({ field, form, errors, onChange }) {
   );
 }
 
+function PhoneVisibility({ value, disabled, onChange }) {
+  return (
+    <div
+      className="register-phone-visibility"
+      role="group"
+      aria-labelledby="register-phone-visibility-title"
+    >
+      <strong id="register-phone-visibility-title">
+        Bạn có muốn công khai số điện thoại?
+      </strong>
+      <p>
+        Số điện thoại sẽ hiển thị trên hồ sơ, danh sách tìm kiếm và khóa học khi bạn đồng ý.
+      </p>
+      <div>
+        <label>
+          <input
+            type="radio"
+            name="isPhonePublic"
+            checked={value}
+            disabled={disabled}
+            onChange={() => onChange(true)}
+          />
+          Có
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="isPhonePublic"
+            checked={!value}
+            disabled={disabled}
+            onChange={() => onChange(false)}
+          />
+          Không
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -95,7 +134,11 @@ export function Register() {
   const [teacherTermsAccepted, setTeacherTermsAccepted] = useState(false);
   const formRef = useRef(null);
   const content = roleContent[role];
-  const fields = role === "center" ? centerAccountFields : accountFields;
+  const fields = role === "center"
+    ? centerAccountFields
+    : role === "teacher"
+      ? [accountFields[0], accountFields[3], accountFields[1], accountFields[2], ...accountFields.slice(4)]
+      : accountFields;
   const today = getTodayDate();
 
   const updateField = (event) => {
@@ -240,74 +283,85 @@ export function Register() {
                   const isPassword =
                     name === "password" || name === "confirmPassword";
                   return (
-                    <div className="register-field" key={name}>
-                      <label
-                        htmlFor={`register-${name}`}
-                        className={
-                          role === "center" || showLabel
-                            ? "register-field-label"
-                            : "register-sr-only"
-                        }
-                      >
-                        {label}{" "}
-                        {(role === "center" || showLabel) && (
-                          <span aria-hidden="true">*</span>
-                        )}
-                      </label>
-                      <div
-                        className={`register-control ${errors[name] ? "is-invalid" : ""}`}
-                      >
-                        <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
-                        <input
-                          id={`register-${name}`}
-                          name={name}
-                          type={
-                            isPassword
-                              ? visiblePasswords[name]
-                                ? "text"
-                                : "password"
-                              : type
+                    <Fragment key={name}>
+                      <div className="register-field">
+                        <label
+                          htmlFor={`register-${name}`}
+                          className={
+                          showLabel
+                              ? "register-field-label"
+                              : "register-sr-only"
                           }
-                          autoComplete={autoComplete}
-                          placeholder={placeholder || label}
-                          value={form[name]}
-                          onChange={updateField}
-                          required
-                          maxLength={isPassword ? 128 : maxLength}
-                          max={type === "date" ? today : undefined}
-                          lang={type === "date" ? "vi" : undefined}
-                          aria-invalid={Boolean(errors[name])}
-                          aria-describedby={
-                            errors[name]
-                              ? `register-${name}-error`
-                              : name === "password"
-                                ? "register-password-hint"
-                                : undefined
+                        >
+                          {label}{" "}
+                          {showLabel && (
+                            <span aria-hidden="true">*</span>
+                          )}
+                        </label>
+                        <div
+                          className={`register-control ${errors[name] ? "is-invalid" : ""}`}
+                        >
+                          <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
+                          <input
+                            id={`register-${name}`}
+                            name={name}
+                            type={
+                              isPassword
+                                ? visiblePasswords[name]
+                                  ? "text"
+                                  : "password"
+                                : type
+                            }
+                            autoComplete={autoComplete}
+                            placeholder={placeholder || label}
+                            value={form[name]}
+                            onChange={updateField}
+                            required
+                            maxLength={isPassword ? 128 : maxLength}
+                            max={type === "date" ? today : undefined}
+                            lang={type === "date" ? "vi" : undefined}
+                            aria-invalid={Boolean(errors[name])}
+                            aria-describedby={
+                              errors[name]
+                                ? `register-${name}-error`
+                                : name === "password"
+                                  ? "register-password-hint"
+                                  : undefined
+                            }
+                          />
+                          {isPassword && (
+                            <button
+                              type="button"
+                              className="register-password-toggle"
+                              onClick={() =>
+                                setVisiblePasswords((current) => ({
+                                  ...current,
+                                  [name]: !current[name],
+                                }))
+                              }
+                              aria-label={`${visiblePasswords[name] ? "Ẩn" : "Hiện"} ${label.toLowerCase()}`}
+                              aria-pressed={Boolean(visiblePasswords[name])}
+                            >
+                              {visiblePasswords[name] ? (
+                                <EyeOff size={21} />
+                              ) : (
+                                <Eye size={21} />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        <FieldError name={name} errors={errors} />
+                      </div>
+                      {role !== "student" && name === "phone" && (
+                        <PhoneVisibility
+                          value={form.isPhonePublic}
+                          disabled={loading}
+                          onChange={(isPhonePublic) =>
+                            setForm((current) => ({ ...current, isPhonePublic }))
                           }
                         />
-                        {isPassword && (
-                          <button
-                            type="button"
-                            className="register-password-toggle"
-                            onClick={() =>
-                              setVisiblePasswords((current) => ({
-                                ...current,
-                                [name]: !current[name],
-                              }))
-                            }
-                            aria-label={`${visiblePasswords[name] ? "Ẩn" : "Hiện"} ${label.toLowerCase()}`}
-                            aria-pressed={Boolean(visiblePasswords[name])}
-                          >
-                            {visiblePasswords[name] ? (
-                              <EyeOff size={21} />
-                            ) : (
-                              <Eye size={21} />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                      <FieldError name={name} errors={errors} />
-                    </div>
+                      )}
+                    </Fragment>
                   );
                 },
               )}
@@ -316,52 +370,9 @@ export function Register() {
               </p>
             </fieldset>
 
-            {role !== "student" && (
-              <fieldset
-                className="register-phone-visibility"
-                disabled={loading}
-              >
-                <legend>Bạn có muốn công khai số điện thoại?</legend>
-                <p>
-                  Số điện thoại chỉ hiển thị trên hồ sơ, danh sách tìm kiếm và
-                  khóa học khi bạn đồng ý.
-                </p>
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      name="isPhonePublic"
-                      checked={form.isPhonePublic}
-                      onChange={() =>
-                        setForm((current) => ({
-                          ...current,
-                          isPhonePublic: true,
-                        }))
-                      }
-                    />{" "}
-                    Có, công khai số điện thoại
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="isPhonePublic"
-                      checked={!form.isPhonePublic}
-                      onChange={() =>
-                        setForm((current) => ({
-                          ...current,
-                          isPhonePublic: false,
-                        }))
-                      }
-                    />{" "}
-                    Không, giữ riêng tư
-                  </label>
-                </div>
-              </fieldset>
-            )}
-
             {(role === "teacher" || role === "center") && (
               <fieldset
-                className="register-fields register-profile-fields"
+                className="register-fields"
                 disabled={loading}
               >
                 <legend className="register-sr-only">
@@ -369,18 +380,6 @@ export function Register() {
                     ? "Thông tin dành cho giáo viên"
                     : "Thông tin trung tâm đào tạo"}
                 </legend>
-                <div className="register-profile-heading">
-                  <h2>
-                    {role === "teacher"
-                      ? "Thông tin dành cho giáo viên"
-                      : "Thông tin trung tâm đào tạo"}
-                  </h2>
-                  <p>
-                      {role === "teacher"
-                        ? "Nêu thông tin tổng quan để học viên hiểu về bạn. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực sau khi đăng ký."
-                        : "Nêu thông tin tổng quan để học viên hiểu về trung tâm. Tối đa 500 ký tự; bạn có thể hoàn thiện hồ sơ năng lực sau khi đăng ký."}
-                  </p>
-                </div>
                 {(role === "teacher" ? teacherFields : centerFields).map(
                   (field) => (
                     <ProfileField

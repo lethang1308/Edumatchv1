@@ -93,7 +93,8 @@ const passwordFields = [
 
 const phoneField = {
   name: "phone",
-  label: "Số điện thoại",
+  label: "Số điện thoại (tên đăng nhập)",
+  placeholder: "Số điện thoại ( Tài khoản đăng nhập )",
   icon: Phone,
   type: "tel",
   autoComplete: "tel",
@@ -132,16 +133,12 @@ export const centerAccountFields = [
   {
     name: "centerName",
     label: "Tên trung tâm",
-    placeholder: "VD: Trung tâm Anh ngữ EduMatch",
+    placeholder: "Tên trung tâm",
     icon: Building2,
     autoComplete: "organization",
     maxLength: 150,
   },
-  {
-    ...phoneField,
-    label: "Số điện thoại (tài khoản đăng nhập)",
-    placeholder: "Số điện thoại dùng để đăng nhập",
-  },
+  phoneField,
   ...passwordFields,
 ];
 
@@ -149,22 +146,21 @@ export const teacherFields = [
   {
     name: "qualification",
     label: "Bằng cấp, chứng chỉ",
-    placeholder: "VD: Cử nhân ĐH Sư phạm, IELTS 8.0...",
+    placeholder: "Bằng cấp/chứng chỉ",
     icon: Award,
     maxLength: 500,
   },
   {
     name: "experience",
     label: "Kinh nghiệm giảng dạy",
-    placeholder: "VD: 3 năm dạy Toán THPT, luyện thi đại học...",
+    placeholder: "Kinh nghiệm giảng dạy",
     icon: ChartNoAxesColumnIncreasing,
     maxLength: 500,
   },
   {
     name: "biography",
     label: "Thông tin tổng quan",
-    placeholder:
-      "Nêu sơ lược chuyên môn, phong cách giảng dạy hoặc điều bạn muốn học viên biết...",
+    placeholder: "Giới thiệu ngắn gọn để học viên hiểu thêm về bạn.",
     icon: FileText,
     multiline: true,
     maxLength: SHORT_BIO_MAX_LENGTH,
@@ -182,8 +178,7 @@ export const centerFields = [
   {
     name: "centerDescription",
     label: "Thông tin tổng quan",
-    placeholder:
-      "Nêu sơ lược lĩnh vực đào tạo, điểm nổi bật và giá trị trung tâm mang đến...",
+    placeholder: "Giới thiệu ngắn gọn để học viên hiểu thêm về trung tâm.",
     icon: FileText,
     multiline: true,
     maxLength: SHORT_BIO_MAX_LENGTH,
@@ -203,7 +198,7 @@ export const initialForm = {
   centerName: "",
   centerDescription: "",
   foundedYear: "",
-  isPhonePublic: false,
+  isPhonePublic: true,
 };
 
 export function getTodayDate(today = new Date()) {

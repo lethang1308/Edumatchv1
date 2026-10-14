@@ -587,7 +587,9 @@
   border-radius: 12px;
   background: var(--color-soft);
 }
-.register-phone-visibility legend {
+.register-phone-visibility legend,
+.register-phone-visibility > strong {
+  display: block;
   padding: 0;
   color: var(--color-ink);
   font-size: var(--text-body);
