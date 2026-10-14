@@ -17,9 +17,12 @@ export function FloatingChat() {
   const [forwarding, setForwarding] = useState(null);
   const [showNewMessages, setShowNewMessages] = useState(false);
   const historyRef = useRef(null);
+  const messageRefs = useRef(new Map());
+  const replyHighlightTimer = useRef(null);
   const previousMessageCount = useRef(0);
   const forceScrollToBottom = useRef(true);
   const seenIncomingMessageIds = useRef(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const widget = getChatWidget(user?.id);
   const messages = getConversationsForUser(user?.id);
   const threadMessages = messages.filter((message) => conversationThreadKey(message) === widget?.threadKey).reverse();
@@ -87,6 +90,8 @@ export function FloatingChat() {
     forceScrollToBottom.current = false;
   }, [threadMessages.length, widget?.threadKey]);
 
+  useEffect(() => () => window.clearTimeout(replyHighlightTimer.current), []);
+
   if (!user || pathname === ROUTES.MESSAGES || !widget || widget.isClosed || !reference) return null;
 
   const send = (event) => {
@@ -114,6 +119,14 @@ export function FloatingChat() {
     if (history) history.scrollTop = history.scrollHeight;
     setShowNewMessages(false);
   };
+  const scrollToOriginalMessage = (messageId) => {
+    const target = messageRefs.current.get(messageId);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedMessageId(messageId);
+    window.clearTimeout(replyHighlightTimer.current);
+    replyHighlightTimer.current = window.setTimeout(() => setHighlightedMessageId(null), 1400);
+  };
   const forwardMessage = (target) => {
     if (!forwarding) return;
     saveConversation({
@@ -139,7 +152,7 @@ export function FloatingChat() {
 
   return <aside className="floating-chat" aria-label={`Cửa sổ chat với ${contactName}`}>
     <header className="floating-chat__head"><span>{contactName.slice(0, 1)}</span><div><strong>{contactName}</strong><small>{course?.title || 'Trao đổi lịch học'}</small></div><button type="button" onClick={minimize} aria-label="Thu nhỏ cửa sổ chat"><Minus size={16} /></button><button type="button" onClick={close} aria-label="Đóng cửa sổ chat"><X size={17} /></button></header>
-    <div className="floating-chat__history" ref={historyRef} onScroll={() => { const history = historyRef.current; if (history && history.scrollHeight - history.scrollTop - history.clientHeight < 36) setShowNewMessages(false); }}>{threadMessages.map((message) => <article className={message.senderId === user.id || (!message.senderId && message.studentId === user.id) ? 'is-own' : ''} key={message.id}>{message.forwarded && <span className="floating-chat__forwarded">Đã chuyển tiếp</span>}{message.replyTo && <div className="floating-chat__reply-preview"><strong>{message.replyTo.senderName}</strong><span>{message.replyTo.text}</span></div>}<p>{message.text}</p><div className="floating-chat__message-meta"><small>{message.createdAt || 'Vừa xong'}</small><span className="floating-chat__message-actions"><button type="button" onClick={() => setReplyingTo(message)} aria-label="Trả lời tin nhắn"><Reply size={13} /></button><button type="button" onClick={() => setForwarding(message)} aria-label="Chuyển tiếp tin nhắn"><Forward size={13} /></button></span></div></article>)}</div>
+    <div className="floating-chat__history" ref={historyRef} onScroll={() => { const history = historyRef.current; if (history && history.scrollHeight - history.scrollTop - history.clientHeight < 36) setShowNewMessages(false); }}>{threadMessages.map((message) => <article className={`${message.senderId === user.id || (!message.senderId && message.studentId === user.id) ? 'is-own' : ''} ${highlightedMessageId === message.id ? 'is-highlighted' : ''}`} key={message.id} ref={(node) => { if (node) messageRefs.current.set(message.id, node); else messageRefs.current.delete(message.id); }}>{message.forwarded && <span className="floating-chat__forwarded">Đã chuyển tiếp</span>}{message.replyTo && <button type="button" className="floating-chat__reply-preview" onClick={() => scrollToOriginalMessage(message.replyTo.id)} aria-label="Xem tin nhắn gốc"><strong>{message.replyTo.senderName}</strong><span>{message.replyTo.text}</span></button>}<p>{message.text}</p><div className="floating-chat__message-meta"><small>{message.createdAt || 'Vừa xong'}</small><span className="floating-chat__message-actions"><button type="button" onClick={() => setReplyingTo(message)} aria-label="Trả lời tin nhắn"><Reply size={13} /></button><button type="button" onClick={() => setForwarding(message)} aria-label="Chuyển tiếp tin nhắn"><Forward size={13} /></button></span></div></article>)}</div>
     {showNewMessages && <button type="button" className="floating-chat__new-message" onClick={scrollToLatest}>Xem tin nhắn mới nhất</button>}
     <form className="floating-chat__composer" onSubmit={send}>{replyingTo && <div className="floating-chat__replying"><span>Đang trả lời: {replyingTo.text}</span><button type="button" onClick={() => setReplyingTo(null)} aria-label="Hủy trả lời"><X size={14} /></button></div>}<div><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={submitOnPlainEnter} rows="1" placeholder="Viết tin nhắn..." /><button type="submit" aria-label="Gửi tin nhắn"><Send size={17} /></button></div></form>
     {forwarding && <div className="floating-chat__forward-dialog" role="dialog" aria-modal="true" aria-label="Chuyển tiếp tin nhắn"><div><header><strong>Chuyển tiếp tin nhắn</strong><button type="button" onClick={() => setForwarding(null)} aria-label="Đóng"><X size={17} /></button></header><p>{forwarding.text}</p><span>Chọn người đã từng nhắn tin</span><section>{forwardTargets.length ? forwardTargets.map((target) => <button type="button" key={target.key} onClick={() => forwardMessage(target)}>{target.name}</button>) : <small>Chưa có cuộc trò chuyện khác để chuyển tiếp.</small>}</section></div></div>}
