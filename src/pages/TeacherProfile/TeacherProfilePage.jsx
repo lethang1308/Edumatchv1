@@ -4,9 +4,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { createConversationId, createNotification, getAge, getCourses, getPosts, getProviderTrustCount, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
+import { createConversationId, createNotification, deletePost, getAge, getCourses, getPosts, getProviderTrustCount, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
 import { CourseCard } from '@/components/courses/CourseCard';
 import { Modal } from '@/components/feedback/Modal';
+import { ImageAttachment } from '@/components/forms/ImageAttachment';
+import { ContentMenu } from '@/components/feedback/ContentMenu';
+import { LikesModal } from '@/components/feedback/LikesModal';
+import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
 import '@/components/courses/course.css';
 import '../Courses/courses.css';
 import { tutors } from '../Home/homeData';
@@ -25,6 +29,9 @@ export function TeacherProfilePage() {
   const [postText, setPostText] = useState('');
   const [media, setMedia] = useState(null);
   const [commentText, setCommentText] = useState({});
+  const [commentMedia, setCommentMedia] = useState({});
+  const [openContentMenu, setOpenContentMenu] = useState(null);
+  const [likesTarget, setLikesTarget] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingDetailedProfile, setIsEditingDetailedProfile] = useState(false);
   const [isViewingDetailedProfile, setIsViewingDetailedProfile] = useState(false);
@@ -274,20 +281,63 @@ export function TeacherProfilePage() {
       }
       return { ...post, likes: hasLiked ? likes.filter((id) => id !== user.id) : [...likes, user.id] };
     });
-    setPosts(next.filter((post) => post.teacherId === teacherId));
+    setPosts(next.filter((post) => post.teacherId === teacherId || post.authorId === teacherId));
   };
   const comment = (event, postId) => {
     event.preventDefault();
     if (!user) { toast.error('Vui lòng đăng nhập để bình luận.'); return; }
     const text = commentText[postId]?.trim();
-    if (!text) return;
+    const media = commentMedia[postId] || null;
+    if (!text && !media) return;
     const targetPost = getPosts().find((post) => post.id === postId);
     if ((targetPost?.authorId || targetPost?.teacherId) !== user.id) {
       createNotification({ recipientId: targetPost?.authorId || targetPost?.teacherId, actorName: user.name || 'Một thành viên', actorAvatar: user.avatar || '', type: 'post_comment', title: `${user.name || 'Một thành viên'} đã bình luận về bài viết của bạn`, description: text, link: `${ROUTES.FEED}#${postId}` });
     }
-    const next = updatePost(postId, (post) => ({ ...post, comments: [...(post.comments || []), { id: `comment-${Date.now()}`, author: user.name || 'Thành viên EduMatch', authorId: user.id, authorName: user.name || 'Thành viên EduMatch', authorRole: user.role || 'student', authorAvatar: user.avatar || '', text, replies: [], createdAt: new Date().toISOString() }] }));
-    setPosts(next.filter((post) => post.teacherId === teacherId));
+    const next = updatePost(postId, (post) => ({ ...post, comments: [...(post.comments || []), { id: `comment-${Date.now()}`, author: user.name || 'Thành viên EduMatch', authorId: user.id, authorName: user.name || 'Thành viên EduMatch', authorRole: user.role || 'student', authorAvatar: user.avatar || '', text, media, replies: [], createdAt: new Date().toISOString() }] }));
+    setPosts(next.filter((post) => post.teacherId === teacherId || post.authorId === teacherId));
     setCommentText((current) => ({ ...current, [postId]: '' }));
+    setCommentMedia((current) => ({ ...current, [postId]: null }));
+  };
+  const toggleProfileCommentLike = (postId, commentId) => {
+    if (!user) { toast.error('Vui lòng đăng nhập để thích bình luận.'); return; }
+    const next = updatePost(postId, (post) => ({
+      ...post,
+      comments: (post.comments || []).map((item) => {
+        if (item.id !== commentId) return item;
+        const likes = item.likes || [];
+        return { ...item, likes: likes.includes(user.id) ? likes.filter((id) => id !== user.id) : [...likes, user.id] };
+      }),
+    }));
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
+  };
+  const ownsContent = (authorId) => Boolean(user?.id && authorId === user.id);
+  const editProfilePost = (post) => {
+    if (!ownsContent(post.authorId || post.teacherId)) return;
+    const text = window.prompt('Chỉnh sửa bài viết', post.text || '');
+    if (text === null) return;
+    const next = updatePost(post.id, (current) => ({ ...current, text: text.trim() }));
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
+  };
+  const removeProfilePost = (post) => {
+    if (!ownsContent(post.authorId || post.teacherId) || !window.confirm('Xóa bài viết này?')) return;
+    const next = deletePost(post.id);
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
+  };
+  const editProfileComment = (postId, commentId) => {
+    const post = posts.find((item) => item.id === postId);
+    const target = post?.comments?.find((item) => item.id === commentId);
+    if (!target || !ownsContent(target.authorId)) return;
+    const text = window.prompt('Chỉnh sửa bình luận', target.text || '');
+    if (text === null) return;
+    const next = updatePost(postId, (current) => ({ ...current, comments: (current.comments || []).map((item) => item.id === commentId ? { ...item, text: text.trim() } : item) }));
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
+  };
+  const removeProfileComment = (postId, commentId) => {
+    const post = posts.find((item) => item.id === postId);
+    const target = post?.comments?.find((item) => item.id === commentId);
+    if (!target || !ownsContent(target.authorId) || !window.confirm('Xóa bình luận này?')) return;
+    const next = updatePost(postId, (current) => ({ ...current, comments: (current.comments || []).filter((item) => item.id !== commentId) }));
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
   };
   const messageProfile = () => {
     if (!isAuthenticated) { toast.error('Vui lòng đăng nhập để nhắn tin.'); navigate(ROUTES.LOGIN); return; }
@@ -329,11 +379,28 @@ export function TeacherProfilePage() {
     </header>
     <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p>{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p>{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p>{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p>{profileQualifications || 'Đang cập nhật'}</p></>}{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions"><button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> {hasDetailedProfile ? 'Chỉnh sửa hồ sơ năng lực' : 'Tạo hồ sơ năng lực'}</button>{isCenterProfile && <>{user?.licenseVerificationStatus === 'verified' ? <span className="teacher-bio__verified"><BadgeCheck size={15} /> Đã xác thực pháp lý</span> : user?.licenseVerificationStatus === 'pending' ? <span className="teacher-bio__pending"><FileCheck2 size={15} /> Hồ sơ đang xét duyệt</span> : <button type="button" className="teacher-bio__verify" onClick={openVerificationForm}><FileCheck2 size={15} /> Yêu cầu xác minh giấy phép</button>}<Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link></>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
     <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
-      {ownsProfile && <form className="post-composer" onSubmit={publish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media && <div className="post-composer__preview">{media.type === 'video' ? <video src={media.src} controls /> : <img src={media.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={clearMedia} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{media.name}</span></div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
-      {posts.length ? posts.map((post) => { const likes = post.likes || []; const comments = post.comments || []; return <article className="social-post" key={post.id}><div className="social-post__head"><span>{profile.name.slice(0, 1)}</span><div><strong>{profile.name}</strong>{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>Chia sẻ cùng cộng đồng EduMatch</small></div></div>{post.text && <p>{post.text}</p>}{post.media && <div className="social-post__media">{post.media.type === 'video' ? <video src={post.media.src} controls preload="metadata" /> : <img src={post.media.src} alt={`Nội dung do ${profile.name} chia sẻ`} />}</div>}<div className="social-post__actions"><button onClick={() => like(post.id)} className={likes.includes(user?.id) ? 'is-liked' : ''}><Heart size={17} fill={likes.includes(user?.id) ? 'currentColor' : 'none'} /> {likes.length || ''} Thích</button><span><MessageCircle size={16} /> {comments.length} bình luận</span></div>{comments.map((item) => <p className="post-comment" key={item.id}><strong>{item.author}</strong>{item.text}</p>)}<form className="post-comment-form" onSubmit={(event) => comment(event, post.id)}><input value={commentText[post.id] || ''} onChange={(event) => setCommentText((current) => ({ ...current, [post.id]: event.target.value }))} placeholder="Viết bình luận..." /><button type="submit">Gửi</button></form></article>; }) : <div className="feed-empty"><Star size={23} /><p>{isCenterProfile ? 'Trung tâm chưa có bài viết nào.' : isTeacherProfile ? 'Giáo viên chưa có bài viết nào.' : 'Học viên chưa có bài viết nào.'}</p></div>}
+      {ownsProfile && <form className="post-composer" onSubmit={publish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} onKeyDown={submitOnPlainEnter} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media && <div className="post-composer__preview">{media.type === 'video' ? <video src={media.src} controls /> : <img src={media.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={clearMedia} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{media.name}</span></div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
+      {posts.length ? posts.map((post) => {
+        const likes = post.likes || [];
+        const comments = post.comments || [];
+        return <article className="social-post" key={post.id}>
+          <div className="social-post__head"><span>{profile.name.slice(0, 1)}</span><div><Link className="social-post__author" to={ROUTES.TEACHER_PROFILE(post.authorId || post.teacherId || profile.id)}>{post.authorName || post.author || profile.name}</Link>{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>Chia sẻ cùng cộng đồng EduMatch</small></div></div>
+          {ownsContent(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfilePost(post)} onDelete={() => removeProfilePost(post)} label="bài viết" />}
+          {post.text && <p>{post.text}</p>}
+          {post.media && <div className="social-post__media">{post.media.type === 'video' ? <video src={post.media.src} controls preload="metadata" /> : <img src={post.media.src} alt={`Nội dung do ${profile.name} chia sẻ`} />}</div>}
+          <div className="social-post__actions"><button onClick={() => like(post.id)} className={likes.includes(user?.id) ? 'is-liked' : ''}><Heart size={17} fill={likes.includes(user?.id) ? 'currentColor' : 'none'} /> Thích</button>{likes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button>}<span><MessageCircle size={16} /> {comments.length} bình luận</span></div>
+          {comments.map((item) => {
+            const commentLikes = item.likes || [];
+            const isCommentLiked = commentLikes.includes(user?.id);
+            return <div className="post-comment" key={item.id}><div className="post-comment__head">{item.authorId ? <Link className="post-comment__author" to={ROUTES.TEACHER_PROFILE(item.authorId)}>{item.authorName || item.author}</Link> : <strong>{item.author}</strong>}{ownsContent(item.authorId) && <ContentMenu id={`comment-${item.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfileComment(post.id, item.id)} onDelete={() => removeProfileComment(post.id, item.id)} label="bình luận" />}</div>{item.text && <span>{item.text}</span>}{item.media && (item.media.type === 'video' ? <video className="review-media" src={item.media.src} controls preload="metadata" /> : <img className="review-media" src={item.media.src} alt={`Ảnh đính kèm từ ${item.author}`} />)}<div className="post-comment__reaction"><button type="button" className={`post-comment__like ${isCommentLiked ? 'is-liked' : ''}`} onClick={() => toggleProfileCommentLike(post.id, item.id)}><Heart size={13} fill={isCommentLiked ? 'currentColor' : 'none'} /> Thích</button>{commentLikes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: commentLikes, label: 'Những người đã thích bình luận này' })}>{commentLikes.length} lượt thích</button>}</div></div>;
+          })}
+          <form className="post-comment-form" onSubmit={(event) => comment(event, post.id)}><textarea value={commentText[post.id] || ''} onChange={(event) => setCommentText((current) => ({ ...current, [post.id]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" /><ImageAttachment id={`profile-comment-image-${post.id}`} value={commentMedia[post.id] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [post.id]: media }))} label="Tệp" /><button type="submit">Gửi</button></form>
+        </article>;
+      }) : <div className="feed-empty"><Star size={23} /><p>{isCenterProfile ? 'Trung tâm chưa có bài viết nào.' : isTeacherProfile ? 'Giáo viên chưa có bài viết nào.' : 'Học viên chưa có bài viết nào.'}</p></div>}
     </main></div>
     {isEducationProviderProfile && <section className="teacher-courses"><div className="feed-heading"><h2>Khóa học đang mở</h2><p>{courses.length ? (isCenterProfile ? 'Khám phá các chương trình đào tạo của trung tâm.' : 'Khám phá các lộ trình mà giáo viên đang giảng dạy.') : 'Khóa học sẽ xuất hiện tại đây.'}</p></div>{courses.length > 0 && <div className="course-grid">{courses.map((course) => <CourseCard course={course} editable={canCreateCourse} key={course.id} />)}</div>}</section>}
   </div></section>
+    <LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} />
     <Modal
       open={isEditingProfile}
       onClose={() => setIsEditingProfile(false)}

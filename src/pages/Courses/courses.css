@@ -113,9 +113,9 @@
 .form-field input,
 .form-field textarea,
 .review-form textarea,
-.review-reply-form input,
+.review-reply-form textarea,
 .post-composer textarea,
-.post-comment-form input,
+.post-comment-form textarea,
 .message-panel textarea {
   width: 100%;
   border: 1px solid var(--edu-line);
@@ -134,9 +134,9 @@
 }
 .form-field :is(input, textarea):focus,
 .review-form textarea:focus,
-.review-reply-form input:focus,
+.review-reply-form textarea:focus,
 .post-composer textarea:focus,
-.post-comment-form input:focus,
+.post-comment-form textarea:focus,
 .message-panel textarea:focus {
   border-color: var(--edu-green);
   box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
@@ -484,6 +484,21 @@
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
 }
+.review-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+}
+.review-form__actions > button {
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: var(--radius-control);
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+  font-size: var(--text-control);
+  font-weight: 700;
+}
 .review-form__notice {
   margin: 17px 0;
   padding: 12px 15px;
@@ -507,6 +522,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 .review-item__head > span {
   display: flex;
@@ -523,9 +539,19 @@
 }
 .review-list p {
   margin: 5px 0 0;
+  white-space: pre-wrap;
   color: var(--edu-muted);
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
+}
+.review-media {
+  display: block;
+  max-width: min(320px, 100%);
+  max-height: 260px;
+  margin-top: 9px;
+  border: 1px solid var(--edu-line);
+  border-radius: 9px;
+  object-fit: cover;
 }
 .review-replies {
   display: grid;
@@ -543,11 +569,18 @@
   color: var(--edu-ink);
   font-size: var(--text-caption);
 }
+.review-reply__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .review-reply p {
   white-space: pre-line;
 }
 .review-item__actions,
-.review-reply > button {
+.review-reply > button,
+.review-reply__actions {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -557,7 +590,8 @@
   font-weight: 700;
 }
 .review-item__actions button,
-.review-reply > button {
+.review-reply > button,
+.review-reply__actions button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -566,7 +600,9 @@
 .review-item__actions button:hover,
 .review-item__actions button.is-liked,
 .review-reply > button:hover,
-.review-reply > button.is-liked {
+.review-reply > button.is-liked,
+.review-reply__actions button:hover,
+.review-reply__actions button.is-liked {
   color: var(--color-trust);
 }
 .review-reply-form {
@@ -574,9 +610,11 @@
   gap: 8px;
   margin-top: 12px;
 }
-.review-reply-form input {
+.review-reply-form textarea {
   min-width: 0;
   flex: 1;
+  min-height: 42px;
+  max-height: 112px;
 }
 .review-reply-form button {
   display: inline-flex;
@@ -742,6 +780,8 @@
   background: var(--edu-tag);
   color: var(--edu-green);
 }
+.review-likes-count { padding: 0 !important; color: var(--edu-muted) !important; font-weight: 700; }
+.review-likes-count:hover { color: var(--edu-green) !important; text-decoration: underline; }
 .message-dialog__recipient {
   display: flex;
   align-items: center;
@@ -778,7 +818,7 @@
 }
 .message-dialog__recipient i {
   margin-left: auto;
-  color: var(--edu-green);
+  color: var(--edu-muted);
   font-size: var(--text-caption-xs);
   font-style: normal;
   white-space: nowrap;
@@ -791,8 +831,14 @@
   height: 6px;
   margin-right: 5px;
   border-radius: 50%;
-  background: var(--color-online);
+  background: var(--edu-faint);
   vertical-align: 1px;
+}
+.message-dialog__recipient i.is-online {
+  color: var(--edu-green);
+}
+.message-dialog__recipient i.is-online::before {
+  background: var(--color-online);
 }
 .message-dialog__field {
   display: block;
@@ -976,6 +1022,7 @@
   line-height: var(--text-control--line-height);
 }
 .social-post {
+  position: relative;
   margin-top: 14px;
   padding: 19px;
   border: 1px solid var(--edu-line);
@@ -1000,14 +1047,28 @@
 .social-post__head div {
   display: grid;
 }
-.social-post__head strong {
+.social-post__head strong,
+.social-post__author {
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
 }
+.social-post__author,
+.post-comment__author {
+  color: var(--edu-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.social-post__author:hover,
+.post-comment__author:hover { color: var(--edu-green); text-decoration: underline; }
 .social-post__head small {
   color: var(--edu-muted);
   font-size: var(--text-caption-xs);
   line-height: var(--text-caption-xs--line-height);
+}
+.social-post > .content-menu {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 .social-post > p {
   margin: 13px 0;
@@ -1030,9 +1091,18 @@
   align-items: center;
   gap: 5px;
 }
+.social-post__actions { align-items: center; }
+.social-post__actions .social-likes-count { align-self: center; line-height: var(--text-caption--line-height); }
 .social-post__actions button.is-liked {
   color: var(--color-trust);
 }
+.social-likes-count {
+  padding: 0 !important;
+  color: var(--edu-muted);
+  font: inherit;
+  font-weight: 700;
+}
+.social-likes-count:hover { color: var(--edu-green); text-decoration: underline; }
 .post-comment {
   margin: 11px 0 0 !important;
   padding: 8px 10px;
@@ -1046,14 +1116,44 @@
   display: block;
   color: var(--edu-ink);
 }
+.post-comment__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.post-comment__like {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 0;
+  color: var(--edu-muted);
+  font: inherit;
+  font-size: var(--text-caption-xs);
+  font-weight: 700;
+}
+.post-comment > span {
+  display: block;
+}
+.post-comment__like:hover,
+.post-comment__like.is-liked {
+  color: var(--color-trust);
+}
+.post-comment__reaction { display: flex; align-items: center; gap: 9px; min-height: 22px; }
+.post-comment__reaction .post-comment__like,
+.post-comment__reaction .social-likes-count { margin-top: 0; line-height: var(--text-caption-xs--line-height); }
 .post-comment-form {
   display: flex;
   gap: 8px;
   margin-top: 11px;
 }
-.post-comment-form input {
+.post-comment-form textarea {
   min-width: 0;
   padding: 8px 10px;
+  min-height: 39px;
+  max-height: 112px;
 }
 .post-comment-form button {
   padding: 0 11px;

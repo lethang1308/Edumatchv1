@@ -418,6 +418,23 @@ export const toggleCourseReviewLike = (reviewId, userId, replyId = null) => {
   return updatedReview;
 };
 
+export const updateCourseReview = (reviewId, updater) => {
+  let updatedReview = null;
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) => {
+    if (review.id !== reviewId) return review;
+    updatedReview = updater(review);
+    return updatedReview;
+  });
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return updatedReview;
+};
+
+export const deleteCourseReview = (reviewId) => {
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).filter((review) => review.id !== reviewId);
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return next;
+};
+
 export const getCourseRating = (courseId) => {
   const reviews = getCourseReviews(courseId);
   const total = reviews.length;
@@ -441,6 +458,12 @@ export const updatePost = (postId, updater) => {
   const next = read(STORAGE_KEYS.TEACHER_POSTS, []).map((post) =>
     post.id === postId ? updater(post) : post
   );
+  write(STORAGE_KEYS.TEACHER_POSTS, next);
+  return next;
+};
+
+export const deletePost = (postId) => {
+  const next = read(STORAGE_KEYS.TEACHER_POSTS, []).filter((post) => post.id !== postId);
   write(STORAGE_KEYS.TEACHER_POSTS, next);
   return next;
 };
@@ -532,7 +555,14 @@ export const addCourseRatingTrust = (userId, providerId, courseId) => {
 
 export const saveConversation = (conversation) => {
   const saved = read(STORAGE_KEYS.CONVERSATIONS, []);
-  write(STORAGE_KEYS.CONVERSATIONS, [conversation, ...saved]);
+  const recipientId = conversation.senderId === conversation.teacherId
+    ? conversation.studentId
+    : conversation.teacherId;
+  write(STORAGE_KEYS.CONVERSATIONS, [{
+    ...conversation,
+    unreadFor: conversation.unreadFor || (recipientId ? [recipientId] : []),
+    tags: conversation.tags || [],
+  }, ...saved]);
 };
 
 export const createConversationId = (prefix = 'message') =>
@@ -542,6 +572,66 @@ export const getConversationsForUser = (userId) =>
   read(STORAGE_KEYS.CONVERSATIONS, []).filter(
     (message) => message.studentId === userId || message.teacherId === userId
   );
+
+export const updateConversationThread = (thread, updater) => {
+  const reference = thread.messages?.[0] || thread;
+  const sameThread = (message) =>
+    message.courseId === reference.courseId
+    && message.studentId === reference.studentId
+    && message.teacherId === reference.teacherId;
+  const next = read(STORAGE_KEYS.CONVERSATIONS, []).map((message) =>
+    sameThread(message) ? updater(message) : message
+  );
+  write(STORAGE_KEYS.CONVERSATIONS, next);
+  return next;
+};
+
+export const markConversationRead = (thread, userId) =>
+  updateConversationThread(thread, (message) => ({
+    ...message,
+    unreadFor: (message.unreadFor || []).filter((id) => id !== userId),
+  }));
+
+export const markConversationUnread = (thread, userId) =>
+  updateConversationThread(thread, (message) => ({
+    ...message,
+    unreadFor: Array.from(new Set([...(message.unreadFor || []), userId])),
+  }));
+
+export const setConversationTags = (thread, tags) =>
+  updateConversationThread(thread, (message) => ({ ...message, tags }));
+
+export const getMessageTags = (userId) =>
+  read(STORAGE_KEYS.MESSAGE_TAGS, []).filter((tag) => tag.userId === userId);
+
+export const saveMessageTag = (userId, tag) => {
+  if (!userId || !tag?.id || !tag?.name) return getMessageTags(userId);
+  const saved = read(STORAGE_KEYS.MESSAGE_TAGS, []);
+  const existing = saved.find((item) => item.userId === userId && item.id === tag.id);
+  const nextTag = { ...tag, userId };
+  const next = existing
+    ? saved.map((item) => item.userId === userId && item.id === tag.id ? { ...item, ...nextTag } : item)
+    : [...saved, nextTag];
+  write(STORAGE_KEYS.MESSAGE_TAGS, next);
+  return next.filter((item) => item.userId === userId);
+};
+
+export const deleteMessageTag = (userId, tagId) => {
+  const next = read(STORAGE_KEYS.MESSAGE_TAGS, []).filter(
+    (tag) => tag.userId !== userId || tag.id !== tagId
+  );
+  write(STORAGE_KEYS.MESSAGE_TAGS, next);
+  return next.filter((tag) => tag.userId === userId);
+};
+
+export const removeMessageTagFromUserConversations = (userId, tagId) => {
+  const next = read(STORAGE_KEYS.CONVERSATIONS, []).map((message) => {
+    if (message.studentId !== userId && message.teacherId !== userId) return message;
+    return { ...message, tags: (message.tags || []).filter((tag) => (typeof tag === 'string' ? tag.toLowerCase() : tag.id) !== tagId) };
+  });
+  write(STORAGE_KEYS.CONVERSATIONS, next);
+  return next.filter((message) => message.studentId === userId || message.teacherId === userId);
+};
 
 export const getAge = (dob) => {
   if (!dob) return '—';
