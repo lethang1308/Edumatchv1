@@ -349,6 +349,38 @@
 .register-page--teacher .register-login-copy {
   margin-top: 16px;
 }
+
+@media (min-width: 1024px) {
+  .register-page--teacher {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .register-page--teacher .register-shell {
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+  }
+  .register-page--teacher .register-card {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .register-page--teacher .register-heading,
+  .register-page--teacher .register-roles,
+  .register-page--teacher .register-login-copy {
+    flex: 0 0 auto;
+  }
+  .register-page--teacher .register-form {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+  }
+}
 .register-profile-fields {
   padding-top: 16px;
   border-top: 1px solid var(--register-line);
@@ -381,9 +413,67 @@
   font-size: var(--text-caption-xs);
   font-variant-numeric: tabular-nums;
 }
+.register-count--input {
+  margin-top: -2px;
+}
 .register-count.is-limit {
   color: var(--color-danger);
   font-weight: 700;
+}
+.register-text-editor-modal {
+  width: min(1120px, 96vw) !important;
+  max-width: 96vw !important;
+  max-height: 94dvh !important;
+}
+.register-text-editor-modal__body {
+  display: grid;
+  gap: 9px;
+}
+.register-text-editor-modal__textarea {
+  width: 100%;
+  min-height: min(58dvh, 620px);
+  padding: 16px;
+  border: 1px solid var(--register-line);
+  border-radius: var(--edu-radius-control);
+  background: var(--edu-brand-soft);
+  color: var(--register-ink);
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: 1.7;
+  outline: 0;
+  resize: vertical;
+}
+.register-text-editor-modal__textarea:focus {
+  border-color: var(--register-green);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px rgb(0 123 104 / 12%);
+}
+.register-text-editor-modal__count {
+  margin: 0;
+  justify-self: end;
+  color: var(--register-muted);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.register-text-editor-modal__count.is-limit {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+.register-text-editor-modal__done {
+  min-width: 88px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--register-green);
+  border-radius: var(--edu-radius-control);
+  background: var(--register-green);
+  color: var(--color-on-primary);
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 700;
+  cursor: pointer;
+}
+.register-text-editor-modal__done:hover {
+  background: var(--register-green-hover);
 }
 
 .register-hero {
@@ -556,6 +646,15 @@
     min-width: 0;
     margin: 0;
   }
+  .register-text-editor-modal {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  .register-text-editor-modal__textarea {
+    min-height: 48dvh;
+    padding: 13px;
+    font-size: var(--text-control);
+  }
 }
 @media (max-width: 374px) {
   .register-control input {
@@ -592,8 +691,9 @@
   display: block;
   padding: 0;
   color: var(--color-ink);
-  font-size: var(--text-body);
+  font-size: var(--text-caption);
   font-weight: 700;
+  line-height: 1.4;
 }
 .register-phone-visibility > p {
   margin: 0;

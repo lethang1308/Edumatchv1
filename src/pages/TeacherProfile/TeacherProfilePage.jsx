@@ -34,7 +34,10 @@ export function TeacherProfilePage() {
   const [likesTarget, setLikesTarget] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingDetailedProfile, setIsEditingDetailedProfile] = useState(false);
+  const [isViewingProfileSummary, setIsViewingProfileSummary] = useState(false);
   const [isViewingDetailedProfile, setIsViewingDetailedProfile] = useState(false);
+  const [selectedPortfolioImage, setSelectedPortfolioImage] = useState(null);
+  const [activeProfileTextField, setActiveProfileTextField] = useState(null);
   const [isVerifyingLicense, setIsVerifyingLicense] = useState(false);
   const [profileDraft, setProfileDraft] = useState({});
   const [profileErrors, setProfileErrors] = useState({});
@@ -82,6 +85,27 @@ export function TeacherProfilePage() {
   const shortProfileIntro = limitProfileText(profileIntro);
   const profileQualifications = limitProfileText(profile?.qualifications);
   const profileExperience = limitProfileText(profile?.experience);
+  const profileTextFields = {
+    qualifications: {
+      label: 'Bằng cấp, chứng chỉ',
+      placeholder: 'Ví dụ: Cử nhân Sư phạm, IELTS 8.0',
+    },
+    experience: {
+      label: 'Kinh nghiệm giảng dạy',
+      placeholder: 'Ví dụ: 5 năm giảng dạy tiếng Anh',
+    },
+    bio: {
+      label: 'Thông tin tổng quan',
+      placeholder: user?.role === 'center'
+        ? 'Chia sẻ thêm để học viên hiểu hơn về trung tâm của bạn.'
+        : user?.role === 'teacher'
+          ? 'Chia sẻ về bản thân để học viên hiểu hơn về bạn.'
+          : 'Chia sẻ ngắn gọn điều bạn muốn cộng đồng biết về mình...',
+    },
+  };
+  const activeProfileText = activeProfileTextField
+    ? profileTextFields[activeProfileTextField]
+    : null;
 
   useEffect(() => {
     if (user?.id && profile?.id && user.id !== profile.id) trackProviderAffinity(user.id, profile.id, 'viewed-profile', 1);
@@ -155,6 +179,7 @@ export function TeacherProfilePage() {
     };
     updateUser(updates);
     if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, updates);
+    setActiveProfileTextField(null);
     setIsEditingProfile(false);
     toast.success('Thông tin hồ sơ đã được cập nhật.');
   };
@@ -369,7 +394,7 @@ export function TeacherProfilePage() {
 
   const coverStyle = profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined;
   const profileType = isCenterProfile ? 'TRUNG TÂM ĐÀO TẠO' : isTeacherProfile ? 'GIÁO VIÊN' : 'HỌC VIÊN';
-  const subtitle = isCenterProfile ? 'Đối tác đào tạo của EduMatch' : isTeacherProfile ? `${getAge(profile.dob)} tuổi · ${profileQualifications || 'Đang cập nhật chuyên môn'}` : 'Học viên EduMatch';
+  const subtitle = isCenterProfile ? 'Đối tác đào tạo của EduMatch' : isTeacherProfile ? `${getAge(profile.dob)} tuổi` : 'Học viên EduMatch';
 
   return <><section className="learning-page teacher-public-page"><div className="learning-container">
     <header className={`teacher-cover ${profile.coverImage ? 'has-custom-cover' : ''}`} style={coverStyle}>
@@ -377,7 +402,7 @@ export function TeacherProfilePage() {
       <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1><p>{subtitle}</p>{isEducationProviderProfile && <small className={`teacher-cover__trust-count ${trustCount < 3 ? 'is-new' : ''}`}>{trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</>}</small>}{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div>
       {ownsProfile && <label className="profile-cover-upload teacher-cover__cover-upload"><ImagePlus size={16} /> Ảnh bìa<input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'coverImage')} /></label>}
     </header>
-    <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p>{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p>{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p>{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p>{profileQualifications || 'Đang cập nhật'}</p></>}{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions"><button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> {hasDetailedProfile ? 'Chỉnh sửa hồ sơ năng lực' : 'Tạo hồ sơ năng lực'}</button>{isCenterProfile && <>{user?.licenseVerificationStatus === 'verified' ? <span className="teacher-bio__verified"><BadgeCheck size={15} /> Đã xác thực pháp lý</span> : user?.licenseVerificationStatus === 'pending' ? <span className="teacher-bio__pending"><FileCheck2 size={15} /> Hồ sơ đang xét duyệt</span> : <button type="button" className="teacher-bio__verify" onClick={openVerificationForm}><FileCheck2 size={15} /> Yêu cầu xác minh giấy phép</button>}<Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link></>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
+    <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions">{hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> Tạo hồ sơ năng lực</button>}{isCenterProfile && <>{user?.licenseVerificationStatus === 'verified' ? <span className="teacher-bio__verified"><BadgeCheck size={15} /> Đã xác thực pháp lý</span> : user?.licenseVerificationStatus === 'pending' ? <span className="teacher-bio__pending"><FileCheck2 size={15} /> Hồ sơ đang xét duyệt</span> : <button type="button" className="teacher-bio__verify" onClick={openVerificationForm}><FileCheck2 size={15} /> Yêu cầu xác minh giấy phép</button>}<Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link></>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
     <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
       {ownsProfile && <form className="post-composer" onSubmit={publish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} onKeyDown={submitOnPlainEnter} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media && <div className="post-composer__preview">{media.type === 'video' ? <video src={media.src} controls /> : <img src={media.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={clearMedia} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{media.name}</span></div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
       {posts.length ? posts.map((post) => {
@@ -402,8 +427,25 @@ export function TeacherProfilePage() {
   </div></section>
     <LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} />
     <Modal
+      open={isViewingProfileSummary}
+      onClose={() => setIsViewingProfileSummary(false)}
+      title="Thông tin hồ sơ"
+      description={`Thông tin do ${profile.name} cung cấp.`}
+      size="md"
+    >
+      <article className="teacher-profile-summary">
+        <section><h3>Thông tin tổng quan</h3><p>{shortProfileIntro}</p></section>
+        {isCenterProfile && <section><h3>Năm thành lập</h3><p>{profile.foundedYear || 'Đang cập nhật'}</p></section>}
+        {isTeacherProfile && <><section><h3>Kinh nghiệm</h3><p>{profileExperience || 'Đang cập nhật'}</p></section><section><h3>Bằng cấp, chứng chỉ</h3><p>{profileQualifications || 'Đang cập nhật'}</p></section></>}
+        {publicPhone && <section><h3>Điện thoại liên hệ</h3><a href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={15} /> {profile.phone}</a></section>}
+      </article>
+    </Modal>
+    <Modal
       open={isEditingProfile}
-      onClose={() => setIsEditingProfile(false)}
+      onClose={() => {
+        setActiveProfileTextField(null);
+        setIsEditingProfile(false);
+      }}
       title={user?.role === 'center' ? 'Chỉnh sửa hồ sơ Trung tâm' : user?.role === 'teacher' ? 'Chỉnh sửa hồ sơ giáo viên' : 'Giới thiệu bản thân'}
       description={user?.role === 'center' ? 'Thông tin tổng quan này hiển thị công khai trên hồ sơ và các khóa học của trung tâm.' : user?.role === 'teacher' ? 'Thông tin tổng quan này hiển thị công khai trên hồ sơ và các khóa học của bạn.' : 'Chia sẻ thông tin tổng quan để cộng đồng EduMatch hiểu thêm về bạn.'}
       size="lg"
@@ -427,18 +469,20 @@ export function TeacherProfilePage() {
         </label>
         <label>
           <span>Bằng cấp, chứng chỉ</span>
-          <input name="qualifications" value={profileDraft.qualifications || ''} onChange={updateProfileDraft} maxLength={500} placeholder="Ví dụ: Cử nhân Sư phạm, IELTS 8.0" />
+          <textarea name="qualifications" value={profileDraft.qualifications || ''} onChange={updateProfileDraft} onClick={() => setActiveProfileTextField('qualifications')} rows="3" maxLength={SHORT_BIO_MAX_LENGTH} placeholder="Ví dụ: Cử nhân Sư phạm, IELTS 8.0" />
+          <small className={`teacher-profile-editor__counter ${String(profileDraft.qualifications || '').length >= SHORT_BIO_MAX_LENGTH ? 'is-limit' : ''}`}>{String(profileDraft.qualifications || '').length}/{SHORT_BIO_MAX_LENGTH} ký tự</small>
           {profileErrors.qualifications && <small>{profileErrors.qualifications}</small>}
         </label>
         <label>
           <span>Kinh nghiệm giảng dạy</span>
-          <input name="experience" value={profileDraft.experience || ''} onChange={updateProfileDraft} maxLength={500} placeholder="Ví dụ: 5 năm giảng dạy tiếng Anh" />
+          <textarea name="experience" value={profileDraft.experience || ''} onChange={updateProfileDraft} onClick={() => setActiveProfileTextField('experience')} rows="3" maxLength={SHORT_BIO_MAX_LENGTH} placeholder="Ví dụ: 5 năm giảng dạy tiếng Anh" />
+          <small className={`teacher-profile-editor__counter ${String(profileDraft.experience || '').length >= SHORT_BIO_MAX_LENGTH ? 'is-limit' : ''}`}>{String(profileDraft.experience || '').length}/{SHORT_BIO_MAX_LENGTH} ký tự</small>
           {profileErrors.experience && <small>{profileErrors.experience}</small>}
         </label>
         </>}
         <label className="teacher-profile-editor__full">
           <span>Thông tin tổng quan</span>
-          <textarea name="bio" value={profileDraft.bio || ''} onChange={updateProfileDraft} rows="3" maxLength={SHORT_BIO_MAX_LENGTH} placeholder={user?.role === 'center' ? 'Nêu sơ lược lĩnh vực đào tạo, điểm nổi bật và giá trị trung tâm mang đến...' : user?.role === 'teacher' ? 'Nêu sơ lược chuyên môn, phong cách giảng dạy hoặc điều bạn muốn học viên biết...' : 'Chia sẻ ngắn gọn điều bạn muốn cộng đồng biết về mình...'} />
+          <textarea name="bio" value={profileDraft.bio || ''} onChange={updateProfileDraft} onClick={() => setActiveProfileTextField('bio')} rows="3" maxLength={SHORT_BIO_MAX_LENGTH} placeholder={profileTextFields.bio.placeholder} />
           <small className={`teacher-profile-editor__counter ${String(profileDraft.bio || '').length >= SHORT_BIO_MAX_LENGTH ? 'is-limit' : ''}`}>{String(profileDraft.bio || '').length}/{SHORT_BIO_MAX_LENGTH} ký tự</small>
           {profileErrors.bio && <small>{profileErrors.bio}</small>}
         </label>
@@ -447,16 +491,41 @@ export function TeacherProfilePage() {
           <span><strong>Công khai số điện thoại</strong><small>Số điện thoại sẽ hiển thị trên hồ sơ, danh sách tìm kiếm và khóa học của bạn.</small></span>
         </label>}
         <div className="teacher-profile-editor__actions">
-          <button type="button" onClick={() => setIsEditingProfile(false)}>Hủy</button>
+          <button type="button" onClick={() => { setActiveProfileTextField(null); setIsEditingProfile(false); }}>Hủy</button>
           <button type="submit"><Save size={16} /> Lưu thông tin</button>
         </div>
       </form>
     </Modal>
     <Modal
+      open={Boolean(activeProfileTextField)}
+      onClose={() => setActiveProfileTextField(null)}
+      title={activeProfileText?.label}
+      description={`Soạn nội dung chi tiết. Tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`}
+      size="xl"
+      className="profile-text-editor-modal"
+      footer={<button type="button" className="profile-text-editor-modal__done" onClick={() => setActiveProfileTextField(null)}>Xong</button>}
+    >
+      {activeProfileTextField && <div className="profile-text-editor-modal__body">
+        <textarea
+          className="profile-text-editor-modal__textarea"
+          name={activeProfileTextField}
+          value={profileDraft[activeProfileTextField] || ''}
+          onChange={updateProfileDraft}
+          rows="16"
+          maxLength={SHORT_BIO_MAX_LENGTH}
+          placeholder={activeProfileText?.placeholder}
+          aria-label={activeProfileText?.label}
+        />
+        <p className={`profile-text-editor-modal__count ${String(profileDraft[activeProfileTextField] || '').length >= SHORT_BIO_MAX_LENGTH ? 'is-limit' : ''}`}>
+          {String(profileDraft[activeProfileTextField] || '').length}/{SHORT_BIO_MAX_LENGTH} ký tự
+        </p>
+      </div>}
+    </Modal>
+    <Modal
       open={isEditingDetailedProfile}
       onClose={() => setIsEditingDetailedProfile(false)}
       title="Hồ sơ năng lực"
-      description="Trình bày đầy đủ về chuyên môn, phương pháp, đội ngũ hoặc các dấu ấn của bạn. Nội dung này không giới hạn ký tự."
+      description="Hãy chia sẻ thật chi tiết về chuyên môn, kinh nghiệm, phương pháp, đội ngũ hoặc các dấu ấn của bạn. Học viên sẽ hiểu và tin tưởng bạn hơn."
       size="lg"
     >
       <form className="teacher-profile-editor detailed-profile-editor" onSubmit={saveDetailedProfile}>
@@ -481,8 +550,18 @@ export function TeacherProfilePage() {
       title="Hồ sơ năng lực"
       description={`Thông tin do ${profile.name} cung cấp.`}
       size="lg"
+      footer={ownsProfile && canCreateCourse ? <button type="button" className="profile-portfolio-view__edit" onClick={() => { setIsViewingDetailedProfile(false); openDetailedProfileEditor(); }}><FileText size={16} /> Chỉnh sửa hồ sơ năng lực</button> : null}
     >
-      {hasDetailedProfile ? <article className="profile-portfolio-view"><p>{profile.detailedProfile}</p>{profile.profilePortfolioImages?.length > 0 && <div className="profile-portfolio-view__gallery">{profile.profilePortfolioImages.map((image, index) => <img key={`${image.slice(0, 24)}-${index}`} src={image} alt={`Hình ảnh hồ sơ năng lực ${index + 1} của ${profile.name}`} />)}</div>}</article> : <div className="profile-portfolio-view__empty"><FileText size={22} /><p>{isCenterProfile ? 'Trung tâm đang hoàn thiện hồ sơ năng lực.' : 'Giáo viên đang hoàn thiện hồ sơ năng lực.'}</p></div>}
+      {hasDetailedProfile ? <article className="profile-portfolio-view"><p>{profile.detailedProfile}</p>{profile.profilePortfolioImages?.length > 0 && <div className="profile-portfolio-view__gallery">{profile.profilePortfolioImages.map((image, index) => <button type="button" className="profile-portfolio-view__image" key={`${image.slice(0, 24)}-${index}`} onClick={() => setSelectedPortfolioImage({ src: image, index })} aria-label={`Phóng to ảnh minh họa ${index + 1}`}><img src={image} alt={`Hình ảnh hồ sơ năng lực ${index + 1} của ${profile.name}`} /></button>)}</div>}</article> : <div className="profile-portfolio-view__empty"><FileText size={22} /><p>{isCenterProfile ? 'Trung tâm đang hoàn thiện hồ sơ năng lực.' : 'Giáo viên đang hoàn thiện hồ sơ năng lực.'}</p></div>}
+    </Modal>
+    <Modal
+      open={Boolean(selectedPortfolioImage)}
+      onClose={() => setSelectedPortfolioImage(null)}
+      title={`Ảnh minh họa${selectedPortfolioImage ? ` ${selectedPortfolioImage.index + 1}` : ''}`}
+      description={`Hồ sơ năng lực của ${profile.name}`}
+      size="xl"
+    >
+      {selectedPortfolioImage && <img className="profile-portfolio-lightbox__image" src={selectedPortfolioImage.src} alt={`Ảnh minh họa ${selectedPortfolioImage.index + 1} trong hồ sơ năng lực của ${profile.name}`} />}
     </Modal>
     <Modal
       open={isVerifyingLicense}

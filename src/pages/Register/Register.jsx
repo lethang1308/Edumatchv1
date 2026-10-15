@@ -10,6 +10,7 @@ import {
   buildRegistrationPayload,
   centerAccountFields,
   centerFields,
+  constrainPhoneInput,
   getTodayDate,
   initialForm,
   registrationRoles,
@@ -28,14 +29,15 @@ function FieldError({ name, errors }) {
   ) : null;
 }
 
-function ProfileField({ field, form, errors, onChange }) {
-  const { name, label, placeholder, icon: Icon, multiline, maxLength } = field;
+function ProfileField({ field, form, errors, onChange, onExpand }) {
+  const { name, label, placeholder, icon: Icon, multiline, maxLength, showCharacterCount } = field;
+  const hasCharacterCount = Boolean((multiline || showCharacterCount) && maxLength);
   const isAtCharacterLimit = Boolean(
-    multiline && maxLength && form[name].length >= maxLength,
+    hasCharacterCount && form[name].length >= maxLength,
   );
   const describedBy = [
     errors[name] && `register-${name}-error`,
-    multiline && `register-${name}-count`,
+    hasCharacterCount && `register-${name}-count`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -61,7 +63,11 @@ function ProfileField({ field, form, errors, onChange }) {
         <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
         {multiline ? (
           <div className="register-textarea-body">
-            <textarea {...sharedProps} rows={3} />
+            <textarea
+              {...sharedProps}
+              rows={3}
+              onClick={() => onExpand?.(field)}
+            />
             <span
               className={`register-count ${isAtCharacterLimit ? "is-limit" : ""}`}
               id={`register-${name}-count`}
@@ -73,6 +79,14 @@ function ProfileField({ field, form, errors, onChange }) {
           <input {...sharedProps} type="text" />
         )}
       </div>
+      {!multiline && hasCharacterCount && (
+        <span
+          className={`register-count register-count--input ${isAtCharacterLimit ? "is-limit" : ""}`}
+          id={`register-${name}-count`}
+        >
+          {form[name].length}/{maxLength}
+        </span>
+      )}
       <FieldError name={name} errors={errors} />
     </div>
   );
@@ -86,7 +100,7 @@ function PhoneVisibility({ value, disabled, onChange }) {
       aria-labelledby="register-phone-visibility-title"
     >
       <strong id="register-phone-visibility-title">
-        Bạn có muốn công khai số điện thoại?
+        Công khai số điện thoại?
       </strong>
       <p>
         Số điện thoại sẽ hiển thị trên hồ sơ, danh sách tìm kiếm và khóa học khi bạn đồng ý.
@@ -132,6 +146,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [showTeacherTerms, setShowTeacherTerms] = useState(false);
   const [teacherTermsAccepted, setTeacherTermsAccepted] = useState(false);
+  const [activeRegistrationTextField, setActiveRegistrationTextField] = useState(null);
   const formRef = useRef(null);
   const content = roleContent[role];
   const fields = role === "center"
@@ -153,6 +168,8 @@ export function Register() {
       [name]:
         type === "checkbox"
           ? checked
+          : name === "phone"
+            ? constrainPhoneInput(value)
           : name === "foundedYear"
             ? value.replace(/\D/g, "").slice(0, 4)
             : limitedValue,
@@ -169,6 +186,7 @@ export function Register() {
     setFormError("");
     setShowTeacherTerms(false);
     setTeacherTermsAccepted(false);
+    setActiveRegistrationTextField(null);
   };
 
   const handleSubmit = async (event) => {
@@ -388,6 +406,7 @@ export function Register() {
                       form={form}
                       errors={errors}
                       onChange={updateField}
+                      onExpand={setActiveRegistrationTextField}
                     />
                   ),
                 )}
@@ -444,6 +463,32 @@ export function Register() {
           </div>
         </aside>
       </div>
+      <Modal
+        open={Boolean(activeRegistrationTextField)}
+        onClose={() => setActiveRegistrationTextField(null)}
+        title={activeRegistrationTextField?.label}
+        description={`Soạn nội dung chi tiết. Tối đa ${activeRegistrationTextField?.maxLength || 500} ký tự.`}
+        size="xl"
+        className="register-text-editor-modal"
+        footer={<button type="button" className="register-text-editor-modal__done" onClick={() => setActiveRegistrationTextField(null)}>Xong</button>}
+      >
+        {activeRegistrationTextField && <div className="register-text-editor-modal__body">
+          <textarea
+            className="register-text-editor-modal__textarea"
+            id={`register-expanded-${activeRegistrationTextField.name}`}
+            name={activeRegistrationTextField.name}
+            value={form[activeRegistrationTextField.name] || ""}
+            onChange={updateField}
+            rows="16"
+            maxLength={activeRegistrationTextField.maxLength}
+            placeholder={activeRegistrationTextField.placeholder}
+            aria-label={activeRegistrationTextField.label}
+          />
+          <p className={`register-text-editor-modal__count ${form[activeRegistrationTextField.name].length >= activeRegistrationTextField.maxLength ? "is-limit" : ""}`}>
+            {form[activeRegistrationTextField.name].length}/{activeRegistrationTextField.maxLength} ký tự
+          </p>
+        </div>}
+      </Modal>
       <Modal
         open={showTeacherTerms}
         onClose={closeTeacherTerms}

@@ -22,8 +22,8 @@ export const SHORT_BIO_MAX_LENGTH = 500;
 export const registrationRoles = [
   {
     value: "student",
-    label: "Học sinh",
-    accessibleLabel: "Tôi là học sinh",
+    label: "Học viên",
+    accessibleLabel: "Tôi là học viên",
     icon: GraduationCap,
   },
   {
@@ -55,7 +55,7 @@ export const roleContent = {
     description:
       "Bắt đầu hành trình giảng dạy và kết nối với nhiều học sinh hơn.",
     benefits: [
-      { icon: Users, text: "Kết nối với học sinh có nhu cầu học tập" },
+      { icon: Users, text: "Kết nối với học viên có nhu cầu học tập" },
       { icon: SquareCheckBig, text: "Xây dựng hồ sơ chuyên môn và uy tín" },
       {
         icon: CalendarDays,
@@ -98,8 +98,21 @@ const phoneField = {
   icon: Phone,
   type: "tel",
   autoComplete: "tel",
-  maxLength: 20,
+  maxLength: 12,
 };
+
+// Keep the two supported formats easy to enter: 0xxxxxxxxx or +84xxxxxxxxx.
+// The local format is capped at 10 digits while typing so an accidental extra
+// digit cannot leave the form in an invalid state.
+export function constrainPhoneInput(value) {
+  const compact = String(value || "").replace(/[^\d+]/g, "");
+
+  if (compact.startsWith("+")) {
+    return `+${compact.slice(1).replace(/\D/g, "").slice(0, 11)}`;
+  }
+
+  return compact.replace(/\D/g, "").slice(0, 10);
+}
 
 export const accountFields = [
   {
@@ -124,7 +137,6 @@ export const accountFields = [
     icon: CalendarDays,
     type: "date",
     autoComplete: "bday",
-    showLabel: true,
   },
   ...passwordFields,
 ];
@@ -148,19 +160,23 @@ export const teacherFields = [
     label: "Bằng cấp, chứng chỉ",
     placeholder: "Bằng cấp/chứng chỉ",
     icon: Award,
+    multiline: true,
     maxLength: 500,
+    showCharacterCount: true,
   },
   {
     name: "experience",
     label: "Kinh nghiệm giảng dạy",
     placeholder: "Kinh nghiệm giảng dạy",
     icon: ChartNoAxesColumnIncreasing,
+    multiline: true,
     maxLength: 500,
+    showCharacterCount: true,
   },
   {
     name: "biography",
     label: "Thông tin tổng quan",
-    placeholder: "Giới thiệu ngắn gọn để học viên hiểu thêm về bạn.",
+    placeholder: "Chia sẻ về bản thân để học viên hiểu hơn về bạn.",
     icon: FileText,
     multiline: true,
     maxLength: SHORT_BIO_MAX_LENGTH,
@@ -178,7 +194,7 @@ export const centerFields = [
   {
     name: "centerDescription",
     label: "Thông tin tổng quan",
-    placeholder: "Giới thiệu ngắn gọn để học viên hiểu thêm về trung tâm.",
+    placeholder: "Chia sẻ thêm để học viên hiểu hơn về trung tâm của bạn.",
     icon: FileText,
     multiline: true,
     maxLength: SHORT_BIO_MAX_LENGTH,
@@ -234,7 +250,7 @@ export function validateRegistration(form, role, today = new Date()) {
       errors.email = "Vui lòng nhập email hợp lệ.";
   }
   if (!/^(?:0\d{9}|\+84\d{9})$/.test(form.phone.replace(/[\s.-]/g, "")))
-    errors.phone = "Nhập số điện thoại 10 chữ số hoặc bắt đầu bằng +84.";
+    errors.phone = "Nhập 10 số (ví dụ 0989898989), hoặc +84 rồi 9 số.";
   if (role !== "center") {
     if (!form.dateOfBirth) errors.dateOfBirth = "Vui lòng chọn ngày sinh.";
     else if (!validBirthDate(form.dateOfBirth, today))
