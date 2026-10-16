@@ -372,6 +372,28 @@
   max-height: 520px;
   object-fit: contain;
 }
+.community-post__media.is-album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+}
+.community-post__media.is-album :is(img, video) {
+  height: 220px;
+  max-height: none;
+  object-fit: cover;
+}
+.community-post__media.is-album :first-child:nth-last-child(3) {
+  grid-row: span 2;
+  height: 442px;
+}
+@media (max-width: 600px) {
+  .community-post__media.is-album :is(img, video) {
+    height: 150px;
+  }
+  .community-post__media.is-album :first-child:nth-last-child(3) {
+    height: 302px;
+  }
+}
 .community-post__summary {
   display: flex;
   justify-content: space-between;

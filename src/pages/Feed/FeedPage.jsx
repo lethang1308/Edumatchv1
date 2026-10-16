@@ -306,6 +306,7 @@ export function FeedPage() {
             const likes = post.likes || [];
             const comments = post.comments || [];
             const isLiked = likes.includes(user?.id);
+            const postMediaItems = post.mediaItems || (post.media ? [post.media] : []);
             return <article className="community-post" id={post.id} key={post.id}>
               <header className="community-post__header">
                 {author.avatar ? <img src={author.avatar} alt={`Ảnh đại diện của ${author.name}`} /> : <span>{author.name.slice(0, 1)}</span>}
@@ -313,7 +314,7 @@ export function FeedPage() {
                 {owns(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editPost(post)} onDelete={() => removePost(post)} label="bài viết" />}
               </header>
               {post.text && <p className="community-post__text">{post.text}</p>}
-              {post.media && <div className="community-post__media">{post.media.type === 'video' ? <video src={post.media.src} controls preload="metadata" /> : <img src={post.media.src} alt={`Nội dung do ${author.name} chia sẻ`} />}</div>}
+              {postMediaItems.length > 0 && <div className={`community-post__media ${postMediaItems.length > 1 ? 'is-album' : ''}`}>{postMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh ${index + 1} do ${author.name} chia sẻ`} />)}</div>}
               <div className="community-post__summary">
                 {likes.length ? <button type="button" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button> : <span>Hãy là người đầu tiên thích bài viết này</span>}
                 {comments.length > 0 && <span>{comments.length} bình luận</span>}

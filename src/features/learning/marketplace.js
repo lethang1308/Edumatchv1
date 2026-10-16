@@ -54,6 +54,19 @@ const centerProfiles = {
     heartCount: 1,
     bio: 'Không gian đào tạo kỹ năng giao tiếp và thuyết trình dành cho sinh viên, người đi làm.',
   },
+  fullProfile: {
+    id: 'center-trung-tam-day-du',
+    name: 'Trung Tâm Đầy Đủ',
+    role: 'center',
+    foundedYear: '2014',
+    licenseVerificationStatus: 'verified',
+    heartCount: 1286,
+    isPhonePublic: true,
+    phone: '0908123456',
+    bio: 'Trung tâm đào tạo đa kỹ năng với lộ trình rõ ràng, đội ngũ chuyên môn và hoạt động học tập thường xuyên.',
+    detailedProfile: `Trung Tâm Đầy Đủ xây dựng các chương trình học theo nhu cầu thực tế của học viên, từ tiếng Anh, kỹ năng học tập đến kỹ năng nghề nghiệp. Mỗi lộ trình đều có tư vấn đầu vào, mục tiêu rõ ràng và phản hồi định kỳ để học viên theo dõi tiến bộ.\n\nĐội ngũ giảng viên của trung tâm có kinh nghiệm chuyên môn, ưu tiên lớp học quy mô phù hợp và môi trường trao đổi cởi mở. Hồ sơ pháp lý, thông tin khóa học và học phí được công khai minh bạch trên EduMatch.`,
+    profilePortfolioImages: [tutoringHero, studyTogether, teacherCommunity],
+  },
 };
 
 const teacherProfiles = {
@@ -320,7 +333,64 @@ const sampleCourses = [
     createdAt: '2026-10-08T14:00:00.000Z',
     teacher: { ...teacherProfiles.minhKhoa },
   },
+  {
+    id: 'course-trung-tam-day-du-english',
+    title: 'Tiếng Anh ứng dụng cho người đi làm',
+    description: 'Lộ trình giao tiếp thực hành với phản hồi cá nhân, phù hợp người cần dùng tiếng Anh trong công việc.',
+    price: 2800000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 90,
+    schedule: 'Thứ 3 và Thứ 6, 19:00 - 20:30',
+    learningMode: 'both',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-15T09:00:00.000Z',
+    rating: 4.9,
+    reviewCount: 186,
+    teacher: { ...centerProfiles.fullProfile },
+  },
 ];
+
+const fullCenterPostImages = [tutoringHero, studyTogether, teacherCommunity];
+const fullCenterPostCopy = [
+  'Hôm nay lớp giao tiếp đã hoàn thành phần thực hành giới thiệu dự án. Các nhóm nhận phản hồi trực tiếp để hoàn thiện bài nói trong buổi sau.',
+  'Trung tâm vừa cập nhật lịch workshop cuối tuần. Học viên có thể đăng ký để trải nghiệm một buổi học ngắn trước khi chọn lộ trình phù hợp.',
+  'Một số khoảnh khắc từ buổi chữa bài theo nhóm. Cảm ơn các bạn đã chuẩn bị rất kỹ và chủ động đặt câu hỏi.',
+  'Lớp mới sẽ bắt đầu vào tuần tới với bài kiểm tra đầu vào và buổi tư vấn mục tiêu học tập miễn phí.',
+  'Đội ngũ giảng viên đã họp chuyên môn để cập nhật bộ bài tập thực hành theo những tình huống gần với công việc hằng ngày.',
+];
+
+const fullCenterPosts = Array.from({ length: 50 }, (_, index) => {
+  const number = index + 1;
+  const isAlbum = number % 10 === 0;
+  const hasImage = isAlbum || number % 4 === 0;
+  const imageAt = index % fullCenterPostImages.length;
+  return {
+    id: `sample-full-center-post-${number}`,
+    teacherId: centerProfiles.fullProfile.id,
+    authorId: centerProfiles.fullProfile.id,
+    authorName: centerProfiles.fullProfile.name,
+    authorRole: 'center',
+    authorLicenseVerificationStatus: 'verified',
+    text: fullCenterPostCopy[index % fullCenterPostCopy.length],
+    ...(isAlbum ? {
+      mediaItems: fullCenterPostImages.map((src, imageIndex) => ({
+        src,
+        type: 'image',
+        name: `Hoạt động lớp học ${imageIndex + 1}`,
+      })),
+    } : hasImage ? {
+      media: {
+        src: fullCenterPostImages[imageAt],
+        type: 'image',
+        name: 'Khoảnh khắc hoạt động tại trung tâm',
+      },
+    } : {}),
+    createdAt: new Date(Date.UTC(2026, 9, 16 - Math.floor(index / 2), 9 + (index % 8), 0)).toISOString(),
+    likes: Array.from({ length: 12 + (index % 25) }, (_, likeIndex) => `sample-supporter-${likeIndex + 1}`),
+    comments: [],
+  };
+});
 
 const read = (key, fallback) => storage.get(key, fallback);
 const write = (key, value) => storage.set(key, value);
@@ -445,7 +515,13 @@ export const getCourseRating = (courseId) => {
 };
 
 export const getPosts = (authorId) => {
-  const posts = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const savedById = new Map(saved.map((post) => [post.id, post]));
+  const sampleIds = new Set(fullCenterPosts.map((post) => post.id));
+  const posts = [
+    ...saved.filter((post) => !sampleIds.has(post.id)),
+    ...fullCenterPosts.map((post) => savedById.get(post.id) || post),
+  ];
   return authorId ? posts.filter((post) => post.teacherId === authorId || post.authorId === authorId) : posts;
 };
 
@@ -455,11 +531,18 @@ export const savePost = (post) => {
 };
 
 export const updatePost = (postId, updater) => {
-  const next = read(STORAGE_KEYS.TEACHER_POSTS, []).map((post) =>
-    post.id === postId ? updater(post) : post
-  );
+  const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const existingIndex = saved.findIndex((post) => post.id === postId);
+  const source = existingIndex >= 0
+    ? saved[existingIndex]
+    : fullCenterPosts.find((post) => post.id === postId);
+  if (!source) return getPosts();
+  const updated = updater(source);
+  const next = existingIndex >= 0
+    ? saved.map((post, index) => index === existingIndex ? updated : post)
+    : [updated, ...saved];
   write(STORAGE_KEYS.TEACHER_POSTS, next);
-  return next;
+  return getPosts();
 };
 
 export const deletePost = (postId) => {

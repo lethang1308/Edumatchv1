@@ -7,7 +7,10 @@ const formatCurrency = (value) =>
   Number(value) > 0 ? `${new Intl.NumberFormat('vi-VN').format(value)}đ` : 'Liên hệ';
 
 export function CourseCard({ course, editable = false, sponsored = false }) {
-  const rating = getCourseRating(course.id);
+  const storedRating = getCourseRating(course.id);
+  const rating = storedRating.total
+    ? storedRating
+    : { total: Number(course.reviewCount || 0), average: Number(course.rating || 0) };
   const isCenter = course.teacher.role === 'center';
   const trustCount = getProviderTrustCount(course.teacher.id, course.teacher.heartCount);
   return (

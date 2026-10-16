@@ -1340,6 +1340,33 @@
 .social-post__media img {
   background: var(--edu-soft);
 }
+.social-post__media.is-album,
+.community-post__media.is-album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+}
+.social-post__media.is-album :is(img, video),
+.community-post__media.is-album :is(img, video) {
+  height: 220px;
+  max-height: none;
+  object-fit: cover;
+}
+.social-post__media.is-album :first-child:nth-last-child(3),
+.community-post__media.is-album :first-child:nth-last-child(3) {
+  grid-row: span 2;
+  height: 442px;
+}
+@media (max-width: 600px) {
+  .social-post__media.is-album :is(img, video),
+  .community-post__media.is-album :is(img, video) {
+    height: 150px;
+  }
+  .social-post__media.is-album :first-child:nth-last-child(3),
+  .community-post__media.is-album :first-child:nth-last-child(3) {
+    height: 302px;
+  }
+}
 .course-enroll-status {
   display: inline-flex;
   width: max-content;

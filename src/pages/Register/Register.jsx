@@ -452,6 +452,7 @@ export function Register() {
         {activeRegistrationTextField && <div className="register-text-editor-modal__body">
           <textarea
             className="register-text-editor-modal__textarea"
+            autoFocus
             id={`register-expanded-${activeRegistrationTextField.name}`}
             name={activeRegistrationTextField.name}
             value={form[activeRegistrationTextField.name] || ""}
