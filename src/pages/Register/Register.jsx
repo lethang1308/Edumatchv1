@@ -30,17 +30,7 @@ function FieldError({ name, errors }) {
 }
 
 function ProfileField({ field, form, errors, onChange, onExpand }) {
-  const { name, label, placeholder, icon: Icon, multiline, maxLength, showCharacterCount } = field;
-  const hasCharacterCount = Boolean((multiline || showCharacterCount) && maxLength);
-  const isAtCharacterLimit = Boolean(
-    hasCharacterCount && form[name].length >= maxLength,
-  );
-  const describedBy = [
-    errors[name] && `register-${name}-error`,
-    hasCharacterCount && `register-${name}-count`,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const { name, label, placeholder, icon: Icon, multiline, maxLength } = field;
   const sharedProps = {
     id: `register-${name}`,
     name,
@@ -50,7 +40,7 @@ function ProfileField({ field, form, errors, onChange, onExpand }) {
     maxLength,
     required: true,
     "aria-invalid": Boolean(errors[name]),
-    "aria-describedby": describedBy || undefined,
+    "aria-describedby": errors[name] ? `register-${name}-error` : undefined,
   };
   return (
     <div className="register-field">
@@ -65,28 +55,15 @@ function ProfileField({ field, form, errors, onChange, onExpand }) {
           <div className="register-textarea-body">
             <textarea
               {...sharedProps}
-              rows={3}
+              rows={1}
+              wrap="off"
               onClick={() => onExpand?.(field)}
             />
-            <span
-              className={`register-count ${isAtCharacterLimit ? "is-limit" : ""}`}
-              id={`register-${name}-count`}
-            >
-              {form[name].length}/{maxLength}
-            </span>
           </div>
         ) : (
           <input {...sharedProps} type="text" />
         )}
       </div>
-      {!multiline && hasCharacterCount && (
-        <span
-          className={`register-count register-count--input ${isAtCharacterLimit ? "is-limit" : ""}`}
-          id={`register-${name}-count`}
-        >
-          {form[name].length}/{maxLength}
-        </span>
-      )}
       <FieldError name={name} errors={errors} />
     </div>
   );

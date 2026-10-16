@@ -20,6 +20,13 @@ const MAX_LICENSE_IMAGE_SIZE = 3 * 1024 * 1024;
 const SHORT_BIO_MAX_LENGTH = 500;
 const MAX_PORTFOLIO_IMAGES = 4;
 const limitProfileText = (value, maxLength = SHORT_BIO_MAX_LENGTH) => String(value || '').slice(0, maxLength);
+const cleanProfileText = (value, maxLength = SHORT_BIO_MAX_LENGTH) => limitProfileText(
+  String(value || '')
+    .replace(/\*\*/g, '')
+    .replace(/__/g, '')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, ''),
+  maxLength,
+);
 
 export function TeacherProfilePage() {
   const { teacherId } = useParams();
@@ -81,10 +88,10 @@ export function TeacherProfilePage() {
   const trustCount = getProviderTrustCount(profile?.id, profile?.heartCount);
   const trustedByCurrentUser = hasProviderTrust(user?.id, profile?.id);
   const hasDetailedProfile = Boolean(profile?.detailedProfile?.trim() || profile?.profilePortfolioImages?.length);
-  const profileIntro = profile?.bio || (isCenterProfile ? 'Trung tâm đang hoàn thiện phần giới thiệu.' : isTeacherProfile ? 'Giáo viên đang hoàn thiện phần giới thiệu.' : 'Học viên đang hoàn thiện phần giới thiệu.');
-  const shortProfileIntro = limitProfileText(profileIntro);
-  const profileQualifications = limitProfileText(profile?.qualifications);
-  const profileExperience = limitProfileText(profile?.experience);
+  const profileIntro = cleanProfileText(profile?.bio) || (isCenterProfile ? 'Trung tâm đang hoàn thiện phần giới thiệu.' : isTeacherProfile ? 'Giáo viên đang hoàn thiện phần giới thiệu.' : 'Học viên đang hoàn thiện phần giới thiệu.');
+  const shortProfileIntro = cleanProfileText(profileIntro);
+  const profileQualifications = cleanProfileText(profile?.qualifications);
+  const profileExperience = cleanProfileText(profile?.experience);
   const profileTextFields = {
     qualifications: {
       label: 'Bằng cấp, chứng chỉ',
@@ -131,9 +138,9 @@ export function TeacherProfilePage() {
     setProfileDraft({
       name: user?.name || '',
       dob: user?.dob || '',
-      qualifications: limitProfileText(user?.qualifications),
-      experience: limitProfileText(user?.experience),
-      bio: limitProfileText(user?.bio),
+      qualifications: cleanProfileText(user?.qualifications),
+      experience: cleanProfileText(user?.experience),
+      bio: cleanProfileText(user?.bio),
       foundedYear: user?.foundedYear || '',
       isPhonePublic: Boolean(user?.isPhonePublic),
     });
@@ -143,7 +150,7 @@ export function TeacherProfilePage() {
   const updateProfileDraft = (event) => {
     const { name, value, type, checked } = event.target;
     const nextValue = ['bio', 'qualifications', 'experience'].includes(name)
-      ? limitProfileText(value)
+      ? cleanProfileText(value)
       : value;
     setProfileDraft((current) => ({ ...current, [name]: type === 'checkbox' ? checked : nextValue }));
     if (profileErrors[name]) setProfileErrors((current) => ({ ...current, [name]: '' }));
@@ -164,18 +171,18 @@ export function TeacherProfilePage() {
     if (Object.keys(nextErrors).length) return;
     const updates = user?.role === 'center' ? {
       name: profileDraft.name.trim(),
-      bio: limitProfileText(profileDraft.bio).trim(),
+      bio: cleanProfileText(profileDraft.bio).trim(),
       foundedYear: profileDraft.foundedYear.trim(),
       isPhonePublic: Boolean(profileDraft.isPhonePublic),
     } : user?.role === 'teacher' ? {
       name: profileDraft.name.trim(),
       dob: profileDraft.dob,
-      qualifications: limitProfileText(profileDraft.qualifications).trim(),
-      experience: limitProfileText(profileDraft.experience).trim(),
-      bio: limitProfileText(profileDraft.bio).trim(),
+      qualifications: cleanProfileText(profileDraft.qualifications).trim(),
+      experience: cleanProfileText(profileDraft.experience).trim(),
+      bio: cleanProfileText(profileDraft.bio).trim(),
       isPhonePublic: Boolean(profileDraft.isPhonePublic),
     } : {
-      bio: limitProfileText(profileDraft.bio).trim(),
+      bio: cleanProfileText(profileDraft.bio).trim(),
     };
     updateUser(updates);
     if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, updates);
