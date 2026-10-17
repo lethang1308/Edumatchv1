@@ -5,6 +5,50 @@ import { authService } from '@/services/authService';
 
 export const AuthContext = createContext(null);
 
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const normalizePhone = (value) => String(value || '').replace(/[\s.()-]/g, '').replace(/^\+84/, '0');
+
+const getRegisteredAccounts = () => {
+  const savedAccounts = storage.get(STORAGE_KEYS.REGISTERED_ACCOUNTS, []);
+  const accounts = Array.isArray(savedAccounts) ? savedAccounts : [];
+  const currentUser = storage.get(STORAGE_KEYS.USER_INFO, null);
+
+  if (!currentUser) return accounts;
+
+  const currentEmail = normalizeEmail(currentUser.email);
+  const currentPhone = normalizePhone(currentUser.phone);
+  const isKnown = accounts.some((account) =>
+    (currentEmail && normalizeEmail(account.email) === currentEmail)
+    || (currentPhone && normalizePhone(account.phone) === currentPhone)
+  );
+
+  if (isKnown) return accounts;
+
+  const nextAccounts = [...accounts, {
+    id: currentUser.id,
+    email: currentEmail,
+    phone: currentPhone,
+  }];
+  storage.set(STORAGE_KEYS.REGISTERED_ACCOUNTS, nextAccounts);
+  return nextAccounts;
+};
+
+const rememberRegisteredAccount = (account) => {
+  const email = normalizeEmail(account.email);
+  const phone = normalizePhone(account.phone);
+  const accounts = getRegisteredAccounts();
+  const existingIndex = accounts.findIndex((item) =>
+    (email && normalizeEmail(item.email) === email)
+    || (phone && normalizePhone(item.phone) === phone)
+  );
+  const nextAccount = { id: account.id, email, phone };
+  const nextAccounts = existingIndex >= 0
+    ? accounts.map((item, index) => (index === existingIndex ? { ...item, ...nextAccount } : item))
+    : [...accounts, nextAccount];
+
+  storage.set(STORAGE_KEYS.REGISTERED_ACCOUNTS, nextAccounts);
+};
+
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => storage.get(STORAGE_KEYS.ACCESS_TOKEN, null));
   const [user, setUser] = useState(() => storage.get(STORAGE_KEYS.USER_INFO, null));
@@ -61,6 +105,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    const email = normalizeEmail(userData.email);
+    const phone = normalizePhone(userData.phone);
+    const registeredAccounts = getRegisteredAccounts();
+    const duplicateEmail = email && registeredAccounts.some((account) => normalizeEmail(account.email) === email);
+    const duplicatePhone = phone && registeredAccounts.some((account) => normalizePhone(account.phone) === phone);
+
+    if (duplicateEmail || duplicatePhone) {
+      return {
+        success: false,
+        message: duplicateEmail
+          ? 'Email này đã được dùng để đăng ký một tài khoản khác.'
+          : 'Số điện thoại này đã được dùng để đăng ký một tài khoản khác.',
+      };
+    }
+
     setLoading(true);
     try {
       const res = await authService.register(userData);
@@ -80,15 +139,25 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        detailedProfile: userData.detailedProfile || '',
+        profilePortfolioImages: userData.profilePortfolioImages || [],
         foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, authToken);
       storage.set(STORAGE_KEYS.USER_INFO, authUser);
+      rememberRegisteredAccount(authUser);
       setToken(authToken);
       setUser(authUser);
       return { success: true, user: authUser, data: res };
-    } catch {
+    } catch (error) {
+      if (error?.response) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Không thể đăng ký tài khoản. Vui lòng thử lại.',
+        };
+      }
+
       // Mock skeleton fallback khi backend chưa kết nối
       const mockToken = 'mock_jwt_token_register';
       const mockUser = {
@@ -101,11 +170,14 @@ export const AuthProvider = ({ children }) => {
         qualifications: userData.qualifications || '',
         experience: userData.experience || '',
         bio: userData.bio || '',
+        detailedProfile: userData.detailedProfile || '',
+        profilePortfolioImages: userData.profilePortfolioImages || [],
         foundedYear: userData.foundedYear || '',
         isPhonePublic: Boolean(userData.isPhonePublic),
       };
       storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
       storage.set(STORAGE_KEYS.USER_INFO, mockUser);
+      rememberRegisteredAccount(mockUser);
       setToken(mockToken);
       setUser(mockUser);
       return { success: true, user: mockUser };

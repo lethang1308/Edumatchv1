@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from '@/components/navigation/Header';
 import { Footer } from '@/components/navigation/Footer';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { FloatingChat } from '@/components/messages/FloatingChat';
 
 export const MainLayout = () => {
   const { pathname, hash } = useLocation();
@@ -37,6 +38,7 @@ export const MainLayout = () => {
         <Outlet />
       </main>
       <Footer />
+      <FloatingChat />
     </div>
   );
 };

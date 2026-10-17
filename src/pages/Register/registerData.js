@@ -17,11 +17,13 @@ import {
   Users,
 } from "lucide-react";
 
+export const SHORT_BIO_MAX_LENGTH = 500;
+
 export const registrationRoles = [
   {
     value: "student",
-    label: "Học sinh",
-    accessibleLabel: "Tôi là học sinh",
+    label: "Học viên",
+    accessibleLabel: "Tôi là học viên",
     icon: GraduationCap,
   },
   {
@@ -53,7 +55,7 @@ export const roleContent = {
     description:
       "Bắt đầu hành trình giảng dạy và kết nối với nhiều học sinh hơn.",
     benefits: [
-      { icon: Users, text: "Kết nối với học sinh có nhu cầu học tập" },
+      { icon: Users, text: "Kết nối với học viên có nhu cầu học tập" },
       { icon: SquareCheckBig, text: "Xây dựng hồ sơ chuyên môn và uy tín" },
       {
         icon: CalendarDays,
@@ -91,12 +93,26 @@ const passwordFields = [
 
 const phoneField = {
   name: "phone",
-  label: "Số điện thoại",
+  label: "Số điện thoại (tên đăng nhập)",
+  placeholder: "Số điện thoại ( Tài khoản đăng nhập )",
   icon: Phone,
   type: "tel",
   autoComplete: "tel",
-  maxLength: 20,
+  maxLength: 12,
 };
+
+// Keep the two supported formats easy to enter: 0xxxxxxxxx or +84xxxxxxxxx.
+// The local format is capped at 10 digits while typing so an accidental extra
+// digit cannot leave the form in an invalid state.
+export function constrainPhoneInput(value) {
+  const compact = String(value || "").replace(/[^\d+]/g, "");
+
+  if (compact.startsWith("+")) {
+    return `+${compact.slice(1).replace(/\D/g, "").slice(0, 11)}`;
+  }
+
+  return compact.replace(/\D/g, "").slice(0, 10);
+}
 
 export const accountFields = [
   {
@@ -121,7 +137,6 @@ export const accountFields = [
     icon: CalendarDays,
     type: "date",
     autoComplete: "bday",
-    showLabel: true,
   },
   ...passwordFields,
 ];
@@ -130,16 +145,12 @@ export const centerAccountFields = [
   {
     name: "centerName",
     label: "Tên trung tâm",
-    placeholder: "VD: Trung tâm Anh ngữ EduMatch",
+    placeholder: "Tên trung tâm",
     icon: Building2,
     autoComplete: "organization",
     maxLength: 150,
   },
-  {
-    ...phoneField,
-    label: "Số điện thoại (tài khoản đăng nhập)",
-    placeholder: "Số điện thoại dùng để đăng nhập",
-  },
+  phoneField,
   ...passwordFields,
 ];
 
@@ -147,25 +158,28 @@ export const teacherFields = [
   {
     name: "qualification",
     label: "Bằng cấp, chứng chỉ",
-    placeholder: "VD: Cử nhân ĐH Sư phạm, IELTS 8.0...",
+    placeholder: "Bằng cấp/chứng chỉ",
     icon: Award,
-    maxLength: 200,
+    multiline: true,
+    maxLength: 500,
+    showCharacterCount: true,
   },
   {
     name: "experience",
     label: "Kinh nghiệm giảng dạy",
-    placeholder: "VD: 3 năm dạy Toán THPT, luyện thi đại học...",
+    placeholder: "Kinh nghiệm giảng dạy",
     icon: ChartNoAxesColumnIncreasing,
+    multiline: true,
     maxLength: 500,
+    showCharacterCount: true,
   },
   {
     name: "biography",
-    label: "Giới thiệu về bản thân",
-    placeholder:
-      "Chia sẻ về chuyên môn, phong cách giảng dạy và thông điệp gửi gắm tới học viên...",
+    label: "Thông tin tổng quan",
+    placeholder: "Chia sẻ về bản thân để học viên hiểu hơn về bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: 500,
+    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -179,12 +193,11 @@ export const centerFields = [
   },
   {
     name: "centerDescription",
-    label: "Mô tả về trung tâm",
-    placeholder:
-      "Chia sẻ về chương trình đào tạo, đội ngũ giảng dạy và giá trị mà trung tâm mang đến...",
+    label: "Thông tin tổng quan",
+    placeholder: "Chia sẻ thêm để học viên hiểu hơn về trung tâm của bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: 1000,
+    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -201,7 +214,7 @@ export const initialForm = {
   centerName: "",
   centerDescription: "",
   foundedYear: "",
-  isPhonePublic: false,
+  isPhonePublic: true,
 };
 
 export function getTodayDate(today = new Date()) {
@@ -237,7 +250,7 @@ export function validateRegistration(form, role, today = new Date()) {
       errors.email = "Vui lòng nhập email hợp lệ.";
   }
   if (!/^(?:0\d{9}|\+84\d{9})$/.test(form.phone.replace(/[\s.-]/g, "")))
-    errors.phone = "Nhập số điện thoại 10 chữ số hoặc bắt đầu bằng +84.";
+    errors.phone = "Nhập 10 số (ví dụ 0989898989), hoặc +84 rồi 9 số.";
   if (role !== "center") {
     if (!form.dateOfBirth) errors.dateOfBirth = "Vui lòng chọn ngày sinh.";
     else if (!validBirthDate(form.dateOfBirth, today))
@@ -258,6 +271,13 @@ export function validateRegistration(form, role, today = new Date()) {
   } else if (role === "center" && !form.centerDescription.trim()) {
     errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
   }
+  if (
+    (role === "teacher" && form.biography.length > SHORT_BIO_MAX_LENGTH) ||
+    (role === "center" && form.centerDescription.length > SHORT_BIO_MAX_LENGTH)
+  ) {
+    errors[role === "teacher" ? "biography" : "centerDescription"] =
+      `Thông tin tổng quan tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`;
+  }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";
   return errors;
@@ -265,6 +285,8 @@ export function validateRegistration(form, role, today = new Date()) {
 
 // Only include the active role's fields; hidden profile values never reach the API.
 export function buildRegistrationPayload(form, role) {
+  const limitProfileText = (value) =>
+    String(value || "").slice(0, SHORT_BIO_MAX_LENGTH).trim();
   const data = {
     name: (role === "center" ? form.centerName : form.name).trim(),
     phone: form.phone.replace(/[\s.-]/g, ""),
@@ -276,10 +298,10 @@ export function buildRegistrationPayload(form, role) {
   if (role === "center") {
     return {
       ...data,
-      bio: form.centerDescription.trim(),
+      bio: limitProfileText(form.centerDescription),
       foundedYear: form.foundedYear,
       centerProfile: {
-        description: form.centerDescription.trim(),
+        description: limitProfileText(form.centerDescription),
         foundedYear: form.foundedYear,
       },
     };
@@ -290,11 +312,11 @@ export function buildRegistrationPayload(form, role) {
     dateOfBirth: form.dateOfBirth,
     dob: form.dateOfBirth,
     ...(role === "teacher" && {
-      qualifications: form.qualification.trim(),
-      experience: form.experience.trim(),
-      bio: form.biography.trim(),
+      qualifications: limitProfileText(form.qualification),
+      experience: limitProfileText(form.experience),
+      bio: limitProfileText(form.biography),
       teacherProfile: Object.fromEntries(
-        teacherFields.map(({ name }) => [name, form[name].trim()]),
+        teacherFields.map(({ name }) => [name, limitProfileText(form[name])]),
       ),
     }),
   };

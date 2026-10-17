@@ -1,5 +1,124 @@
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
+import tutoringHero from '@/assets/tutoring-hero.webp';
+import studyTogether from '@/assets/register-student.webp';
+import teacherCommunity from '@/assets/vietnamese-teachers-avatar-strip.png';
+
+const centerProfiles = {
+  oldSchool: {
+    id: 'center-old-school',
+    name: 'Trung tâm The Old School',
+    role: 'center',
+    foundedYear: '2017',
+    licenseVerificationStatus: 'verified',
+    heartCount: 128,
+    bio: 'Trung tâm ngoại ngữ với chương trình cá nhân hóa và đội ngũ giáo viên giàu kinh nghiệm.',
+    detailedProfile: `The Old School xây dựng lộ trình tiếng Anh theo năng lực đầu vào, mục tiêu đầu ra và nhịp học của từng học viên. Mỗi lớp duy trì quy mô nhỏ để giáo viên có thể theo dõi tiến độ, phản hồi bài tập và điều chỉnh nội dung phù hợp.\n\nĐội ngũ chuyên môn của trung tâm tập trung vào tiếng Anh giao tiếp, IELTS nền tảng và IELTS Writing. Học viên được kiểm tra đầu vào, nhận kế hoạch học rõ ràng và tham gia các buổi thực hành định kỳ. Không gian học được thiết kế yên tĩnh, an toàn và thân thiện để người học tự tin đặt câu hỏi và tiến bộ từng tuần.\n\nTrung tâm cam kết công khai thông tin khóa học, học phí và lộ trình trước khi đăng ký. Hồ sơ pháp lý đã được EduMatch xác thực.`,
+    profilePortfolioImages: [tutoringHero, studyTogether],
+  },
+  educare: {
+    id: 'center-educare',
+    name: 'Trung tâm EduCare',
+    role: 'center',
+    foundedYear: '2021',
+    licenseVerificationStatus: 'pending',
+    heartCount: 18,
+    bio: 'Đơn vị đào tạo kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm.',
+    detailedProfile: `EduCare phát triển các chương trình kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm. Nội dung học tập được thiết kế theo tình huống thực tế, kết hợp hướng dẫn chuyên môn, thực hành nhóm và phản hồi cá nhân.\n\nCác lớp nổi bật gồm thuyết trình, tư duy làm việc và ứng dụng Excel trong công việc. Trước mỗi khóa, học viên được chia sẻ mục tiêu, thời lượng và học phí để chủ động lựa chọn. Sau khóa học, EduCare gửi nhận xét tiến bộ và gợi ý lộ trình tiếp theo.\n\nHồ sơ giấy phép của trung tâm đã được gửi đến EduMatch và đang trong quá trình xét duyệt.`,
+    profilePortfolioImages: [studyTogether, teacherCommunity],
+  },
+  melody: {
+    id: 'center-melody-studio',
+    name: 'Melody Studio',
+    role: 'center',
+    foundedYear: '2023',
+    heartCount: 2,
+    bio: 'Không gian học âm nhạc gần gũi dành cho trẻ em và người lớn.',
+  },
+  horizon: {
+    id: 'center-horizon-learning',
+    name: 'Horizon Learning Hub',
+    role: 'center',
+    foundedYear: '2019',
+    licenseVerificationStatus: 'verified',
+    heartCount: 64,
+    bio: 'Trung tâm tiếng Anh ứng dụng với lớp học nhỏ, lộ trình rõ ràng và phản hồi sát sao.',
+    detailedProfile: `Horizon Learning Hub đồng hành cùng học viên từ tiếng Anh nền tảng đến TOEIC và giao tiếp chuyên nghiệp. Trung tâm xây dựng lớp học nhỏ, kiểm tra đầu vào trước khi xếp lớp và công khai kế hoạch học, học phí cùng mục tiêu đầu ra.\n\nĐội ngũ giáo viên có kinh nghiệm luyện thi và đào tạo tiếng Anh cho người đi làm. Mỗi học viên có báo cáo tiến độ theo từng chặng để chủ động điều chỉnh mục tiêu học tập.\n\nHồ sơ pháp lý của trung tâm đã được EduMatch xác thực.`,
+    profilePortfolioImages: [tutoringHero, teacherCommunity],
+  },
+  brightPath: {
+    id: 'center-bright-path',
+    name: 'Bright Path Academy',
+    role: 'center',
+    foundedYear: '2025',
+    heartCount: 1,
+    bio: 'Không gian đào tạo kỹ năng giao tiếp và thuyết trình dành cho sinh viên, người đi làm.',
+  },
+  fullProfile: {
+    id: 'center-trung-tam-day-du',
+    name: 'Trung Tâm Đầy Đủ',
+    role: 'center',
+    foundedYear: '2014',
+    licenseVerificationStatus: 'verified',
+    heartCount: 1286,
+    isPhonePublic: true,
+    phone: '0908123456',
+    bio: 'Trung tâm đào tạo đa kỹ năng với lộ trình rõ ràng, đội ngũ chuyên môn và hoạt động học tập thường xuyên.',
+    detailedProfile: `Trung Tâm Đầy Đủ xây dựng các chương trình học theo nhu cầu thực tế của học viên, từ tiếng Anh, kỹ năng học tập đến kỹ năng nghề nghiệp. Mỗi lộ trình đều có tư vấn đầu vào, mục tiêu rõ ràng và phản hồi định kỳ để học viên theo dõi tiến bộ.\n\nĐội ngũ giảng viên của trung tâm có kinh nghiệm chuyên môn, ưu tiên lớp học quy mô phù hợp và môi trường trao đổi cởi mở. Hồ sơ pháp lý, thông tin khóa học và học phí được công khai minh bạch trên EduMatch.`,
+    profilePortfolioImages: [tutoringHero, studyTogether, teacherCommunity],
+  },
+};
+
+const teacherProfiles = {
+  linhAn: {
+    id: 'teacher-linh-an',
+    name: 'Cô Lê Linh An',
+    role: 'teacher',
+    dob: '1991-08-12',
+    qualifications: 'Thạc sĩ Giảng dạy tiếng Anh, IELTS 8.0',
+    experience: '9 năm giảng dạy tiếng Anh giao tiếp và IELTS',
+    heartCount: 247,
+    isPhonePublic: true,
+    phone: '0901234567',
+    bio: 'Tôi giúp người học xây phản xạ tiếng Anh tự nhiên bằng lộ trình vừa sức và nhiều thực hành.',
+    detailedProfile: `Tôi tập trung vào tiếng Anh giao tiếp, IELTS nền tảng và kỹ năng thuyết trình bằng tiếng Anh. Mỗi học viên được trao đổi mục tiêu ngay từ đầu để xây dựng nhịp học phù hợp, ưu tiên sử dụng ngôn ngữ trong những tình huống gần gũi.\n\nLớp học kết hợp phản xạ nghe nói, bài tập cá nhân và nhận xét sau từng buổi. Tôi tin rằng sự tiến bộ bền vững bắt đầu từ cảm giác an toàn khi được thử, được sai và được phản hồi rõ ràng.`,
+    profilePortfolioImages: [studyTogether, tutoringHero],
+  },
+  ducHieu: {
+    id: 'teacher-duc-hieu',
+    name: 'Thầy Nguyễn Đức Hiếu',
+    role: 'teacher',
+    dob: '1997-03-22',
+    qualifications: 'Cử nhân Sư phạm Toán học',
+    experience: '3 năm đồng hành cùng học sinh THPT',
+    heartCount: 2,
+    bio: 'Dạy Toán theo tư duy nền tảng, giúp học viên hiểu bản chất trước khi luyện đề.',
+  },
+  phuongThao: {
+    id: 'teacher-phuong-thao',
+    name: 'Cô Phạm Phương Thảo',
+    role: 'teacher',
+    dob: '1993-11-04',
+    qualifications: 'Cử nhân Thiết kế đồ họa, chứng chỉ Adobe Certified Professional',
+    experience: '6 năm làm nghề và giảng dạy thiết kế',
+    heartCount: 58,
+    bio: 'Tôi hướng dẫn thiết kế từ nền tảng thị giác đến quy trình xây dựng một portfolio cá nhân.',
+    detailedProfile: `Tôi dạy thiết kế đồ họa cho người mới bắt đầu, tập trung vào tư duy thị giác, bố cục, màu sắc và khả năng kể chuyện bằng hình ảnh. Lộ trình học đi từ bài tập nhỏ đến dự án portfolio cá nhân.\n\nHọc viên được xem phản hồi trực tiếp trên bài làm, nhận định hướng tài nguyên phù hợp và thực hành theo brief gần với môi trường công việc.`,
+    profilePortfolioImages: [teacherCommunity, studyTogether],
+  },
+  minhKhoa: {
+    id: 'teacher-minh-khoa',
+    name: 'Thầy Trần Minh Khoa',
+    role: 'teacher',
+    dob: '1990-01-17',
+    qualifications: 'Kỹ sư Công nghệ thông tin, chứng chỉ AWS Cloud Practitioner',
+    experience: '8 năm phát triển phần mềm và 4 năm hướng dẫn lập trình',
+    heartCount: 103,
+    bio: 'Học lập trình bằng dự án nhỏ, từng bước hiểu cách biến ý tưởng thành sản phẩm.',
+    detailedProfile: `Tôi hướng dẫn Python, JavaScript và kỹ năng xây dựng sản phẩm web cho người mới. Nội dung học luôn gắn với bài tập có đầu ra rõ ràng, giúp học viên hiểu luồng tư duy thay vì chỉ ghi nhớ cú pháp.\n\nHọc viên được theo sát từ bước cài đặt môi trường, chia nhỏ bài toán đến hoàn thiện dự án cá nhân.`,
+    profilePortfolioImages: [tutoringHero, teacherCommunity],
+  },
+};
 
 const sampleCourses = [
   {
@@ -14,15 +133,7 @@ const sampleCourses = [
     learningMode: 'online',
     enrollmentStatus: 'open',
     createdAt: '2026-10-01T09:00:00.000Z',
-    teacher: {
-      id: 'teacher-mai-anh',
-      name: 'Mai Anh',
-      dob: '1992-05-16',
-      qualifications: 'Cử nhân Ngôn ngữ Anh, IELTS 8.0',
-      experience: '7 năm giảng dạy tiếng Anh giao tiếp và IELTS',
-      heartCount: 486,
-      bio: 'Tôi ưu tiên môi trường học thân thiện, giúp học viên tự tin sử dụng tiếng Anh trong đời sống.',
-    },
+    teacher: { ...teacherProfiles.linhAn },
   },
   {
     id: 'course-old-school-ielts',
@@ -38,15 +149,7 @@ const sampleCourses = [
     location: 'Cầu Giấy, Hà Nội',
     enrollmentStatus: 'open',
     createdAt: '2026-10-06T09:00:00.000Z',
-    teacher: {
-      id: 'center-old-school',
-      name: 'Trung tâm The Old School',
-      role: 'center',
-      foundedYear: '2017',
-      licenseVerificationStatus: 'verified',
-      heartCount: 128,
-      bio: 'Trung tâm ngoại ngữ với chương trình cá nhân hóa và đội ngũ giáo viên giàu kinh nghiệm.',
-    },
+    teacher: { ...centerProfiles.oldSchool },
   },
   {
     id: 'course-educare-skills',
@@ -62,15 +165,7 @@ const sampleCourses = [
     location: 'Hải Châu, Đà Nẵng',
     enrollmentStatus: 'open',
     createdAt: '2026-10-05T09:00:00.000Z',
-    teacher: {
-      id: 'center-educare',
-      name: 'Trung tâm EduCare',
-      role: 'center',
-      foundedYear: '2021',
-      licenseVerificationStatus: 'pending',
-      heartCount: 18,
-      bio: 'Đơn vị đào tạo kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm.',
-    },
+    teacher: { ...centerProfiles.educare },
   },
   {
     id: 'course-melody-piano',
@@ -86,14 +181,7 @@ const sampleCourses = [
     location: 'Quận 3, TP. Hồ Chí Minh',
     enrollmentStatus: 'open',
     createdAt: '2026-10-04T09:00:00.000Z',
-    teacher: {
-      id: 'center-melody-studio',
-      name: 'Melody Studio',
-      role: 'center',
-      foundedYear: '2023',
-      heartCount: 2,
-      bio: 'Không gian học âm nhạc gần gũi dành cho trẻ em và người lớn.',
-    },
+    teacher: { ...centerProfiles.melody },
   },
   {
     id: 'course-old-school-ielts-writing',
@@ -107,15 +195,7 @@ const sampleCourses = [
     learningMode: 'online',
     enrollmentStatus: 'open',
     createdAt: '2026-10-07T08:30:00.000Z',
-    teacher: {
-      id: 'center-old-school',
-      name: 'Trung tâm The Old School',
-      role: 'center',
-      foundedYear: '2017',
-      licenseVerificationStatus: 'verified',
-      heartCount: 128,
-      bio: 'Trung tâm ngoại ngữ với chương trình cá nhân hóa và đội ngũ giáo viên giàu kinh nghiệm.',
-    },
+    teacher: { ...centerProfiles.oldSchool },
   },
   {
     id: 'course-educare-excel',
@@ -131,15 +211,7 @@ const sampleCourses = [
     location: 'Hải Châu, Đà Nẵng',
     enrollmentStatus: 'open',
     createdAt: '2026-10-07T10:00:00.000Z',
-    teacher: {
-      id: 'center-educare',
-      name: 'Trung tâm EduCare',
-      role: 'center',
-      foundedYear: '2021',
-      licenseVerificationStatus: 'pending',
-      heartCount: 18,
-      bio: 'Đơn vị đào tạo kỹ năng thực hành dành cho học sinh, sinh viên và người đi làm.',
-    },
+    teacher: { ...centerProfiles.educare },
   },
   {
     id: 'course-melody-guitar',
@@ -155,16 +227,170 @@ const sampleCourses = [
     location: 'Quận 3, TP. Hồ Chí Minh',
     enrollmentStatus: 'open',
     createdAt: '2026-10-07T11:00:00.000Z',
-    teacher: {
-      id: 'center-melody-studio',
-      name: 'Melody Studio',
-      role: 'center',
-      foundedYear: '2023',
-      heartCount: 2,
-      bio: 'Không gian học âm nhạc gần gũi dành cho trẻ em và người lớn.',
-    },
+    teacher: { ...centerProfiles.melody },
+  },
+  {
+    id: 'course-horizon-toeic',
+    title: 'TOEIC nền tảng cho người đi làm',
+    description: 'Lộ trình củng cố ngữ pháp, từ vựng và kỹ năng làm bài theo mục tiêu thực tế.',
+    price: 3600000,
+    paymentType: 'full-course',
+    sessions: 18,
+    duration: 90,
+    schedule: 'Thứ 3 và Thứ 7, 19:00 – 20:30',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Thanh Xuân, Hà Nội',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-12T09:00:00.000Z',
+    teacher: { ...centerProfiles.horizon },
+  },
+  {
+    id: 'course-horizon-speaking',
+    title: 'Tiếng Anh giao tiếp công sở',
+    description: 'Thực hành các tình huống họp, giới thiệu bản thân và giao tiếp trong công việc.',
+    price: 2400000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 90,
+    schedule: 'Thứ 2 và Thứ 5, 18:30 – 20:00',
+    learningMode: 'online',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-11T14:00:00.000Z',
+    teacher: { ...centerProfiles.horizon },
+  },
+  {
+    id: 'course-bright-path-speaking',
+    title: 'Thuyết trình tự tin từ nền tảng',
+    description: 'Lớp thực hành giọng nói, cấu trúc nội dung và kỹ năng trình bày trước đám đông.',
+    price: 2200000,
+    paymentType: 'full-course',
+    sessions: 8,
+    duration: 120,
+    schedule: 'Sáng Chủ nhật',
+    learningMode: 'in-person',
+    inPersonType: 'classroom',
+    location: 'Bình Thạnh, TP. Hồ Chí Minh',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-10T10:00:00.000Z',
+    teacher: { ...centerProfiles.brightPath },
+  },
+  {
+    id: 'course-linh-an-speaking',
+    title: 'Phản xạ tiếng Anh giao tiếp',
+    description: 'Luyện nói theo tình huống đời sống với phản hồi cá nhân sau từng buổi học.',
+    price: 2800000,
+    paymentType: 'full-course',
+    sessions: 12,
+    duration: 90,
+    schedule: 'Thứ 4 và Chủ nhật, 20:00 – 21:30',
+    learningMode: 'online',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-13T08:00:00.000Z',
+    teacher: { ...teacherProfiles.linhAn },
+  },
+  {
+    id: 'course-duc-hieu-math',
+    title: 'Toán nền tảng 10',
+    description: 'Củng cố tư duy đại số và hình học cho học sinh cần học chắc từ gốc.',
+    price: 1600000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 90,
+    schedule: 'Thứ 3 và Thứ 6, 18:00 – 19:30',
+    learningMode: 'in-person',
+    inPersonType: 'home',
+    location: 'Nam Từ Liêm, Hà Nội',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-12T13:00:00.000Z',
+    teacher: { ...teacherProfiles.ducHieu },
+  },
+  {
+    id: 'course-phuong-thao-design',
+    title: 'Thiết kế đồ họa cho người mới',
+    description: 'Làm chủ bố cục, màu sắc và hoàn thiện portfolio thiết kế đầu tiên.',
+    price: 3000000,
+    paymentType: 'full-course',
+    sessions: 10,
+    duration: 120,
+    schedule: 'Tối thứ 3 và thứ 5',
+    learningMode: 'online',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-09T08:00:00.000Z',
+    teacher: { ...teacherProfiles.phuongThao },
+  },
+  {
+    id: 'course-minh-khoa-python',
+    title: 'Python qua dự án thực tế',
+    description: 'Khởi đầu cùng Python bằng các bài tập nhỏ và một dự án cá nhân hoàn chỉnh.',
+    price: 3400000,
+    paymentType: 'full-course',
+    sessions: 14,
+    duration: 120,
+    schedule: 'Thứ 2 và Thứ 6, 19:30 – 21:30',
+    learningMode: 'online',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-08T14:00:00.000Z',
+    teacher: { ...teacherProfiles.minhKhoa },
+  },
+  {
+    id: 'course-trung-tam-day-du-english',
+    title: 'Tiếng Anh ứng dụng cho người đi làm',
+    description: 'Lộ trình giao tiếp thực hành với phản hồi cá nhân, phù hợp người cần dùng tiếng Anh trong công việc.',
+    price: 2800000,
+    paymentType: 'monthly',
+    sessionsPerWeek: 2,
+    duration: 90,
+    schedule: 'Thứ 3 và Thứ 6, 19:00 - 20:30',
+    learningMode: 'both',
+    enrollmentStatus: 'open',
+    createdAt: '2026-10-15T09:00:00.000Z',
+    rating: 4.9,
+    reviewCount: 186,
+    teacher: { ...centerProfiles.fullProfile },
   },
 ];
+
+const fullCenterPostImages = [tutoringHero, studyTogether, teacherCommunity];
+const fullCenterPostCopy = [
+  'Hôm nay lớp giao tiếp đã hoàn thành phần thực hành giới thiệu dự án. Các nhóm nhận phản hồi trực tiếp để hoàn thiện bài nói trong buổi sau.',
+  'Trung tâm vừa cập nhật lịch workshop cuối tuần. Học viên có thể đăng ký để trải nghiệm một buổi học ngắn trước khi chọn lộ trình phù hợp.',
+  'Một số khoảnh khắc từ buổi chữa bài theo nhóm. Cảm ơn các bạn đã chuẩn bị rất kỹ và chủ động đặt câu hỏi.',
+  'Lớp mới sẽ bắt đầu vào tuần tới với bài kiểm tra đầu vào và buổi tư vấn mục tiêu học tập miễn phí.',
+  'Đội ngũ giảng viên đã họp chuyên môn để cập nhật bộ bài tập thực hành theo những tình huống gần với công việc hằng ngày.',
+];
+
+const fullCenterPosts = Array.from({ length: 50 }, (_, index) => {
+  const number = index + 1;
+  const isAlbum = number % 10 === 0;
+  const hasImage = isAlbum || number % 4 === 0;
+  const imageAt = index % fullCenterPostImages.length;
+  return {
+    id: `sample-full-center-post-${number}`,
+    teacherId: centerProfiles.fullProfile.id,
+    authorId: centerProfiles.fullProfile.id,
+    authorName: centerProfiles.fullProfile.name,
+    authorRole: 'center',
+    authorLicenseVerificationStatus: 'verified',
+    text: fullCenterPostCopy[index % fullCenterPostCopy.length],
+    ...(isAlbum ? {
+      mediaItems: fullCenterPostImages.map((src, imageIndex) => ({
+        src,
+        type: 'image',
+        name: `Hoạt động lớp học ${imageIndex + 1}`,
+      })),
+    } : hasImage ? {
+      media: {
+        src: fullCenterPostImages[imageAt],
+        type: 'image',
+        name: 'Khoảnh khắc hoạt động tại trung tâm',
+      },
+    } : {}),
+    createdAt: new Date(Date.UTC(2026, 9, 16 - Math.floor(index / 2), 9 + (index % 8), 0)).toISOString(),
+    likes: Array.from({ length: 12 + (index % 25) }, (_, likeIndex) => `sample-supporter-${likeIndex + 1}`),
+    comments: [],
+  };
+});
 
 const read = (key, fallback) => storage.get(key, fallback);
 const write = (key, value) => storage.set(key, value);
@@ -227,7 +453,56 @@ export const getCourseReviews = (courseId) =>
 
 export const addCourseReview = (review) => {
   const saved = read(STORAGE_KEYS.COURSE_REVIEWS, []);
-  write(STORAGE_KEYS.COURSE_REVIEWS, [review, ...saved]);
+  write(STORAGE_KEYS.COURSE_REVIEWS, [{ ...review, replies: review.replies || [] }, ...saved]);
+};
+
+export const addCourseReviewReply = (reviewId, reply) => {
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) =>
+    review.id === reviewId
+      ? { ...review, replies: [...(review.replies || []), reply] }
+      : review,
+  );
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return next.find((review) => review.id === reviewId);
+};
+
+export const toggleCourseReviewLike = (reviewId, userId, replyId = null) => {
+  let updatedReview = null;
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) => {
+    if (review.id !== reviewId) return review;
+    if (replyId) {
+      const replies = (review.replies || []).map((reply) => {
+        if (reply.id !== replyId) return reply;
+        const likes = reply.likes || [];
+        const nextReply = { ...reply, likes: likes.includes(userId) ? likes.filter((id) => id !== userId) : [...likes, userId] };
+        updatedReview = { ...review, replies: (review.replies || []).map((item) => item.id === replyId ? nextReply : item) };
+        return nextReply;
+      });
+      return { ...review, replies };
+    }
+    const likes = review.likes || [];
+    updatedReview = { ...review, likes: likes.includes(userId) ? likes.filter((id) => id !== userId) : [...likes, userId] };
+    return updatedReview;
+  });
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return updatedReview;
+};
+
+export const updateCourseReview = (reviewId, updater) => {
+  let updatedReview = null;
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).map((review) => {
+    if (review.id !== reviewId) return review;
+    updatedReview = updater(review);
+    return updatedReview;
+  });
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return updatedReview;
+};
+
+export const deleteCourseReview = (reviewId) => {
+  const next = read(STORAGE_KEYS.COURSE_REVIEWS, []).filter((review) => review.id !== reviewId);
+  write(STORAGE_KEYS.COURSE_REVIEWS, next);
+  return next;
 };
 
 export const getCourseRating = (courseId) => {
@@ -240,7 +515,13 @@ export const getCourseRating = (courseId) => {
 };
 
 export const getPosts = (authorId) => {
-  const posts = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const savedById = new Map(saved.map((post) => [post.id, post]));
+  const sampleIds = new Set(fullCenterPosts.map((post) => post.id));
+  const posts = [
+    ...saved.filter((post) => !sampleIds.has(post.id)),
+    ...fullCenterPosts.map((post) => savedById.get(post.id) || post),
+  ];
   return authorId ? posts.filter((post) => post.teacherId === authorId || post.authorId === authorId) : posts;
 };
 
@@ -250,9 +531,22 @@ export const savePost = (post) => {
 };
 
 export const updatePost = (postId, updater) => {
-  const next = read(STORAGE_KEYS.TEACHER_POSTS, []).map((post) =>
-    post.id === postId ? updater(post) : post
-  );
+  const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
+  const existingIndex = saved.findIndex((post) => post.id === postId);
+  const source = existingIndex >= 0
+    ? saved[existingIndex]
+    : fullCenterPosts.find((post) => post.id === postId);
+  if (!source) return getPosts();
+  const updated = updater(source);
+  const next = existingIndex >= 0
+    ? saved.map((post, index) => index === existingIndex ? updated : post)
+    : [updated, ...saved];
+  write(STORAGE_KEYS.TEACHER_POSTS, next);
+  return getPosts();
+};
+
+export const deletePost = (postId) => {
+  const next = read(STORAGE_KEYS.TEACHER_POSTS, []).filter((post) => post.id !== postId);
   write(STORAGE_KEYS.TEACHER_POSTS, next);
   return next;
 };
@@ -344,7 +638,14 @@ export const addCourseRatingTrust = (userId, providerId, courseId) => {
 
 export const saveConversation = (conversation) => {
   const saved = read(STORAGE_KEYS.CONVERSATIONS, []);
-  write(STORAGE_KEYS.CONVERSATIONS, [conversation, ...saved]);
+  const recipientId = conversation.senderId === conversation.teacherId
+    ? conversation.studentId
+    : conversation.teacherId;
+  write(STORAGE_KEYS.CONVERSATIONS, [{
+    ...conversation,
+    unreadFor: conversation.unreadFor || (recipientId ? [recipientId] : []),
+    tags: conversation.tags || [],
+  }, ...saved]);
 };
 
 export const createConversationId = (prefix = 'message') =>
@@ -354,6 +655,66 @@ export const getConversationsForUser = (userId) =>
   read(STORAGE_KEYS.CONVERSATIONS, []).filter(
     (message) => message.studentId === userId || message.teacherId === userId
   );
+
+export const updateConversationThread = (thread, updater) => {
+  const reference = thread.messages?.[0] || thread;
+  const sameThread = (message) =>
+    message.courseId === reference.courseId
+    && message.studentId === reference.studentId
+    && message.teacherId === reference.teacherId;
+  const next = read(STORAGE_KEYS.CONVERSATIONS, []).map((message) =>
+    sameThread(message) ? updater(message) : message
+  );
+  write(STORAGE_KEYS.CONVERSATIONS, next);
+  return next;
+};
+
+export const markConversationRead = (thread, userId) =>
+  updateConversationThread(thread, (message) => ({
+    ...message,
+    unreadFor: (message.unreadFor || []).filter((id) => id !== userId),
+  }));
+
+export const markConversationUnread = (thread, userId) =>
+  updateConversationThread(thread, (message) => ({
+    ...message,
+    unreadFor: Array.from(new Set([...(message.unreadFor || []), userId])),
+  }));
+
+export const setConversationTags = (thread, tags) =>
+  updateConversationThread(thread, (message) => ({ ...message, tags }));
+
+export const getMessageTags = (userId) =>
+  read(STORAGE_KEYS.MESSAGE_TAGS, []).filter((tag) => tag.userId === userId);
+
+export const saveMessageTag = (userId, tag) => {
+  if (!userId || !tag?.id || !tag?.name) return getMessageTags(userId);
+  const saved = read(STORAGE_KEYS.MESSAGE_TAGS, []);
+  const existing = saved.find((item) => item.userId === userId && item.id === tag.id);
+  const nextTag = { ...tag, userId };
+  const next = existing
+    ? saved.map((item) => item.userId === userId && item.id === tag.id ? { ...item, ...nextTag } : item)
+    : [...saved, nextTag];
+  write(STORAGE_KEYS.MESSAGE_TAGS, next);
+  return next.filter((item) => item.userId === userId);
+};
+
+export const deleteMessageTag = (userId, tagId) => {
+  const next = read(STORAGE_KEYS.MESSAGE_TAGS, []).filter(
+    (tag) => tag.userId !== userId || tag.id !== tagId
+  );
+  write(STORAGE_KEYS.MESSAGE_TAGS, next);
+  return next.filter((tag) => tag.userId === userId);
+};
+
+export const removeMessageTagFromUserConversations = (userId, tagId) => {
+  const next = read(STORAGE_KEYS.CONVERSATIONS, []).map((message) => {
+    if (message.studentId !== userId && message.teacherId !== userId) return message;
+    return { ...message, tags: (message.tags || []).filter((tag) => (typeof tag === 'string' ? tag.toLowerCase() : tag.id) !== tagId) };
+  });
+  write(STORAGE_KEYS.CONVERSATIONS, next);
+  return next.filter((message) => message.studentId === userId || message.teacherId === userId);
+};
 
 export const getAge = (dob) => {
   if (!dob) return '—';

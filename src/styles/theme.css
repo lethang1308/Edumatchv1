@@ -158,3 +158,60 @@
   --color-danger-light: #422d2d;
   color-scheme: dark;
 }
+
+/* Small, reusable image control used by discussions and course reviews. */
+.image-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.image-attachment > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+.image-attachment > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--edu-line, var(--color-line));
+  border-radius: 8px;
+  color: var(--edu-green, var(--color-primary));
+  font-size: var(--text-caption-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+.image-attachment > label:hover {
+  border-color: var(--edu-green, var(--color-primary));
+  background: var(--edu-tag, var(--color-tag));
+}
+.image-attachment__preview {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+}
+.image-attachment__preview :is(img, video) {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--edu-line, var(--color-line));
+  border-radius: 7px;
+  object-fit: cover;
+}
+.image-attachment__preview button {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--edu-ink, var(--color-ink));
+  color: var(--edu-surface, var(--color-surface));
+}
