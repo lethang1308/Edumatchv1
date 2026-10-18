@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BadgeCheck, Camera, FileCheck2, FileText, Handshake, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Send, Star, Upload, Video, X } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
@@ -56,7 +56,7 @@ export function TeacherProfilePage() {
   const mediaInputRef = useRef(null);
   const portfolioImagesInputRef = useRef(null);
   const courses = getCourses().filter((course) => course.teacher.id === teacherId);
-  const ownsProfile = user?.id === teacherId;
+  const ownsProfile = user?.id != null && String(user.id) === String(teacherId);
   const sampleTutor = tutors.find((tutor) => tutor.id === teacherId);
   const sampleProfile = sampleTutor ? {
     id: sampleTutor.id,
@@ -119,6 +119,8 @@ export function TeacherProfilePage() {
   }, [profile?.id, user?.id]);
 
   if (!profile) return <section className="learning-page"><div className="learning-empty"><h1>Chưa có hồ sơ công khai</h1><p>Hồ sơ sẽ xuất hiện sau khi người dùng hoàn thiện thông tin hoặc công khai khóa học đầu tiên.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
+
+  if (ownsProfile && user.role === 'student') return <Navigate to={ROUTES.PROFILE} replace />;
 
   const chooseProfileImage = (event, field) => {
     const file = event.target.files?.[0];

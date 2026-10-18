@@ -16,6 +16,7 @@ import { PartnerTermsPage } from '@/pages/PartnerTerms';
 import { CenterSupportPage } from '@/pages/CenterSupport';
 import { ContactPage } from '@/pages/Contact';
 import { FeedPage } from '@/pages/Feed';
+import { ProfileSettingsPage } from '@/pages/Profile/ProfileSettingsPage';
 
 /**
  * Public routes accessible without authentication
@@ -24,6 +25,10 @@ export const publicRoutes = [
   {
     element: <MainLayout />,
     children: [
+      {
+        path: ROUTES.PROFILE,
+        element: <ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>,
+      },
       {
         path: ROUTES.HOME,
         element: <Home />,

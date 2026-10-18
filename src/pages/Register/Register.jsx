@@ -5,6 +5,9 @@ import toast from "react-hot-toast";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/feedback/Modal";
+import { RegistrationOtpModal } from "@/components/auth/RegistrationOtpModal";
+import { authService } from "@/services/authService";
+import { requestError } from "@/utils/formErrors";
 import {
   accountFields,
   buildRegistrationPayload,
@@ -122,6 +125,8 @@ export function Register() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSession, setOtpSession] = useState(null);
+  const requestInProgress = useRef(false);
   const [showTeacherTerms, setShowTeacherTerms] = useState(false);
   const [teacherTermsAccepted, setTeacherTermsAccepted] = useState(false);
   const [activeRegistrationTextField, setActiveRegistrationTextField] = useState(null);
@@ -165,6 +170,7 @@ export function Register() {
     setShowTeacherTerms(false);
     setTeacherTermsAccepted(false);
     setActiveRegistrationTextField(null);
+    setOtpSession(null);
   };
 
   const handleSubmit = async (event) => {
@@ -184,36 +190,52 @@ export function Register() {
       setShowTeacherTerms(true);
       return;
     }
-    await completeRegistration();
+    await beginRegistration();
   };
 
-  const completeRegistration = async () => {
-    if (loading) return;
+  const beginRegistration = async () => {
+    if (requestInProgress.current) return;
+    requestInProgress.current = true;
     setLoading(true);
     const data = buildRegistrationPayload(form, role);
     try {
-      const result = await register(data);
+      const response = await authService.sendRegistrationOtp({ name: data.name, email: data.email, phone: data.phone });
+      setOtpSession({ payload: data, role, debugOtp: response.debug_otp || '',
+        resendAt: Date.now() + (response.resend_after || 60) * 1000 });
+    } catch (error) {
+      setErrors(mapRegistrationErrors(error.response?.data?.errors, role));
+      setFormError(error.response?.status === 429
+        ? 'Bạn đã yêu cầu quá nhiều lần. Vui lòng chờ 60 giây trước khi gửi lại.'
+        : requestError(error));
+    } finally {
+      requestInProgress.current = false;
+      setLoading(false);
+    }
+  };
+
+  const completeRegistration = async (otp) => {
+    if (requestInProgress.current || !otpSession) return;
+    requestInProgress.current = true;
+    setLoading(true);
+    try {
+      const result = await register({ ...otpSession.payload, otp });
       if (!result?.success) {
-        const fieldErrors = mapRegistrationErrors(result?.errors);
-        setErrors(fieldErrors);
-        setFormError(fieldErrors.role || result?.message || "Chưa thể tạo tài khoản. Vui lòng thử lại.");
-        const firstField = Object.keys(fieldErrors)[0];
-        if (firstField) formRef.current.elements.namedItem(firstField)?.focus();
-        return;
+        const fieldErrors = mapRegistrationErrors(result?.errors, role);
+        if (Object.keys(fieldErrors).some((field) => field !== 'otp')) {
+          setOtpSession(null);
+          setErrors(fieldErrors);
+          setFormError(fieldErrors.role || result?.message || "Vui lòng kiểm tra lại thông tin đăng ký.");
+        }
+        return result;
       }
+      setOtpSession(null);
       toast.success(role === "student" ? "Tạo tài khoản học viên thành công!" : "Tạo tài khoản thành công!");
       navigate(role === "student" ? ROUTES.STUDENT_WELCOME : ROUTES.HOME, {
         replace: true,
       });
-    } catch (error) {
-      setErrors(mapRegistrationErrors(error.response?.data?.errors));
-      const message =
-        error.response?.data?.message ||
-        (error.response
-          ? "Chưa thể tạo tài khoản. Vui lòng kiểm tra thông tin và thử lại."
-          : "Chưa thể kết nối để tạo tài khoản. Vui lòng thử lại sau.");
-      setFormError(error.response || error.code ? message : error.message);
+      return result;
     } finally {
+      requestInProgress.current = false;
       setLoading(false);
     }
   };
@@ -226,7 +248,7 @@ export function Register() {
   const confirmTeacherTerms = () => {
     if (!teacherTermsAccepted || loading) return;
     setShowTeacherTerms(false);
-    completeRegistration();
+    beginRegistration();
   };
 
   return (
@@ -353,7 +375,7 @@ export function Register() {
                         </div>
                         <FieldError name={name} errors={errors} />
                       </div>
-                      {role !== "student" && name === "phone" && (
+                      {role === "teacher" && name === "phone" && (
                         <PhoneVisibility
                           value={form.isPhonePublic}
                           disabled={loading}
@@ -406,7 +428,7 @@ export function Register() {
               className="register-submit"
               disabled={loading}
             >
-              {loading ? "Đang tạo tài khoản..." : "Đăng ký"}
+              {loading ? "Đang xử lý..." : "Đăng ký"}
             </button>
           </form>
           <p className="register-login-copy">
@@ -446,6 +468,11 @@ export function Register() {
           </div>
         </aside>
       </div>
+      {otpSession && otpSession.role === role && <RegistrationOtpModal session={otpSession}
+        onClose={() => { if (!loading) setOtpSession(null); }}
+        onConfirm={completeRegistration}
+        onResend={() => authService.sendRegistrationOtp({ name: otpSession.payload.name,
+          email: otpSession.payload.email, phone: otpSession.payload.phone })} />}
       <Modal
         open={Boolean(activeRegistrationTextField)}
         onClose={() => setActiveRegistrationTextField(null)}
@@ -502,7 +529,7 @@ export function Register() {
               disabled={!teacherTermsAccepted || loading}
               onClick={confirmTeacherTerms}
             >
-              {loading ? "Đang tạo tài khoản..." : "Đồng ý & hoàn tất đăng ký"}
+              {loading ? "Đang xử lý..." : "Đồng ý & xác thực email"}
             </button>
           </div>
         }

@@ -13,6 +13,7 @@ import {
   Newspaper,
   Phone,
   Search,
+  Settings,
   Sun,
   X,
 } from 'lucide-react';
@@ -171,9 +172,10 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+              <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
                 {user?.name}
               </Link>
+              <Link to={ROUTES.PROFILE} className="theme-toggle" aria-label="Cài đặt tài khoản" title="Cài đặt tài khoản"><Settings size={17} /></Link>
               <Button
                 variant="outline"
                 className="edu-button edu-button-outline"
@@ -246,7 +248,8 @@ export const Header = ({ theme, onToggleTheme }) => {
               <span><strong>{notification.title}</strong><small>{notificationTime(notification.createdAt)}</small></span>
             </Link>) : <p>Chưa có thông báo nào.</p>}
           </section>}
-          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
+          {isAuthenticated && <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
+          {isAuthenticated && <Link to={ROUTES.PROFILE} onClick={() => setMobileMenuOpen(false)}>Cài đặt tài khoản</Link>}
           {isAuthenticated ? (
             <button
               onClick={() => {

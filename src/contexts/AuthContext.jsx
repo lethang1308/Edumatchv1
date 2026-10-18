@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 import { authService } from '@/services/authService';
@@ -82,14 +82,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateUser = (updates) => {
+  const updateUser = useCallback((updates) => {
     setUser((current) => {
       if (!current) return null;
       const nextUser = { ...current, ...updates };
       storage.set(STORAGE_KEYS.USER_INFO, nextUser);
       return nextUser;
     });
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{

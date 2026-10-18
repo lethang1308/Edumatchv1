@@ -4,6 +4,7 @@ import { Check, Eye, EyeOff, Lock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
+import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import studentImage from '@/assets/login-student-v2.png';
 import teacherAvatarsImg from '@/assets/teacher-avatars.png';
 import './login.css';
@@ -28,6 +29,7 @@ export const Login = () => {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const validate = () => {
     const nextErrors = {};
@@ -187,7 +189,7 @@ export const Login = () => {
                 <button
                   type="button"
                   className="login-text-button"
-                  onClick={() => toast('Liên kết đặt lại mật khẩu sẽ sớm khả dụng.')}
+                  onClick={() => setForgotPasswordOpen(true)}
                 >
                   Quên mật khẩu?
                 </button>
@@ -355,6 +357,7 @@ export const Login = () => {
           </aside>
         </div>
       </section>
+      {forgotPasswordOpen && <ForgotPasswordModal initialIdentifier={email} onClose={() => setForgotPasswordOpen(false)} onSuccess={(identifier) => { setEmail(identifier); setPassword(''); setErrors({}); setFormError(''); }} />}
     </main>
   );
 };

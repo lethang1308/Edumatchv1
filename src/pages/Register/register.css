@@ -350,37 +350,6 @@
   margin-top: 16px;
 }
 
-@media (min-width: 1024px) {
-  .register-page--teacher {
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .register-page--teacher .register-shell {
-    height: 100%;
-    min-height: 0;
-    align-items: stretch;
-  }
-  .register-page--teacher .register-card {
-    display: flex;
-    min-height: 0;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .register-page--teacher .register-heading,
-  .register-page--teacher .register-roles,
-  .register-page--teacher .register-login-copy {
-    flex: 0 0 auto;
-  }
-  .register-page--teacher .register-form {
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 6px;
-    scrollbar-gutter: stable;
-  }
-}
 .register-profile-fields {
   padding-top: 16px;
   border-top: 1px solid var(--register-line);
