@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck, Camera, FileCheck2, FileText, Handshake, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Send, Star, Upload, Video, X } from 'lucide-react';
+import { BadgeCheck, Camera, FileCheck2, FileText, Handshake, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Send, Share2, Star, Upload, Video, X } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
@@ -27,6 +27,39 @@ const cleanProfileText = (value, maxLength = SHORT_BIO_MAX_LENGTH) => limitProfi
     .replace(/^\s{0,3}#{1,6}\s+/gm, ''),
   maxLength,
 );
+const formatPublishedAt = (dateValue) => {
+  if (!dateValue) return 'Vừa xong';
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return 'Vừa xong';
+  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+const getMediaItems = (item) => Array.isArray(item?.mediaItems) && item.mediaItems.length
+  ? item.mediaItems
+  : item?.media
+    ? [item.media]
+    : [];
+const getOriginalSharedPost = (post, posts, getPostAuthor) => {
+  let snapshot = post.sharedPost;
+  const visited = new Set([post.id]);
+
+  while (snapshot?.id && !visited.has(snapshot.id)) {
+    visited.add(snapshot.id);
+    const sourcePost = posts.find((item) => item.id === snapshot.id);
+    if (!sourcePost) break;
+    if (!sourcePost.sharedPost) {
+      return {
+        id: sourcePost.id,
+        author: getPostAuthor(sourcePost),
+        text: sourcePost.text || '',
+        media: sourcePost.media || null,
+        mediaItems: sourcePost.mediaItems || [],
+      };
+    }
+    snapshot = sourcePost.sharedPost;
+  }
+
+  return snapshot;
+};
 
 export function TeacherProfilePage() {
   const { teacherId } = useParams();
@@ -37,6 +70,11 @@ export function TeacherProfilePage() {
   const [media, setMedia] = useState(null);
   const [commentText, setCommentText] = useState({});
   const [commentMedia, setCommentMedia] = useState({});
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyMedia, setReplyMedia] = useState(null);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [shareText, setShareText] = useState('');
   const [openContentMenu, setOpenContentMenu] = useState(null);
   const [likesTarget, setLikesTarget] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -330,6 +368,71 @@ export function TeacherProfilePage() {
     setCommentText((current) => ({ ...current, [postId]: '' }));
     setCommentMedia((current) => ({ ...current, [postId]: null }));
   };
+  const openShareDialog = (post) => {
+    if (!user) { toast.error('Vui lòng đăng nhập để chia sẻ bài viết.'); return; }
+    setShareTarget(post);
+    setShareText('');
+  };
+  const sharePost = (event) => {
+    event.preventDefault();
+    if (!shareTarget || !user) return;
+    const post = shareTarget;
+    const postAuthor = (item) => ({
+      id: item.authorId || item.teacherId || '',
+      name: item.authorName || item.author || profile.name,
+      role: item.authorRole || profile.role || 'student',
+      avatar: item.authorAvatar || profile.avatar || '',
+    });
+    const originalPost = getOriginalSharedPost(post, getPosts(), postAuthor);
+    const sourceAuthor = originalPost?.author || postAuthor(post);
+    const sharedPost = {
+      id: `post-share-${Date.now()}`,
+      teacherId: user.id,
+      authorId: user.id,
+      authorName: user.name || 'Thành viên EduMatch',
+      authorRole: user.role || 'student',
+      authorAvatar: user.avatar || '',
+      text: shareText.trim(),
+      sharedPost: {
+        id: originalPost?.id || post.id,
+        author: sourceAuthor,
+        text: originalPost?.text || '',
+        media: originalPost?.media || null,
+        mediaItems: originalPost?.mediaItems || [],
+      },
+      createdAt: new Date().toISOString(),
+      likes: [],
+      comments: [],
+    };
+    savePost(sharedPost);
+    if (user.id === teacherId) setPosts((current) => [sharedPost, ...current]);
+    setShareTarget(null);
+    setShareText('');
+    toast.success('Bài viết đã được chia sẻ lên trang cá nhân của bạn.');
+  };
+  const openProfileReply = (postId, commentId) => {
+    if (!user) { toast.error('Vui lòng đăng nhập để trả lời bình luận.'); return; }
+    setReplyTarget({ postId, commentId });
+    setReplyText('');
+    setReplyMedia(null);
+  };
+  const replyToProfileComment = (event) => {
+    event.preventDefault();
+    if (!replyTarget || !user) return;
+    const text = replyText.trim();
+    if (!text && !replyMedia) return;
+    const targetPost = getPosts().find((post) => post.id === replyTarget.postId);
+    const parentComment = targetPost?.comments?.find((item) => item.id === replyTarget.commentId);
+    const reply = { id: `reply-${Date.now()}`, author: user.name || 'Thành viên EduMatch', authorId: user.id, authorName: user.name || 'Thành viên EduMatch', authorRole: user.role || 'student', authorAvatar: user.avatar || '', text, media: replyMedia, likes: [], createdAt: new Date().toISOString() };
+    if (parentComment?.authorId && parentComment.authorId !== user.id) {
+      createNotification({ recipientId: parentComment.authorId, actorName: user.name || 'Một thành viên', actorAvatar: user.avatar || '', type: 'comment_reply', title: `${user.name || 'Một thành viên'} đã trả lời bình luận của bạn`, description: text, link: `${ROUTES.TEACHER_PROFILE(teacherId)}#${replyTarget.postId}` });
+    }
+    const next = updatePost(replyTarget.postId, (post) => ({ ...post, comments: (post.comments || []).map((item) => item.id === replyTarget.commentId ? { ...item, replies: [...(item.replies || []), reply] } : item) }));
+    setPosts(next.filter((item) => item.teacherId === teacherId || item.authorId === teacherId));
+    setReplyTarget(null);
+    setReplyText('');
+    setReplyMedia(null);
+  };
   const toggleProfileCommentLike = (postId, commentId) => {
     if (!user) { toast.error('Vui lòng đăng nhập để thích bình luận.'); return; }
     const next = updatePost(postId, (post) => ({
@@ -401,12 +504,12 @@ export function TeacherProfilePage() {
 
   const coverStyle = profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined;
   const profileType = isCenterProfile ? 'TRUNG TÂM ĐÀO TẠO' : isTeacherProfile ? 'GIÁO VIÊN' : 'HỌC VIÊN';
-  const subtitle = isCenterProfile ? 'Đối tác đào tạo của EduMatch' : isTeacherProfile ? `${getAge(profile.dob)} tuổi` : 'Học viên EduMatch';
+  const subtitle = isCenterProfile ? '' : isTeacherProfile ? `${getAge(profile.dob)} tuổi` : 'Học viên EduMatch';
 
   return <><section className="learning-page teacher-public-page"><div className="learning-container">
     <header className={`teacher-cover ${profile.coverImage ? 'has-custom-cover' : ''}`} style={coverStyle}>
       <div className="teacher-cover__avatar">{profile.avatar ? <img src={profile.avatar} alt={`Ảnh đại diện của ${profile.name}`} /> : profile.name?.slice(0, 1)}{ownsProfile && <label className="profile-avatar-upload" title="Cập nhật ảnh đại diện"><Camera size={15} /><input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'avatar')} /></label>}</div>
-      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1><p>{subtitle}</p>{isEducationProviderProfile && <small className={`teacher-cover__trust-count ${trustCount < 3 ? 'is-new' : ''}`}>{trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</>}</small>}{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div>
+      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1>{subtitle && <p>{subtitle}</p>}<div className="teacher-cover__status-list">{isEducationProviderProfile && <small className={`teacher-cover__trust-count ${trustCount < 3 ? 'is-new' : ''}`}>{trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</>}</small>}{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div></div>
       {ownsProfile && <label className="profile-cover-upload teacher-cover__cover-upload"><ImagePlus size={16} /> Ảnh bìa<input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'coverImage')} /></label>}
     </header>
     <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions">{hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> Tạo hồ sơ năng lực</button>}{isCenterProfile && <>{user?.licenseVerificationStatus === 'verified' ? <span className="teacher-bio__verified"><BadgeCheck size={15} /> Đã xác thực pháp lý</span> : user?.licenseVerificationStatus === 'pending' ? <span className="teacher-bio__pending"><FileCheck2 size={15} /> Hồ sơ đang xét duyệt</span> : <button type="button" className="teacher-bio__verify" onClick={openVerificationForm}><FileCheck2 size={15} /> Yêu cầu xác minh giấy phép</button>}<Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link></>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
@@ -415,25 +518,33 @@ export function TeacherProfilePage() {
       {posts.length ? posts.map((post) => {
         const likes = post.likes || [];
         const comments = post.comments || [];
-        const postMediaItems = post.mediaItems || (post.media ? [post.media] : []);
+        const postMediaItems = getMediaItems(post);
+        const postAuthor = (item) => ({ id: item.authorId || item.teacherId || '', name: item.authorName || item.author || profile.name, role: item.authorRole || profile.role || 'student', avatar: item.authorAvatar || profile.avatar || '' });
+        const originalSharedPost = post.sharedPost ? getOriginalSharedPost(post, getPosts(), postAuthor) : null;
+        const sharedMediaItems = getMediaItems(originalSharedPost);
         return <article className="social-post" key={post.id}>
-          <div className="social-post__head"><span>{profile.name.slice(0, 1)}</span><div><Link className="social-post__author" to={ROUTES.TEACHER_PROFILE(post.authorId || post.teacherId || profile.id)}>{post.authorName || post.author || profile.name}</Link>{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>Chia sẻ cùng cộng đồng EduMatch</small></div></div>
+          <div className="social-post__head"><span>{(post.authorName || post.author || profile.name).slice(0, 1)}</span><div><Link className="social-post__author" to={ROUTES.TEACHER_PROFILE(post.authorId || post.teacherId || profile.id)}>{post.authorName || post.author || profile.name}</Link>{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{formatPublishedAt(post.createdAt)}</small></div></div>
           {ownsContent(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfilePost(post)} onDelete={() => removeProfilePost(post)} label="bài viết" />}
           {post.text && <p>{post.text}</p>}
+          {originalSharedPost && <div className="shared-post"><span>Đã chia sẻ <Link to={`${ROUTES.FEED}#${originalSharedPost.id}`}>bài viết gốc</Link> của</span>{originalSharedPost.author?.id ? <Link className="shared-post__author" to={ROUTES.TEACHER_PROFILE(originalSharedPost.author.id)}>{originalSharedPost.author.name}</Link> : <strong>{originalSharedPost.author?.name || 'Thành viên EduMatch'}</strong>}<p>{originalSharedPost.text || 'Bài viết gốc không có nội dung văn bản.'}</p>{sharedMediaItems.length > 0 && <div className="social-post__media">{sharedMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh chia sẻ ${index + 1}`} />)}</div>}</div>}
           {postMediaItems.length > 0 && <div className={`social-post__media ${postMediaItems.length > 1 ? 'is-album' : ''}`}>{postMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh ${index + 1} do ${profile.name} chia sẻ`} />)}</div>}
-          <div className="social-post__actions"><button onClick={() => like(post.id)} className={likes.includes(user?.id) ? 'is-liked' : ''}><Heart size={17} fill={likes.includes(user?.id) ? 'currentColor' : 'none'} /> Thích</button>{likes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button>}<span><MessageCircle size={16} /> {comments.length} bình luận</span></div>
+          <div className="social-post__actions"><button onClick={() => like(post.id)} className={likes.includes(user?.id) ? 'is-liked' : ''}><Heart size={17} fill={likes.includes(user?.id) ? 'currentColor' : 'none'} /> Thích</button><button type="button" onClick={() => document.getElementById(`profile-comment-${post.id}`)?.focus()}><MessageCircle size={16} /> Bình luận</button><button type="button" onClick={() => openShareDialog(post)}><Share2 size={16} /> Chia sẻ</button>{likes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button>}</div>
           {comments.map((item) => {
             const commentLikes = item.likes || [];
             const isCommentLiked = commentLikes.includes(user?.id);
-            return <div className="post-comment" key={item.id}><div className="post-comment__head">{item.authorId ? <Link className="post-comment__author" to={ROUTES.TEACHER_PROFILE(item.authorId)}>{item.authorName || item.author}</Link> : <strong>{item.author}</strong>}{ownsContent(item.authorId) && <ContentMenu id={`comment-${item.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfileComment(post.id, item.id)} onDelete={() => removeProfileComment(post.id, item.id)} label="bình luận" />}</div>{item.text && <span>{item.text}</span>}{item.media && (item.media.type === 'video' ? <video className="review-media" src={item.media.src} controls preload="metadata" /> : <img className="review-media" src={item.media.src} alt={`Ảnh đính kèm từ ${item.author}`} />)}<div className="post-comment__reaction"><button type="button" className={`post-comment__like ${isCommentLiked ? 'is-liked' : ''}`} onClick={() => toggleProfileCommentLike(post.id, item.id)}><Heart size={13} fill={isCommentLiked ? 'currentColor' : 'none'} /> Thích</button>{commentLikes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: commentLikes, label: 'Những người đã thích bình luận này' })}>{commentLikes.length} lượt thích</button>}</div></div>;
+            const isReplying = replyTarget?.postId === post.id && replyTarget?.commentId === item.id;
+            return <div className="post-comment" key={item.id}><div className="post-comment__head">{item.authorId ? <Link className="post-comment__author" to={ROUTES.TEACHER_PROFILE(item.authorId)}>{item.authorName || item.author}</Link> : <strong>{item.author}</strong>}{ownsContent(item.authorId) && <ContentMenu id={`comment-${item.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfileComment(post.id, item.id)} onDelete={() => removeProfileComment(post.id, item.id)} label="bình luận" />}</div>{item.text && <span>{item.text}</span>}{item.media && (item.media.type === 'video' ? <video className="review-media" src={item.media.src} controls preload="metadata" /> : <img className="review-media" src={item.media.src} alt={`Ảnh đính kèm từ ${item.author}`} />)}<div className="post-comment__reaction"><button type="button" className={`post-comment__like ${isCommentLiked ? 'is-liked' : ''}`} onClick={() => toggleProfileCommentLike(post.id, item.id)}><Heart size={13} fill={isCommentLiked ? 'currentColor' : 'none'} /> Thích</button>{commentLikes.length > 0 && <button type="button" className="social-likes-count" onClick={() => setLikesTarget({ ids: commentLikes, label: 'Những người đã thích bình luận này' })}>{commentLikes.length} lượt thích</button>}<button type="button" className="post-comment__reply-button" onClick={() => openProfileReply(post.id, item.id)}>Trả lời</button></div>{(item.replies || []).map((reply) => <div className="post-comment__reply" key={reply.id}><strong>{reply.authorId ? <Link className="post-comment__author" to={ROUTES.TEACHER_PROFILE(reply.authorId)}>{reply.authorName || reply.author}</Link> : reply.author}</strong>{reply.text && <span>{reply.text}</span>}</div>)}{isReplying && <form className="post-comment-form post-comment-form--reply" onSubmit={replyToProfileComment}><textarea autoFocus value={replyText} onChange={(event) => setReplyText(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder={`Trả lời ${item.authorName || item.author}...`} rows="1" /><ImageAttachment id={`profile-reply-image-${post.id}-${item.id}`} value={replyMedia} onChange={setReplyMedia} label="Tệp" /><button type="submit">Gửi</button></form>}</div>;
           })}
-          <form className="post-comment-form" onSubmit={(event) => comment(event, post.id)}><textarea value={commentText[post.id] || ''} onChange={(event) => setCommentText((current) => ({ ...current, [post.id]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" /><ImageAttachment id={`profile-comment-image-${post.id}`} value={commentMedia[post.id] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [post.id]: media }))} label="Tệp" /><button type="submit">Gửi</button></form>
+          <form className="post-comment-form" onSubmit={(event) => comment(event, post.id)}><textarea id={`profile-comment-${post.id}`} value={commentText[post.id] || ''} onChange={(event) => setCommentText((current) => ({ ...current, [post.id]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" /><ImageAttachment id={`profile-comment-image-${post.id}`} value={commentMedia[post.id] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [post.id]: media }))} label="Tệp" /><button type="submit">Gửi</button></form>
         </article>;
       }) : <div className="feed-empty"><Star size={23} /><p>{isCenterProfile ? 'Trung tâm chưa có bài viết nào.' : isTeacherProfile ? 'Giáo viên chưa có bài viết nào.' : 'Học viên chưa có bài viết nào.'}</p></div>}
     </main></div>
     {isEducationProviderProfile && <section className="teacher-courses"><div className="feed-heading"><h2>Khóa học đang mở</h2><p>{courses.length ? (isCenterProfile ? 'Khám phá các chương trình đào tạo của trung tâm.' : 'Khám phá các lộ trình mà giáo viên đang giảng dạy.') : 'Khóa học sẽ xuất hiện tại đây.'}</p></div>{courses.length > 0 && <div className="course-grid">{courses.map((course) => <CourseCard course={course} editable={canCreateCourse} key={course.id} />)}</div>}</section>}
   </div></section>
     <LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} />
+    <Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm">
+      <form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form>
+    </Modal>
     <Modal
       open={isViewingProfileSummary}
       onClose={() => setIsViewingProfileSummary(false)}

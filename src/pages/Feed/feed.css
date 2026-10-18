@@ -417,7 +417,7 @@
 .feed-likes-count:hover { color: var(--edu-green); text-decoration: underline; }
 .community-post__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--edu-line);
   border-bottom: 1px solid var(--edu-line);
 }
@@ -443,6 +443,7 @@
 .community-post__actions button:active {
   transform: scale(0.98);
 }
+.community-post .shared-post { margin: 16px 0 0; }
 .community-post__comments {
   display: grid;
   gap: 13px;

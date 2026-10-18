@@ -1,17 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BadgeCheck, BookOpen, CornerDownRight, Heart, Image as ImageIcon, MessageCircle, Newspaper, Send, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BadgeCheck, BookOpen, CornerDownRight, Heart, Image as ImageIcon, MessageCircle, Newspaper, Send, Share2, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { createNotification, deletePost, getCourses, getPosts, getProviderAffinity, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
+import { createNotification, deletePost, getCourses, getPosts, getProviderAffinity, savePost, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { ImageAttachment } from '@/components/forms/ImageAttachment';
 import { ContentMenu } from '@/components/feedback/ContentMenu';
 import { LikesModal } from '@/components/feedback/LikesModal';
+import { Modal } from '@/components/feedback/Modal';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
 import './feed.css';
-
-const roleLabel = (role) => role === 'center' ? 'Trung tâm đào tạo' : role === 'student' ? 'Học viên EduMatch' : 'Giáo viên EduMatch';
 
 const getAuthor = (item, providers) => {
   const provider = providers.get(item.authorId || item.teacherId);
@@ -28,7 +27,36 @@ const shortTime = (dateValue) => {
   if (!dateValue) return 'Vừa xong';
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return 'Vừa xong';
-  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+
+const getMediaItems = (item) => Array.isArray(item?.mediaItems) && item.mediaItems.length
+  ? item.mediaItems
+  : item?.media
+    ? [item.media]
+    : [];
+
+const getOriginalSharedPost = (post, posts, getPostAuthor) => {
+  let snapshot = post.sharedPost;
+  const visited = new Set([post.id]);
+
+  while (snapshot?.id && !visited.has(snapshot.id)) {
+    visited.add(snapshot.id);
+    const sourcePost = posts.find((item) => item.id === snapshot.id);
+    if (!sourcePost) break;
+    if (!sourcePost.sharedPost) {
+      return {
+        id: sourcePost.id,
+        author: getPostAuthor(sourcePost),
+        text: sourcePost.text || '',
+        media: sourcePost.media || null,
+        mediaItems: sourcePost.mediaItems || [],
+      };
+    }
+    snapshot = sourcePost.sharedPost;
+  }
+
+  return snapshot;
 };
 
 const interactionScore = (post) =>
@@ -49,9 +77,12 @@ export function FeedPage() {
   const [replyTarget, setReplyTarget] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replyMedia, setReplyMedia] = useState(null);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [shareText, setShareText] = useState('');
   const [openContentMenu, setOpenContentMenu] = useState(null);
   const [likesTarget, setLikesTarget] = useState(null);
   const [feedTab, setFeedTab] = useState('providers');
+  const handledPostHash = useRef('');
   const providers = useMemo(() => new Map(getCourses().map((course) => [course.teacher.id, course.teacher])), []);
   const rankedPosts = useMemo(() => {
     const affinity = getProviderAffinity(user?.id);
@@ -63,12 +94,15 @@ export function FeedPage() {
       return interactionDifference || new Date(second.createdAt) - new Date(first.createdAt);
     });
   }, [posts, user?.id]);
-  const visiblePosts = rankedPosts.filter((post) => (feedTab === 'students' ? getAuthor(post, providers).role === 'student' : getAuthor(post, providers).role !== 'student'));
+  const visiblePosts = rankedPosts.filter((post) => post.sharedPost || (feedTab === 'students' ? getAuthor(post, providers).role === 'student' : getAuthor(post, providers).role !== 'student'));
 
   useEffect(() => {
     const postId = window.location.hash.slice(1);
-    if (!postId) return undefined;
-    const timer = window.setTimeout(() => document.getElementById(postId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
+    if (!postId || handledPostHash.current === postId) return undefined;
+    const target = document.getElementById(postId);
+    if (!target) return undefined;
+    handledPostHash.current = postId;
+    const timer = window.setTimeout(() => target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
     return () => window.clearTimeout(timer);
   }, [posts]);
 
@@ -94,6 +128,42 @@ export function FeedPage() {
   const removePost = (post) => {
     if (!owns(post.authorId || post.teacherId) || !window.confirm('Xóa bài viết này?')) return;
     setPosts(deletePost(post.id).slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
+  };
+  const openShareDialog = (post) => {
+    if (!requireAuth()) return;
+    setShareTarget(post);
+    setShareText('');
+  };
+  const sharePost = (event) => {
+    event.preventDefault();
+    if (!shareTarget || !requireAuth()) return;
+    const post = shareTarget;
+    const originalPost = getOriginalSharedPost(post, posts, (item) => getAuthor(item, providers));
+    const source = originalPost?.author || getAuthor(post, providers);
+    const sharedPost = {
+      id: `post-share-${Date.now()}`,
+      teacherId: user.id,
+      authorId: user.id,
+      authorName: user.name || 'Thành viên EduMatch',
+      authorRole: user.role || 'student',
+      authorAvatar: user.avatar || '',
+      text: shareText.trim(),
+      sharedPost: {
+        id: originalPost?.id || post.id,
+        author: source,
+        text: originalPost?.text || '',
+        media: originalPost?.media || null,
+        mediaItems: originalPost?.mediaItems || [],
+      },
+      createdAt: new Date().toISOString(),
+      likes: [],
+      comments: [],
+    };
+    savePost(sharedPost);
+    setPosts((current) => [sharedPost, ...current]);
+    setShareTarget(null);
+    setShareText('');
+    toast.success('Bài viết đã được chia sẻ lên trang cá nhân của bạn.');
   };
   const editDiscussion = (postId, commentId, replyId = null) => {
     const post = posts.find((item) => item.id === postId);
@@ -306,14 +376,17 @@ export function FeedPage() {
             const likes = post.likes || [];
             const comments = post.comments || [];
             const isLiked = likes.includes(user?.id);
-            const postMediaItems = post.mediaItems || (post.media ? [post.media] : []);
+            const postMediaItems = getMediaItems(post);
+            const originalSharedPost = post.sharedPost ? getOriginalSharedPost(post, posts, (item) => getAuthor(item, providers)) : null;
+            const sharedMediaItems = getMediaItems(originalSharedPost);
             return <article className="community-post" id={post.id} key={post.id}>
               <header className="community-post__header">
                 {author.avatar ? <img src={author.avatar} alt={`Ảnh đại diện của ${author.name}`} /> : <span>{author.name.slice(0, 1)}</span>}
-                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}{author.role === 'center' && author.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{roleLabel(author.role)} · {shortTime(post.createdAt)}</small></div>
+                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}{author.role === 'center' && author.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{shortTime(post.createdAt)}</small></div>
                 {owns(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editPost(post)} onDelete={() => removePost(post)} label="bài viết" />}
               </header>
               {post.text && <p className="community-post__text">{post.text}</p>}
+              {originalSharedPost && <div className="shared-post"><span>Đã chia sẻ <Link to={`${ROUTES.FEED}#${originalSharedPost.id}`}>bài viết gốc</Link> của</span>{originalSharedPost.author?.id ? <Link className="shared-post__author" to={ROUTES.TEACHER_PROFILE(originalSharedPost.author.id)}>{originalSharedPost.author.name}</Link> : <strong>{originalSharedPost.author?.name || 'Thành viên EduMatch'}</strong>}<p>{originalSharedPost.text || 'Bài viết gốc không có nội dung văn bản.'}</p>{sharedMediaItems.length > 0 && <div className="community-post__media">{sharedMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh chia sẻ ${index + 1}`} />)}</div>}</div>}
               {postMediaItems.length > 0 && <div className={`community-post__media ${postMediaItems.length > 1 ? 'is-album' : ''}`}>{postMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh ${index + 1} do ${author.name} chia sẻ`} />)}</div>}
               <div className="community-post__summary">
                 {likes.length ? <button type="button" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button> : <span>Hãy là người đầu tiên thích bài viết này</span>}
@@ -322,6 +395,7 @@ export function FeedPage() {
               <div className="community-post__actions">
                 <button type="button" className={isLiked ? 'is-liked' : ''} onClick={() => toggleLike(post.id)}><Heart size={17} fill={isLiked ? 'currentColor' : 'none'} /> {isLiked ? 'Đã thích' : 'Thích'}</button>
                 <button type="button" onClick={() => document.getElementById(`comment-${post.id}`)?.focus()}><MessageCircle size={17} /> Bình luận</button>
+                <button type="button" onClick={() => openShareDialog(post)}><Share2 size={17} /> Chia sẻ</button>
               </div>
               {comments.length > 0 && <div className="community-post__comments">
                 {comments.map((comment) => {
@@ -375,7 +449,7 @@ export function FeedPage() {
           </aside>
         </div>
       </div>
-    </section><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /></>
+    </section><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /><Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm"><form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form></Modal></>
   );
 }
 
