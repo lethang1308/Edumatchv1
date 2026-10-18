@@ -2,7 +2,10 @@ import axios from 'axios';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://127.0.0.1:8000/api';
 
 /**
  * Main Axios instance for API communication
@@ -44,9 +47,13 @@ api.interceptors.response.use(
       const { status } = error.response;
 
       // 401: Unauthorized - Token hết hạn hoặc không hợp lệ
-      if (status === 401) {
+      const isSignIn = /\/auth\/(login|register)$/.test(error.config?.url || '');
+      const currentToken = storage.get(STORAGE_KEYS.ACCESS_TOKEN);
+      const isCurrentSession = currentToken && error.config?.headers?.Authorization === `Bearer ${currentToken}`;
+      if (status === 401 && !isSignIn && isCurrentSession) {
         storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
         storage.remove(STORAGE_KEYS.USER_INFO);
+        window.dispatchEvent(new Event('auth:expired'));
         // Không redirect cưỡng chế trực tiếp ở đây để tránh navigation loop
       }
 

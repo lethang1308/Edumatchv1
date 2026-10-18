@@ -13,6 +13,7 @@ import {
   constrainPhoneInput,
   getTodayDate,
   initialForm,
+  mapRegistrationErrors,
   registrationRoles,
   roleContent,
   teacherFields,
@@ -192,15 +193,20 @@ export function Register() {
     const data = buildRegistrationPayload(form, role);
     try {
       const result = await register(data);
-      if (result?.success === false)
-        throw new Error(
-          result.message || "Chưa thể tạo tài khoản. Vui lòng thử lại.",
-        );
-      toast.success("Tạo tài khoản thành công!");
+      if (!result?.success) {
+        const fieldErrors = mapRegistrationErrors(result?.errors);
+        setErrors(fieldErrors);
+        setFormError(fieldErrors.role || result?.message || "Chưa thể tạo tài khoản. Vui lòng thử lại.");
+        const firstField = Object.keys(fieldErrors)[0];
+        if (firstField) formRef.current.elements.namedItem(firstField)?.focus();
+        return;
+      }
+      toast.success(role === "student" ? "Tạo tài khoản học viên thành công!" : "Tạo tài khoản thành công!");
       navigate(role === "student" ? ROUTES.STUDENT_WELCOME : ROUTES.HOME, {
         replace: true,
       });
     } catch (error) {
+      setErrors(mapRegistrationErrors(error.response?.data?.errors));
       const message =
         error.response?.data?.message ||
         (error.response
