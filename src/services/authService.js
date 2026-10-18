@@ -2,60 +2,41 @@ import api from './api';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 
+export function normalizeAuthUser(user) {
+  return {
+    ...user,
+    dob: user.student_profile?.date_of_birth?.slice(0, 10) || user.dob || '',
+  };
+}
+
+function saveSession(response) {
+  const token = response?.token || response?.access_token;
+  if (!token || !response?.user?.id) {
+    throw new Error('Phản hồi xác thực không hợp lệ. Vui lòng thử lại.');
+  }
+  const user = normalizeAuthUser(response.user);
+  storage.set(STORAGE_KEYS.ACCESS_TOKEN, token);
+  storage.set(STORAGE_KEYS.USER_INFO, user);
+  return { ...response, token, user };
+}
+
 export const authService = {
-  /**
-   * Đăng nhập người dùng
-   * @param {{ email: string, password: string }} credentials
-   */
   async login(credentials) {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      if (response?.token) {
-        storage.set(STORAGE_KEYS.ACCESS_TOKEN, response.token);
-      }
-      return response;
-    } catch {
-      // Mock skeleton fallback khi backend chưa chạy
-      const mockToken = 'mock_jwt_token_sample';
-      const savedUser = storage.get(STORAGE_KEYS.USER_INFO, null);
-      const mockUser = savedUser || {
-        id: 'usr_1',
-        name: 'Người dùng EduMatch',
-        email: credentials.email || 'admin@example.com',
-        role: 'student',
-      };
-      storage.set(STORAGE_KEYS.ACCESS_TOKEN, mockToken);
-      storage.set(STORAGE_KEYS.USER_INFO, mockUser);
-      return { token: mockToken, user: mockUser };
-    }
+    return saveSession(await api.post('/auth/login', credentials));
   },
 
-  /**
-   * Đăng ký người dùng mới
-   */
   async register(data) {
-    return api.post('/auth/register', data);
+    return saveSession(await api.post('/auth/register', data));
   },
 
-  /**
-   * Lấy thông tin tài khoản hiện tại
-   */
   async getProfile() {
-    try {
-      return await api.get('/auth/me');
-    } catch {
-      return storage.get(STORAGE_KEYS.USER_INFO, {
-        id: 'usr_1',
-        name: 'Demo Admin',
-        email: 'admin@example.com',
-        role: 'admin',
-      });
+    const response = await api.get('/auth/me');
+    if (!response?.user?.id) {
+      throw new Error('Không thể xác thực phiên đăng nhập.');
     }
+    return { ...response, user: normalizeAuthUser(response.user) };
   },
 
-  /**
-   * Đăng xuất
-   */
   async logout() {
     try {
       await api.post('/auth/logout');
