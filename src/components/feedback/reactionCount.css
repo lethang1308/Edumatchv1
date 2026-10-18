@@ -1,0 +1,27 @@
+.discussion-reaction-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 1px 2px 1px 0 !important;
+  border: 0;
+  background: transparent;
+  color: var(--edu-muted);
+  font: inherit;
+  font-size: var(--text-caption-xs);
+  font-weight: 750;
+  line-height: 1;
+  cursor: pointer;
+}
+.discussion-reaction-count__icon {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 2px solid var(--edu-surface);
+  border-radius: 50%;
+  background: var(--color-trust);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(15 53 47 / 16%);
+}
+.discussion-reaction-count:hover { color: var(--edu-green); text-decoration: underline; text-underline-offset: 2px; }

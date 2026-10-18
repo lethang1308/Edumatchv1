@@ -613,6 +613,10 @@ const trustRecords = () => read(STORAGE_KEYS.PROVIDER_TRUSTS, []);
 export const getProviderTrustCount = (providerId, baseCount = 0) =>
   Number(baseCount || 0) + trustRecords().filter((record) => record.providerId === providerId).length;
 
+export const getProviderTrustUserIds = (providerId) => [...new Set(
+  trustRecords().filter((record) => record.providerId === providerId).map((record) => record.userId)
+)];
+
 export const hasProviderTrust = (userId, providerId) =>
   Boolean(userId && trustRecords().some((record) => record.userId === userId && record.providerId === providerId && record.source === 'profile'));
 

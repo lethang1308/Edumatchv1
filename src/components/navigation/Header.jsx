@@ -82,6 +82,11 @@ export const Header = ({ theme, onToggleTheme }) => {
     });
     setMobileMenuOpen(false);
   };
+  const openOwnProfile = (event) => {
+    if (location.pathname !== ROUTES.TEACHER_PROFILE(user?.id)) return;
+    event.preventDefault();
+    window.location.reload();
+  };
 
   return (
     <header className="edu-header">
@@ -171,7 +176,7 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến hoặc tải lại trang cá nhân" onClick={openOwnProfile}>
                 {user?.name}
               </Link>
               <Button

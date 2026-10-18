@@ -1096,6 +1096,14 @@
 .teacher-feed {
   min-width: 0;
 }
+.teacher-feed__load-more {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption);
+  font-weight: 400;
+}
 .post-composer {
   margin-top: 17px;
   padding: 15px;
@@ -1183,6 +1191,9 @@
 }
 .social-post__actions { align-items: center; }
 .social-post__actions .social-likes-count { align-self: center; line-height: var(--text-caption--line-height); }
+.social-post__summary { padding: 11px 0 8px; border-top: 1px solid var(--edu-line); color: var(--edu-muted); font-size: var(--text-caption); line-height: var(--text-caption--line-height); font-weight: 400; }
+.social-post__summary > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.social-post__summary span { font-weight: 400; }
 .social-post__actions button.is-liked {
   color: var(--color-trust);
 }
@@ -1190,7 +1201,7 @@
   padding: 0 !important;
   color: var(--edu-muted);
   font: inherit;
-  font-weight: 700;
+  font-weight: 400;
 }
 .social-likes-count:hover { color: var(--edu-green); text-decoration: underline; }
 .shared-post {
@@ -2601,6 +2612,13 @@
   font-weight: 800;
   line-height: var(--text-caption-xs--line-height);
 }
+button.teacher-cover__trust-count {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+button.teacher-cover__trust-count:hover { text-decoration: underline; text-underline-offset: 2px; }
 .teacher-cover__trust-count.is-new {
   color: var(--edu-gold) !important;
 }

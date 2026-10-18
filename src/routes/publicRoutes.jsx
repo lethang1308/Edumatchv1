@@ -15,7 +15,7 @@ import { MessagesPage } from '@/pages/Messages';
 import { PartnerTermsPage } from '@/pages/PartnerTerms';
 import { CenterSupportPage } from '@/pages/CenterSupport';
 import { ContactPage } from '@/pages/Contact';
-import { FeedPage } from '@/pages/Feed';
+import { FeedPage, PostDetailPage } from '@/pages/Feed';
 
 /**
  * Public routes accessible without authentication
@@ -47,6 +47,10 @@ export const publicRoutes = [
       {
         path: ROUTES.FEED,
         element: <FeedPage />,
+      },
+      {
+        path: ROUTES.POST_DETAIL(),
+        element: <PostDetailPage />,
       },
       {
         path: ROUTES.COURSE_DETAIL(),
