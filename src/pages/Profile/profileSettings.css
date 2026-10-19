@@ -90,8 +90,8 @@
   opacity: 0;
 }
 .profile-avatar-label:focus-within {
-  outline: 2px solid #2b8d78;
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: 0 0 0 2px #2b8d78;
 }
 .profile-settings-tabs {
   display: flex;

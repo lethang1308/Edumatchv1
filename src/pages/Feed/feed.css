@@ -584,7 +584,8 @@
 .feed-reply-form textarea:focus,
 .feed-comment-form textarea:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(6 126 102 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .feed-reply-form button,
 .feed-comment-form button {

@@ -36,9 +36,17 @@
     border-color 150ms,
     box-shadow 150ms;
 }
-.edu-site :is(a, button, input, select, summary):focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 4px;
+.edu-site :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.edu-site :is(input, textarea, select) {
+  outline: none;
+}
+.edu-site :is(input, textarea, select):focus,
+.edu-site :is(input, textarea, select):focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
 }
 .edu-site section[id] {
   scroll-margin-top: 100px;
@@ -176,7 +184,8 @@
 }
 .header-search:focus-within {
   border-color: var(--edu-green);
-  outline: 2px solid rgb(81 191 166 / 20%);
+  outline: none;
+  box-shadow: none;
 }
 .header-search kbd {
   font-family: inherit;
@@ -848,7 +857,8 @@
 }
 .filter-input--search:focus-within {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .filter-input select option {
   background: var(--edu-surface);

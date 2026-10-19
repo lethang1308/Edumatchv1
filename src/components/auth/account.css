@@ -34,8 +34,9 @@
 .account-field input:focus,
 .account-field select:focus,
 .account-field textarea:focus {
-  outline: 2px solid #2b8d78;
-  outline-offset: 2px;
+  outline: none;
+  border-color: #2b8d78;
+  box-shadow: none;
 }
 .account-field input[aria-invalid='true'],
 .account-field textarea[aria-invalid='true'] {
