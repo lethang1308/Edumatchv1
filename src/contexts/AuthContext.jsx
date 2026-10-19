@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 import { authService } from '@/services/authService';
+import { disconnectPusher } from '@/services/pusherService';
 
 export const AuthContext = createContext(null);
 
@@ -13,13 +14,18 @@ const authFailure = (error, fallback) => ({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => storage.get(STORAGE_KEYS.ACCESS_TOKEN) || null);
+  const [user, setUser] = useState(() => storage.get(STORAGE_KEYS.USER_INFO) || null);
+  const [loading, setLoading] = useState(() => {
+    const hasToken = Boolean(storage.get(STORAGE_KEYS.ACCESS_TOKEN));
+    const hasUser = Boolean(storage.get(STORAGE_KEYS.USER_INFO));
+    return hasToken && !hasUser;
+  });
 
   useEffect(() => {
     let active = true;
     const clearSession = () => {
+      disconnectPusher();
       storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
       storage.remove(STORAGE_KEYS.USER_INFO);
       if (active) {
@@ -71,6 +77,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    disconnectPusher();
     try {
       await authService.logout();
       return { success: true };
@@ -82,14 +89,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateUser = (updates) => {
+  const updateUser = useCallback((updates) => {
     setUser((current) => {
       if (!current) return null;
       const nextUser = { ...current, ...updates };
       storage.set(STORAGE_KEYS.USER_INFO, nextUser);
       return nextUser;
     });
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{

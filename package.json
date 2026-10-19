@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:auth": "node --test tests/auth.test.js",
+    "test:phase2": "node --test tests/phase2.test.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -16,6 +17,8 @@
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.49.0",
+    "pdfjs-dist": "6.4.299",
+    "pusher-js": "^8.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hot-toast": "^2.4.1",

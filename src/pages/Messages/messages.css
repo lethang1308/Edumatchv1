@@ -1083,7 +1083,8 @@
 }
 .chat-composer textarea:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .chat-composer__row > button {
   display: grid;

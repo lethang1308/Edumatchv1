@@ -6,11 +6,12 @@ import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { getAge, getCourse, saveCourse, updateCourse } from '@/features/learning/marketplace';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
-import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
+import { useAdministrativeOptions } from '@/hooks/useAdministrativeOptions';
+import { useMasterData } from '@/hooks/useMasterData';
 import './courses.css';
 
 const emptyForm = {
-  title: '', description: '', price: '', paymentType: 'full-course', sessions: '', duration: '',
+  title: '', description: '', subject: '', educationLevel: '', price: '', paymentType: 'full-course', sessions: '', duration: '',
   sessionsPerWeek: '', schedule: '', learningMode: 'online', inPersonType: 'classroom', enrollmentStatus: 'open', province: '', ward: '',
 };
 
@@ -39,7 +40,8 @@ export function CreateCoursePage() {
       return { ...current, [name]: value };
     });
   };
-  const wardOptions = useMemo(() => getAdministrativeWards(form.province), [form.province]);
+  const { administrativeProvinces, wardOptions, error: areaError } = useAdministrativeOptions(form.province);
+  const catalog = useMasterData();
   const selectLocation = (name) => (value) => setForm((current) => ({
     ...current,
     [name]: value,
@@ -77,6 +79,8 @@ export function CreateCoursePage() {
           <section className="form-surface form-surface--main">
             <div className="form-heading"><h2>Thông tin khóa học</h2><p>Hãy mô tả ngắn gọn giá trị học viên sẽ nhận được.</p></div>
             <Field label="Tên khóa học" error={errors.title}><input name="title" value={form.title} onChange={update} placeholder="Ví dụ: Luyện thi IELTS từ nền tảng đến 6.5" /></Field>
+            {(catalog.error || areaError) && <p className="field-error" role="alert">{catalog.error || areaError}</p>}
+            <div className="form-split"><Field label="Môn học"><select name="subject" value={form.subject} onChange={update}><option value="">Chọn môn học</option>{catalog.subjects.map((subject) => <option key={subject.id} value={subject.name}>{subject.name}</option>)}</select></Field><Field label="Cấp lớp"><select name="educationLevel" value={form.educationLevel} onChange={update}><option value="">Chọn cấp lớp</option>{catalog.levels.map((level) => <option key={level.id} value={level.code}>{level.name}</option>)}</select></Field></div>
             <Field label="Mô tả khóa học" error={errors.description}><textarea name="description" value={form.description} onChange={update} rows="5" placeholder="Mục tiêu, lộ trình và phương pháp giảng dạy của khóa học..." /></Field>
             <Field label="Mức học phí (VNĐ)" hint="Không bắt buộc" error={errors.price}><input name="price" value={form.price} onChange={update} inputMode="numeric" placeholder="Điền học phí" /></Field>
             <fieldset className="radio-field"><legend>Hình thức đóng học phí</legend><div className="segmented-control">

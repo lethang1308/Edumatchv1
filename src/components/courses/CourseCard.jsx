@@ -1,4 +1,5 @@
-import { BadgeCheck, CalendarDays, Clock3, Heart, Monitor, Star } from 'lucide-react';
+import { VerifiedBadge } from '@/components/common/VerifiedBadge';
+import { CalendarDays, Clock3, Heart, Monitor, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { enrollmentLabel, getCourseRating, getProviderTrustCount, modeLabel, paymentLabel } from '@/features/learning/marketplace';
@@ -33,7 +34,7 @@ export function CourseCard({ course, editable = false, sponsored = false }) {
         {course.teacher.role !== 'student' && <span className={`course-card__trust ${trustCount < 3 ? 'is-new' : ''}`}>
           {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
         </span>}
-        {isCenter && course.teacher.licenseVerificationStatus === 'verified' && <span className="course-card__verified"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>}
+        <VerifiedBadge userId={course.teacher.id} />
       </div>
       <div className="course-card__description"><p>{course.description || ' '}</p><Link to={ROUTES.COURSE_DETAIL(course.id)}>Xem thêm</Link></div>
       <div className="course-card__facts">

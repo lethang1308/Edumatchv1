@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
@@ -13,13 +13,18 @@ import {
   Newspaper,
   Phone,
   Search,
+  Settings,
+  ShieldCheck,
   Sun,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { Button } from '@/components/common/Button';
+import { accountNotificationService } from '@/services/accountNotificationService';
+import { subscribeUserNotifications } from '@/services/pusherService';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/features/learning/marketplace';
+import toast from 'react-hot-toast';
 
 const notificationIcon = (type) => {
   if (type === 'post_like' || type === 'profile_like') return <Heart size={15} />;
@@ -42,11 +47,15 @@ export const Header = ({ theme, onToggleTheme }) => {
   const [notificationPanel, setNotificationPanel] = useState({ open: false, locationKey: '' });
   const { isAuthenticated, user, logout } = useAuth();
   const [notifications, setNotifications] = useState(() => user?.id ? getNotifications(user.id) : []);
+  const [serverNotifications, setServerNotifications] = useState({ userId: null, items: [] });
+  const receivedServerNotificationIds = useRef(new Set());
+  const allNotifications = [...(serverNotifications.userId === user?.id ? serverNotifications.items : []), ...notifications]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const isEducationProvider = isAuthenticated && ['teacher', 'center'].includes(user?.role);
   const isCenterAccount = isAuthenticated && user?.role === 'center';
   const teachingDestination = isEducationProvider ? ROUTES.CREATE_COURSE : ROUTES.REGISTER;
   const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
-  const unreadNotifications = notifications.filter((notification) => !notification.isRead).length;
+  const unreadNotifications = allNotifications.filter((notification) => !notification.isRead).length;
   const notificationOpen = notificationPanel.open && notificationPanel.locationKey === locationKey;
 
   useEffect(() => {
@@ -56,8 +65,42 @@ export const Header = ({ theme, onToggleTheme }) => {
     return () => window.removeEventListener('edumatch:notifications-updated', refreshNotifications);
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      receivedServerNotificationIds.current = new Set();
+      return undefined;
+    }
+    let active = true;
+    accountNotificationService.list().then((items) => {
+      if (!active) return;
+      receivedServerNotificationIds.current = new Set(items.map((item) => item.id));
+      setServerNotifications({ userId: user.id, items });
+    }).catch(() => { /* The next login still attempts the initial history load. */ });
+    const unsubscribe = subscribeUserNotifications(user.id, (notification) => {
+      if (!notification?.id || receivedServerNotificationIds.current.has(notification.id)) return;
+      receivedServerNotificationIds.current.add(notification.id);
+      setServerNotifications((current) => ({
+        userId: user.id,
+        items: [notification, ...current.items.filter((item) => item.id !== notification.id)],
+      }));
+      toast(<div><strong>{notification.title || 'Bạn có thông báo mới'}</strong>{notification.description && <p>{notification.description}</p>}</div>, {
+        icon: '🔔',
+        duration: 5000,
+      });
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [isAuthenticated, user?.id]);
+
   const openNotification = (notificationId) => {
-    markNotificationRead(notificationId);
+    if (String(notificationId).startsWith('server-')) {
+      const item = serverNotifications.items.find((record) => record.id === notificationId);
+      if (item) accountNotificationService.read(item.server_id).then(() => {
+        setServerNotifications((current) => ({ ...current, items: current.items.map((n) => n.id === notificationId ? { ...n, isRead: true } : n) }));
+      }).catch(() => {});
+    } else markNotificationRead(notificationId);
     setNotificationPanel({ open: false, locationKey });
   };
   const toggleNotifications = () => {
@@ -68,6 +111,7 @@ export const Header = ({ theme, onToggleTheme }) => {
   };
   const readAllNotifications = () => {
     if (user?.id) markAllNotificationsRead(user.id);
+    accountNotificationService.readAll().then(() => setServerNotifications((current) => ({ ...current, items: current.items.map((n) => ({ ...n, isRead: true })) }))).catch(() => {});
   };
   const openDialog = (name) => {
     setMobileMenuOpen(false);
@@ -89,14 +133,14 @@ export const Header = ({ theme, onToggleTheme }) => {
         Đi đến nội dung chính
       </a>
       <div className="edu-container header-inner">
-        <a href={ROUTES.HOME} className="edu-brand" title="Tải lại trang chủ EduMatch">
+        <Link to={ROUTES.HOME} className="edu-brand" title="EduMatch - Về trang chủ">
           <span className="brand-symbol">
             E<span />
           </span>
           <span>
             Edu<span className="accent-text">Match</span>
           </span>
-        </a>
+        </Link>
         <form className="header-search" role="search" onSubmit={search}>
           <Search size={16} aria-hidden="true" />
           <input
@@ -145,7 +189,7 @@ export const Header = ({ theme, onToggleTheme }) => {
             {notificationOpen && <section className="notification-popover" aria-label="Danh sách thông báo">
               <header><div><strong>Thông báo</strong><span>{unreadNotifications ? `${unreadNotifications} chưa đọc` : 'Bạn đã đọc tất cả'}</span></div><button type="button" onClick={readAllNotifications} disabled={!unreadNotifications}><CheckCheck size={15} /> Đánh dấu đã đọc</button></header>
               <div className="notification-popover__list">
-                {notifications.length ? notifications.slice(0, 8).map((notification) => <Link
+                {allNotifications.length ? allNotifications.slice(0, 8).map((notification) => <Link
                   to={notification.link || ROUTES.HOME}
                   key={notification.id}
                   className={!notification.isRead ? 'is-unread' : ''}
@@ -171,9 +215,11 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <Link to={ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+              <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
                 {user?.name}
               </Link>
+              <Link to={ROUTES.PROFILE} className="theme-toggle" aria-label="Cài đặt tài khoản" title="Cài đặt tài khoản"><Settings size={17} /></Link>
+              {isEducationProvider && <Link to={ROUTES.VERIFICATION} className="theme-toggle" aria-label="Xác minh hồ sơ" title="Xác minh hồ sơ"><ShieldCheck size={17} /></Link>}
               <Button
                 variant="outline"
                 className="edu-button edu-button-outline"
@@ -227,6 +273,7 @@ export const Header = ({ theme, onToggleTheme }) => {
           </Link>
           <Link to={ROUTES.FEED} onClick={() => setMobileMenuOpen(false)}>Bảng Tin</Link>
           <Link to={teachingDestination} onClick={() => setMobileMenuOpen(false)}>{teachingLabel}</Link>
+          {isEducationProvider && <Link to={ROUTES.VERIFICATION} onClick={() => setMobileMenuOpen(false)}>Xác minh hồ sơ</Link>}
           {isCenterAccount ? (
             <Link to={ROUTES.CENTER_SUPPORT} onClick={() => setMobileMenuOpen(false)}>Tư vấn miễn phí</Link>
           ) : (
@@ -236,7 +283,7 @@ export const Header = ({ theme, onToggleTheme }) => {
           {isAuthenticated && <button onClick={toggleNotifications}>Thông báo{unreadNotifications ? ` (${unreadNotifications})` : ''}</button>}
           {isAuthenticated && notificationOpen && <section className="mobile-notification-panel" aria-label="Danh sách thông báo">
             <header><strong>Thông báo</strong><button type="button" onClick={readAllNotifications} disabled={!unreadNotifications}>Đánh dấu đã đọc</button></header>
-            {notifications.length ? notifications.slice(0, 8).map((notification) => <Link
+            {allNotifications.length ? allNotifications.slice(0, 8).map((notification) => <Link
               to={notification.link || ROUTES.HOME}
               key={notification.id}
               className={!notification.isRead ? 'is-unread' : ''}
@@ -246,7 +293,8 @@ export const Header = ({ theme, onToggleTheme }) => {
               <span><strong>{notification.title}</strong><small>{notificationTime(notification.createdAt)}</small></span>
             </Link>) : <p>Chưa có thông báo nào.</p>}
           </section>}
-          {isAuthenticated && <Link to={ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
+          {isAuthenticated && <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
+          {isAuthenticated && <Link to={ROUTES.PROFILE} onClick={() => setMobileMenuOpen(false)}>Cài đặt tài khoản</Link>}
           {isAuthenticated ? (
             <button
               onClick={() => {
