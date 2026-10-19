@@ -14,9 +14,13 @@ const authFailure = (error, fallback) => ({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => storage.get(STORAGE_KEYS.ACCESS_TOKEN) || null);
+  const [user, setUser] = useState(() => storage.get(STORAGE_KEYS.USER_INFO) || null);
+  const [loading, setLoading] = useState(() => {
+    const hasToken = Boolean(storage.get(STORAGE_KEYS.ACCESS_TOKEN));
+    const hasUser = Boolean(storage.get(STORAGE_KEYS.USER_INFO));
+    return hasToken && !hasUser;
+  });
 
   useEffect(() => {
     let active = true;

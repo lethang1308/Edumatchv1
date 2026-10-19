@@ -133,14 +133,14 @@ export const Header = ({ theme, onToggleTheme }) => {
         Đi đến nội dung chính
       </a>
       <div className="edu-container header-inner">
-        <a href={ROUTES.HOME} className="edu-brand" title="Tải lại trang chủ EduMatch">
+        <Link to={ROUTES.HOME} className="edu-brand" title="EduMatch - Về trang chủ">
           <span className="brand-symbol">
             E<span />
           </span>
           <span>
             Edu<span className="accent-text">Match</span>
           </span>
-        </a>
+        </Link>
         <form className="header-search" role="search" onSubmit={search}>
           <Search size={16} aria-hidden="true" />
           <input
