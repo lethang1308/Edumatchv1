@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 import { authService } from '@/services/authService';
+import { disconnectPusher } from '@/services/pusherService';
 
 export const AuthContext = createContext(null);
 
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let active = true;
     const clearSession = () => {
+      disconnectPusher();
       storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
       storage.remove(STORAGE_KEYS.USER_INFO);
       if (active) {
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    disconnectPusher();
     try {
       await authService.logout();
       return { success: true };

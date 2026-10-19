@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
-  BadgeCheck,
   BookOpen,
   CheckCircle2,
   ChevronDown,
@@ -25,14 +24,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ROUTES } from '@/constants/routes';
 import { CourseCard } from '@/components/courses/CourseCard';
+import { VerifiedBadge } from '@/components/common/VerifiedBadge';
+import { useMasterData } from '@/hooks/useMasterData';
+import { useAdministrativeOptions } from '@/hooks/useAdministrativeOptions';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
-import { administrativeProvinces, getAdministrativeWards } from '@/data/administrativeUnits';
 import { createConversationId, createNotification, getCourseRating, getCourses, getProviderTrustCount, hasProviderTrust, saveConversation, toggleProviderTrust, trackProviderAffinity } from '@/features/learning/marketplace';
 import toast from 'react-hot-toast';
 import heroImage from '@/assets/tutoring-hero.webp';
 import heroImageMobile from '@/assets/tutoring-hero-720.webp';
 import communityTeacherStrip from '@/assets/vietnamese-teachers-avatar-strip.png';
-import { subjects, tutors } from './homeData';
+import { subjects as subjectStyles, tutors } from './homeData';
 import './home.css';
 import '@/components/courses/course.css';
 
@@ -106,7 +107,7 @@ function FilterField({ label, icon: Icon, id, name, value, onChange, children })
   );
 }
 
-function SubjectFilterField({ value, onChange, id = 'subject-filter', listId = 'subject-suggestions', label = 'Môn học / Lĩnh vực' }) {
+function SubjectFilterField({ value, onChange, subjects = [], id = 'subject-filter', listId = 'subject-suggestions', label = 'Môn học / Lĩnh vực' }) {
   return (
     <label className="filter-field">
       <span>{label}</span>
@@ -165,9 +166,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
         {tutor.providerType !== 'student' && <span className={`tutor-trust ${trustCount < 3 ? 'is-new' : ''}`}>
           {trustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={13} fill="currentColor" /> {trustCount} tin tưởng</>}
         </span>}
-        {tutor.providerType === 'center' && tutor.licenseVerificationStatus === 'verified' && (
-          <span className="tutor-verification-badge"><BadgeCheck size={13} /> Đã xác thực pháp lý</span>
-        )}
+        <VerifiedBadge userId={tutor.id} />
       </div>
       <p className="tutor-meta">
         <GraduationCap size={15} />
@@ -188,6 +187,10 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 }
 
 export const Home = () => {
+  const catalog = useMasterData();
+  const subjects = catalog.subjects.map((subject) => ({ ...subject,
+    icon: subjectStyles.find((item) => item.name === subject.name)?.icon || BookOpen,
+    color: subjectStyles.find((item) => item.name === subject.name)?.color || 'green' }));
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -247,6 +250,7 @@ const profileCourses = profile
           : 'online';
       const courseSearchText = normalize([
         course.title,
+        course.subject,
         course.description,
         course.teacher?.name,
         course.location,
@@ -413,7 +417,7 @@ const profileCourses = profile
   const visibleTutors = showAll
     ? filteredTutors.slice((tutorPage - 1) * tutorPageSize, tutorPage * tutorPageSize)
     : filteredTutors.slice(0, 8);
-  const wardOptions = useMemo(() => getAdministrativeWards(filters.province), [filters.province]);
+  const { administrativeProvinces, wardOptions, error: areaError } = useAdministrativeOptions(filters.province);
   const registerForTutor = (tutor) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để đăng ký học.');
@@ -540,6 +544,8 @@ const profileCourses = profile
 
   return (
     <div className={`edu-home ${isSearchResults ? 'edu-home--search-results' : ''}`}>
+      {catalog.error && <p className="edu-container account-error" role="alert">{catalog.error}</p>}
+      {!isSearchResults && catalog.banners.length > 0 && <section className="cms-banners edu-container" aria-label="Thông tin từ EduMatch">{catalog.banners.map((banner) => /^https?:\/\//i.test(banner.link_url || '') ? <a key={banner.id} href={banner.link_url} target="_blank" rel="noopener noreferrer"><img src={banner.image_url} alt={banner.title || 'Thông tin EduMatch'} loading="lazy" /></a> : <img key={banner.id} src={banner.image_url} alt={banner.title || 'Thông tin EduMatch'} loading="lazy" />)}</section>}
       {isSearchResults ? (
         <section className="search-results-hero" aria-labelledby="search-results-title">
           <div className="edu-container">
@@ -766,7 +772,8 @@ const profileCourses = profile
               }}
             >
               <DescriptionFilterField value={visibleTutorFilters.description} onChange={updateFilter} />
-              <SubjectFilterField value={visibleTutorFilters.subject} onChange={updateFilter} />
+              <SubjectFilterField subjects={subjects} value={visibleTutorFilters.subject} onChange={updateFilter} />
+              {areaError && <p className="account-error" role="alert">{areaError}</p>}
               <FilterField
                 label="Hình thức giảng dạy"
                 icon={Monitor}
@@ -910,7 +917,7 @@ const profileCourses = profile
           <div className="subjects-grid">
             {subjects
               .slice(0, showAllSubjects ? subjects.length : 9)
-              .map(({ name, icon: Icon, color }) => (
+              .map(({ name, icon: Icon, icon_url, color }) => (
                 <button
                   key={name}
                   className={`subject-tile subject-${color} ${appliedFilters.subject === name ? 'selected' : ''}`}
@@ -918,7 +925,7 @@ const profileCourses = profile
                   onClick={() => chooseSubject(name)}
                 >
                   <span className="subject-icon">
-                    <Icon size={26} strokeWidth={1.7} />
+                    {icon_url ? <img src={icon_url} alt="" width="26" height="26" loading="lazy" /> : <Icon size={26} strokeWidth={1.7} />}
                   </span>
                   <span>{name}</span>
                 </button>
@@ -1052,9 +1059,7 @@ const profileCourses = profile
                 ) : getProviderTrustCount(profile.id, profile.heartCount) >= 3 ? (
                   <p className="profile-detail__trust"><Heart size={15} fill="currentColor" /> {getProviderTrustCount(profile.id, profile.heartCount)} lượt tin tưởng</p>
                 ) : <p>Hồ sơ giáo viên mới</p>}
-                {profile.providerType === 'center' && profile.licenseVerificationStatus === 'verified' && (
-                  <span className="profile-detail__verification"><BadgeCheck size={15} /> Đã xác thực pháp lý</span>
-                )}
+                <VerifiedBadge userId={profile.id} />
               </div>
             </div>
             <dl className="profile-detail__info">

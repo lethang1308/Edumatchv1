@@ -15,6 +15,9 @@ export function normalizeAuthUser(user) {
     experience: user.teacher_profile ? `${user.teacher_profile.experience_years ?? 0} năm kinh nghiệm` : user.experience || '',
     isPhonePublic: user.teacher_profile?.show_phone ?? user.isPhonePublic ?? false,
     foundedYear: user.center?.founded_year ? String(user.center.founded_year) : user.foundedYear || '',
+    verificationStatus: profile.verification_status || 'unverified',
+    verifiedAt: profile.verified_at || null,
+    licenseVerificationStatus: user.center?.verification_status || '',
   };
 }
 

@@ -259,6 +259,7 @@ export function ProfileSettingsPage() {
             />
           </label>
           <small>JPG, PNG, WebP · tối đa 2 MB</small>
+          {['teacher', 'center'].includes(user.role) && <Link to={ROUTES.VERIFICATION}>Hồ sơ xác minh chuyên môn / pháp lý</Link>}
           {avatarFile && (
             <>
               <small>Ảnh xem trước chưa được lưu.</small>

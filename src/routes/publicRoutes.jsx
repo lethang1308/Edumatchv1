@@ -17,6 +17,7 @@ import { CenterSupportPage } from '@/pages/CenterSupport';
 import { ContactPage } from '@/pages/Contact';
 import { FeedPage } from '@/pages/Feed';
 import { ProfileSettingsPage } from '@/pages/Profile/ProfileSettingsPage';
+import { VerificationPage } from '@/pages/Verification/VerificationPage';
 
 /**
  * Public routes accessible without authentication
@@ -25,6 +26,7 @@ export const publicRoutes = [
   {
     element: <MainLayout />,
     children: [
+      { path: ROUTES.VERIFICATION, element: <ProtectedRoute><VerificationPage /></ProtectedRoute> },
       {
         path: ROUTES.PROFILE,
         element: <ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>,
