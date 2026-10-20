@@ -195,7 +195,8 @@
 .center-support__form-card input:focus,
 .center-support__form-card textarea:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .center-support__note {
   grid-column: 1 / -1;

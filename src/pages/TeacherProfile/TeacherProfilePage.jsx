@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { BadgeCheck, Camera, FileCheck2, FileText, Handshake, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Send, Share2, Star, Upload, Video, X } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
+import { VerifiedBadge } from '@/components/common/VerifiedBadge';
+import { masterDataService } from '@/services/masterDataService';
 import { createConversationId, createNotification, deletePost, getAge, getCourses, getPosts, getProviderTrustCount, getProviderTrustUserIds, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
 import { CourseCard } from '@/components/courses/CourseCard';
 import { Modal } from '@/components/feedback/Modal';
@@ -18,7 +20,6 @@ import '../Courses/courses.css';
 import { tutors } from '../Home/homeData';
 
 const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024;
-const MAX_LICENSE_IMAGE_SIZE = 3 * 1024 * 1024;
 const SHORT_BIO_MAX_LENGTH = 500;
 const MAX_PORTFOLIO_IMAGES = 4;
 const PROFILE_POSTS_BATCH_SIZE = 8;
@@ -68,6 +69,7 @@ export function TeacherProfilePage() {
   const { teacherId } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, updateUser } = useAuth();
+  const [serverProfile, setServerProfile] = useState(null);
   const [posts, setPosts] = useState(() => getPosts(teacherId).slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
   const [postText, setPostText] = useState('');
   const [media, setMedia] = useState(null);
@@ -87,20 +89,17 @@ export function TeacherProfilePage() {
   const [isViewingDetailedProfile, setIsViewingDetailedProfile] = useState(false);
   const [selectedPortfolioImage, setSelectedPortfolioImage] = useState(null);
   const [activeProfileTextField, setActiveProfileTextField] = useState(null);
-  const [isVerifyingLicense, setIsVerifyingLicense] = useState(false);
   const [profileDraft, setProfileDraft] = useState({});
   const [profileErrors, setProfileErrors] = useState({});
   const [detailedProfileDraft, setDetailedProfileDraft] = useState('');
   const [portfolioImagesDraft, setPortfolioImagesDraft] = useState([]);
-  const [verificationDraft, setVerificationDraft] = useState({});
-  const [verificationErrors, setVerificationErrors] = useState({});
   const [, setTrustRefresh] = useState(0);
   const [visiblePostCount, setVisiblePostCount] = useState(PROFILE_POSTS_BATCH_SIZE);
   const mediaInputRef = useRef(null);
   const portfolioImagesInputRef = useRef(null);
   const loadMorePostsRef = useRef(null);
   const courses = getCourses().filter((course) => course.teacher.id === teacherId);
-  const ownsProfile = user?.id === teacherId;
+  const ownsProfile = user?.id != null && String(user.id) === String(teacherId);
   const sampleTutor = tutors.find((tutor) => tutor.id === teacherId);
   const sampleProfile = sampleTutor ? {
     id: sampleTutor.id,
@@ -117,7 +116,7 @@ export function TeacherProfilePage() {
     profilePortfolioImages: sampleTutor.profilePortfolioImages || [],
   } : null;
   const postProfile = getPosts().find((post) => post.authorId === teacherId || post.teacherId === teacherId);
-  const profile = ownsProfile ? user : courses[0]?.teacher || sampleProfile || (postProfile ? {
+  const profile = ownsProfile ? user : (String(serverProfile?.id) === String(teacherId) ? serverProfile : null) || courses[0]?.teacher || sampleProfile || (postProfile ? {
     id: postProfile.authorId || postProfile.teacherId,
     name: postProfile.authorName || postProfile.author || 'Thành viên EduMatch',
     role: postProfile.authorRole || 'student',
@@ -178,7 +177,17 @@ export function TeacherProfilePage() {
     return () => observer.disconnect();
   }, [posts.length, visiblePostCount]);
 
+  useEffect(() => {
+    if (!/^[1-9]\d*$/.test(String(teacherId)) || ownsProfile) return;
+    let active = true;
+    masterDataService.provider(teacherId).then((result) => { if (active) setServerProfile(result); }).catch(() => { if (active) setServerProfile({ requestedId: teacherId }); });
+    return () => { active = false; };
+  }, [teacherId, ownsProfile]);
+
+  if (!profile && /^[1-9]\d*$/.test(String(teacherId)) && String(serverProfile?.requestedId) !== String(teacherId)) return <section className="learning-page"><p role="status">Đang tải hồ sơ công khai...</p></section>;
   if (!profile) return <section className="learning-page"><div className="learning-empty"><h1>Chưa có hồ sơ công khai</h1><p>Hồ sơ sẽ xuất hiện sau khi người dùng hoàn thiện thông tin hoặc công khai khóa học đầu tiên.</p><Link to={ROUTES.HOME}>Về trang chủ</Link></div></section>;
+
+  if (ownsProfile && user.role === 'student') return <Navigate to={ROUTES.PROFILE} replace />;
 
   const chooseProfileImage = (event, field) => {
     const file = event.target.files?.[0];
@@ -289,63 +298,6 @@ export function TeacherProfilePage() {
     });
     setIsEditingDetailedProfile(false);
     toast.success('Hồ sơ năng lực đã được cập nhật.');
-  };
-  const openVerificationForm = () => {
-    setVerificationDraft({
-      centerName: user?.name || '',
-      companyName: user?.companyName || '',
-      taxCode: user?.taxCode || '',
-      foundedYear: user?.foundedYear || '',
-      address: user?.address || '',
-      trainingField: user?.licenseVerification?.trainingField || 'other',
-      businessLicense: user?.licenseVerification?.businessLicense || '',
-      englishCenterLicense: user?.licenseVerification?.englishCenterLicense || '',
-    });
-    setVerificationErrors({});
-    setIsVerifyingLicense(true);
-  };
-  const updateVerificationDraft = (event) => {
-    const { name, value } = event.target;
-    setVerificationDraft((current) => ({ ...current, [name]: value }));
-    if (verificationErrors[name]) setVerificationErrors((current) => ({ ...current, [name]: '' }));
-  };
-  const chooseLicenseImage = (event, field) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('Vui lòng tải lên tệp ảnh giấy phép.'); return; }
-    if (file.size > MAX_LICENSE_IMAGE_SIZE) { toast.error('Ảnh giấy phép tối đa 3 MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setVerificationDraft((current) => ({ ...current, [field]: String(reader.result) }));
-      setVerificationErrors((current) => ({ ...current, [field]: '' }));
-    };
-    reader.readAsDataURL(file);
-  };
-  const submitVerification = (event) => {
-    event.preventDefault();
-    const requiredFields = ['centerName', 'companyName', 'taxCode', 'foundedYear', 'address', 'businessLicense'];
-    if (verificationDraft.trainingField === 'english') requiredFields.push('englishCenterLicense');
-    const nextErrors = {};
-    requiredFields.forEach((field) => {
-      if (!String(verificationDraft[field] || '').trim()) nextErrors[field] = 'Vui lòng điền hoặc tải lên thông tin này';
-    });
-    if (!/^\d{4}$/.test(verificationDraft.foundedYear || '')) nextErrors.foundedYear = 'Năm thành lập gồm 4 chữ số';
-    setVerificationErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
-    const licenseVerification = { ...verificationDraft, submittedAt: new Date().toISOString() };
-    const updates = {
-      name: verificationDraft.centerName.trim(),
-      companyName: verificationDraft.companyName.trim(),
-      taxCode: verificationDraft.taxCode.trim(),
-      foundedYear: verificationDraft.foundedYear.trim(),
-      address: verificationDraft.address.trim(),
-      licenseVerificationStatus: 'pending',
-      licenseVerification,
-    };
-    updateUser(updates);
-    syncTeacherCourseProfile(user.id, { name: updates.name, foundedYear: updates.foundedYear, licenseVerificationStatus: updates.licenseVerificationStatus });
-    setIsVerifyingLicense(false);
-    toast.success('Hồ sơ giấy phép đã được gửi để EduMatch xét duyệt.');
   };
   const chooseMedia = (event) => {
     const file = event.target.files?.[0];
@@ -547,15 +499,15 @@ export function TeacherProfilePage() {
 
   const coverStyle = profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined;
   const profileType = isCenterProfile ? 'TRUNG TÂM ĐÀO TẠO' : isTeacherProfile ? 'GIÁO VIÊN' : 'HỌC VIÊN';
-  const subtitle = isCenterProfile ? '' : isTeacherProfile ? `${getAge(profile.dob)} tuổi` : 'Học viên EduMatch';
+  const subtitle = isCenterProfile ? 'Đối tác đào tạo của EduMatch' : isTeacherProfile ? (profile.dob ? `${getAge(profile.dob)} tuổi` : 'Giáo viên EduMatch') : 'Học viên EduMatch';
 
   return <><section className="learning-page teacher-public-page"><div className="learning-container">
     <header className={`teacher-cover ${profile.coverImage ? 'has-custom-cover' : ''}`} style={coverStyle}>
       <div className="teacher-cover__avatar">{profile.avatar ? <img src={profile.avatar} alt={`Ảnh đại diện của ${profile.name}`} /> : profile.name?.slice(0, 1)}{ownsProfile && <label className="profile-avatar-upload" title="Cập nhật ảnh đại diện"><Camera size={15} /><input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'avatar')} /></label>}</div>
-      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1>{subtitle && <p>{subtitle}</p>}<div className="teacher-cover__status-list">{isEducationProviderProfile && (trustCount < 3 ? <small className="teacher-cover__trust-count is-new">Mới trên EduMatch</small> : <button type="button" className="teacher-cover__trust-count" onClick={() => setLikesTarget({ ids: trustUserIds, title: 'Lượt tin tưởng', label: 'Những thành viên đã tin tưởng hồ sơ này', emptyText: 'Danh sách thành viên tin tưởng đang được cập nhật.' })}><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</button>)}{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div></div>
+      <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1>{subtitle && <p>{subtitle}</p>}<div className="teacher-cover__status-list">{isEducationProviderProfile && (trustCount < 3 ? <small className="teacher-cover__trust-count is-new">Mới trên EduMatch</small> : <button type="button" className="teacher-cover__trust-count" onClick={() => setLikesTarget({ ids: trustUserIds, title: 'Lượt tin tưởng', label: 'Những thành viên đã tin tưởng hồ sơ này', emptyText: 'Danh sách thành viên tin tưởng đang được cập nhật.' })}><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</button>)}<VerifiedBadge userId={profile.id} />{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div></div>
       {ownsProfile && <label className="profile-cover-upload teacher-cover__cover-upload"><ImagePlus size={16} /> Ảnh bìa<input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'coverImage')} /></label>}
     </header>
-    <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions">{hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> Tạo hồ sơ năng lực</button>}{isCenterProfile && <>{user?.licenseVerificationStatus === 'verified' ? <span className="teacher-bio__verified"><BadgeCheck size={15} /> Đã xác thực pháp lý</span> : user?.licenseVerificationStatus === 'pending' ? <span className="teacher-bio__pending"><FileCheck2 size={15} /> Hồ sơ đang xét duyệt</span> : <button type="button" className="teacher-bio__verify" onClick={openVerificationForm}><FileCheck2 size={15} /> Yêu cầu xác minh giấy phép</button>}<Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link></>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
+    <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions">{hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> Tạo hồ sơ năng lực</button>}<Link className="teacher-bio__verify" to={ROUTES.VERIFICATION}><FileCheck2 size={15} /> Hồ sơ xác minh</Link>{isCenterProfile && <Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}</aside>
     <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
       {ownsProfile && <form className="post-composer" onSubmit={publish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media && <div className="post-composer__preview">{media.type === 'video' ? <video src={media.src} controls /> : <img src={media.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={clearMedia} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{media.name}</span></div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
       {posts.length ? renderedPosts.map((post) => {
@@ -568,7 +520,7 @@ export function TeacherProfilePage() {
         const shareIds = [...new Set(getPosts().filter((candidate) => candidate.sharedPost && getOriginalSharedPost(candidate, getPosts(), postAuthor)?.id === post.id).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))];
         const shareCount = shareIds.length;
         return <article className="social-post" key={post.id}>
-          <div className="social-post__head"><span>{(post.authorName || post.author || profile.name).slice(0, 1)}</span><div><Link className="social-post__author" to={ROUTES.TEACHER_PROFILE(post.authorId || post.teacherId || profile.id)}>{post.authorName || post.author || profile.name}</Link>{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{formatPublishedAt(post.createdAt)}</small></div></div>
+          <div className="social-post__head"><span>{(post.authorName || post.author || profile.name).slice(0, 1)}</span><div><Link className="social-post__author" to={ROUTES.TEACHER_PROFILE(post.authorId || post.teacherId || profile.id)}>{post.authorName || post.author || profile.name}</Link><VerifiedBadge userId={post.authorId || post.teacherId || profile.id} />{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{formatPublishedAt(post.createdAt)}</small></div></div>
           {ownsContent(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editProfilePost(post)} onDelete={() => removeProfilePost(post)} label="bài viết" />}
           {post.text && <p>{post.text}</p>}
           {originalSharedPost && <div className="shared-post"><span>Đã chia sẻ <Link to={ROUTES.POST_DETAIL(originalSharedPost.id)}>bài viết gốc</Link> của</span>{originalSharedPost.author?.id ? <Link className="shared-post__author" to={ROUTES.TEACHER_PROFILE(originalSharedPost.author.id)}>{originalSharedPost.author.name}</Link> : <strong>{originalSharedPost.author?.name || 'Thành viên EduMatch'}</strong>}<p>{originalSharedPost.text || 'Bài viết gốc không có nội dung văn bản.'}</p>{sharedMediaItems.length > 0 && <div className="social-post__media">{sharedMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <button type="button" className="post-media-trigger" key={`${item.src}-${index}`} onClick={() => openImageViewer(getPosts().find((entry) => entry.id === originalSharedPost.id) || { ...originalSharedPost, likes: [], comments: [] }, originalSharedPost.author, sharedMediaItems, index)} aria-label={`Mở ảnh chia sẻ ${index + 1}`}><img src={item.src} alt={`Ảnh chia sẻ ${index + 1}`} /></button>)}</div>}</div>}
@@ -731,24 +683,6 @@ export function TeacherProfilePage() {
     >
       {selectedPortfolioImage && <img className="profile-portfolio-lightbox__image" src={selectedPortfolioImage.src} alt={`Ảnh minh họa ${selectedPortfolioImage.index + 1} trong hồ sơ năng lực của ${profile.name}`} />}
     </Modal>
-    <Modal
-      open={isVerifyingLicense}
-      onClose={() => setIsVerifyingLicense(false)}
-      title="Xác minh giấy phép hoạt động"
-      description="EduMatch sẽ kiểm tra hồ sơ trước khi hiển thị nhãn xác thực công khai."
-      size="lg"
-    >
-      <form className="teacher-profile-editor center-verification-form" onSubmit={submitVerification} noValidate>
-        <label><span>Tên trung tâm</span><input name="centerName" value={verificationDraft.centerName || ''} onChange={updateVerificationDraft} />{verificationErrors.centerName && <small>{verificationErrors.centerName}</small>}</label>
-        <label><span>Tên công ty</span><input name="companyName" value={verificationDraft.companyName || ''} onChange={updateVerificationDraft} />{verificationErrors.companyName && <small>{verificationErrors.companyName}</small>}</label>
-        <label><span>Mã số thuế</span><input name="taxCode" value={verificationDraft.taxCode || ''} onChange={updateVerificationDraft} inputMode="numeric" />{verificationErrors.taxCode && <small>{verificationErrors.taxCode}</small>}</label>
-        <label><span>Năm thành lập</span><input name="foundedYear" value={verificationDraft.foundedYear || ''} onChange={(event) => updateVerificationDraft({ target: { name: 'foundedYear', value: event.target.value.replace(/\D/g, '') } })} inputMode="numeric" maxLength="4" placeholder="Ví dụ: 2018" />{verificationErrors.foundedYear && <small>{verificationErrors.foundedYear}</small>}</label>
-        <label className="teacher-profile-editor__full"><span>Địa điểm hoạt động</span><input name="address" value={verificationDraft.address || ''} onChange={updateVerificationDraft} placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố" />{verificationErrors.address && <small>{verificationErrors.address}</small>}</label>
-        <label className="teacher-profile-editor__full"><span>Lĩnh vực đào tạo</span><select name="trainingField" value={verificationDraft.trainingField || 'other'} onChange={updateVerificationDraft}><option value="other">Lĩnh vực đào tạo khác</option><option value="english">Trung tâm tiếng Anh</option></select></label>
-        <label className="license-upload teacher-profile-editor__full"><span>Ảnh giấy phép đăng ký doanh nghiệp</span><input type="file" accept="image/*" onChange={(event) => chooseLicenseImage(event, 'businessLicense')} />{verificationDraft.businessLicense ? <img src={verificationDraft.businessLicense} alt="Giấy phép đăng ký doanh nghiệp đã tải lên" /> : <em><Upload size={17} /> Tải lên ảnh giấy phép, tối đa 3 MB</em>}{verificationErrors.businessLicense && <small>{verificationErrors.businessLicense}</small>}</label>
-        {verificationDraft.trainingField === 'english' && <label className="license-upload teacher-profile-editor__full"><span>Ảnh giấy phép thành lập trung tâm tiếng Anh</span><input type="file" accept="image/*" onChange={(event) => chooseLicenseImage(event, 'englishCenterLicense')} />{verificationDraft.englishCenterLicense ? <img src={verificationDraft.englishCenterLicense} alt="Giấy phép thành lập trung tâm tiếng Anh đã tải lên" /> : <em><Upload size={17} /> Tải lên ảnh giấy phép, tối đa 3 MB</em>}{verificationErrors.englishCenterLicense && <small>{verificationErrors.englishCenterLicense}</small>}</label>}
-        <div className="teacher-profile-editor__actions"><button type="button" onClick={() => setIsVerifyingLicense(false)}>Hủy</button><button type="submit"><FileCheck2 size={16} /> Gửi hồ sơ xét duyệt</button></div>
-      </form>
-    </Modal>
+
   </>;
 }

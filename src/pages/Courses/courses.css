@@ -112,6 +112,7 @@
 }
 .form-field input,
 .form-field textarea,
+.form-field select,
 .review-form textarea,
 .review-reply-form textarea,
 .post-composer textarea,
@@ -129,17 +130,21 @@
   outline: none;
   resize: vertical;
 }
-.form-field input {
+.form-field input,
+.form-field select {
   min-height: var(--control-height);
 }
-.form-field :is(input, textarea):focus,
+.form-field :is(input, textarea, select):focus,
+.form-field :is(input, textarea, select):focus-visible,
 .review-form textarea:focus,
 .review-reply-form textarea:focus,
 .post-composer textarea:focus,
 .post-comment-form textarea:focus,
 .message-panel textarea:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
 .field-error {
   display: block;
@@ -1629,7 +1634,8 @@
 }
 .teacher-profile-editor :is(input, textarea):focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .teacher-profile-editor small {
   color: var(--color-danger);
@@ -1704,7 +1710,8 @@
 }
 .profile-text-editor-modal__textarea:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 12%);
+  outline: none;
+  box-shadow: none;
 }
 .profile-text-editor-modal__count {
   margin: 0;
@@ -2744,7 +2751,8 @@ button.teacher-cover__trust-count:hover { text-decoration: underline; text-under
 }
 .center-verification-form select:focus {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .license-upload {
   position: relative;

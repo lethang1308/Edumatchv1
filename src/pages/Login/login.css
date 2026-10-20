@@ -160,7 +160,8 @@
 .login-control:focus-within {
   border-color: var(--login-green);
   background: var(--color-surface);
-  box-shadow: 0 0 0 3.5px rgba(8, 123, 104, 0.12);
+  outline: none;
+  box-shadow: none;
 }
 
 .login-control.is-invalid {

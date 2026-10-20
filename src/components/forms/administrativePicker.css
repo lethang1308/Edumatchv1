@@ -23,7 +23,8 @@
 }
 .administrative-picker__control:focus-within {
   border-color: var(--edu-green);
-  box-shadow: 0 0 0 3px rgb(8 117 99 / 10%);
+  outline: none;
+  box-shadow: none;
 }
 .administrative-picker__control input {
   min-width: 0;

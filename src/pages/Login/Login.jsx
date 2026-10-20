@@ -4,6 +4,7 @@ import { Check, Eye, EyeOff, Lock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
+import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import studentImage from '@/assets/login-student-v2.png';
 import teacherAvatarsImg from '@/assets/teacher-avatars.png';
 import './login.css';
@@ -21,26 +22,27 @@ export const Login = () => {
   const location = useLocation();
   const registeredIdentifier =
     location.state?.registeredIdentifier || location.state?.registeredEmail;
-  const [email, setEmail] = useState(registeredIdentifier || 'admin@example.com');
-  const [password, setPassword] = useState(registeredIdentifier ? '' : 'password123');
+  const [email, setEmail] = useState(registeredIdentifier || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const validate = () => {
     const nextErrors = {};
-    if (!email) {
+    if (!email.trim()) {
       nextErrors.email = 'Vui lòng nhập email hoặc số điện thoại';
-    } else if (email.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    } else if (email.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       nextErrors.email = 'Email chưa đúng định dạng';
+    } else if (!email.includes('@') && !/^(?:0|\+84)[35789]\d{8}$/.test(email.replace(/[\s.()-]/g, ''))) {
+      nextErrors.email = 'Vui lòng nhập số điện thoại Việt Nam hợp lệ';
     }
 
     if (!password) {
       nextErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (password.length < 6) {
-      nextErrors.password = 'Mật khẩu cần có ít nhất 6 ký tự';
     }
 
     setErrors(nextErrors);
@@ -49,22 +51,31 @@ export const Login = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) return;
     setFormError('');
     if (!validate()) return;
 
     setLoading(true);
-    const result = await login({ email, password, remember });
+    const identifier = email.trim();
+    const result = await login({
+      [identifier.includes('@') ? 'email' : 'phone']: identifier,
+      password,
+      remember,
+    });
     setLoading(false);
 
     if (result.success) {
       toast.success('Đăng nhập thành công');
-      // Luồng Dashboard của base cũ, giữ để đối chiếu khi cần:
-      // navigate(location.state?.from?.pathname || ROUTES.DASHBOARD, { replace: true });
-      navigate(ROUTES.HOME, { replace: true });
+      navigate(location.state?.from?.pathname || ROUTES.HOME, { replace: true });
       return;
     }
 
     const message = result.message || 'Đăng nhập chưa thành công. Vui lòng thử lại.';
+    const fieldErrors = result.errors || {};
+    setErrors({
+      email: (fieldErrors.identifier || fieldErrors.email || fieldErrors.phone)?.[0],
+      password: fieldErrors.password?.[0],
+    });
     setFormError(message);
     toast.error(message);
   };
@@ -178,7 +189,7 @@ export const Login = () => {
                 <button
                   type="button"
                   className="login-text-button"
-                  onClick={() => toast('Liên kết đặt lại mật khẩu sẽ sớm khả dụng.')}
+                  onClick={() => setForgotPasswordOpen(true)}
                 >
                   Quên mật khẩu?
                 </button>
@@ -346,6 +357,7 @@ export const Login = () => {
           </aside>
         </div>
       </section>
+      {forgotPasswordOpen && <ForgotPasswordModal initialIdentifier={email} onClose={() => setForgotPasswordOpen(false)} onSuccess={(identifier) => { setEmail(identifier); setPassword(''); setErrors({}); setFormError(''); }} />}
     </main>
   );
 };

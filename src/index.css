@@ -77,6 +77,24 @@
   :where(.edu-site) p {
     color: inherit;
   }
+
+  /* Remove ugly browser outline and offset rings from all inputs, textareas, and selects */
+  input,
+  textarea,
+  select {
+    outline: none;
+  }
+
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+  }
 }
 
 .app-container {
