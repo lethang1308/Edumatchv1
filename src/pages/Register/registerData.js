@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 
-export const SHORT_BIO_MAX_LENGTH = 500;
+export const SHORT_BIO_MAX_LENGTH = 5000;
 
 export const registrationRoles = [
   {
@@ -150,9 +150,13 @@ export const centerAccountFields = [
     placeholder: "Tên trung tâm",
     icon: Building2,
     autoComplete: "organization",
-    maxLength: 150,
+    maxLength: 200,
   },
+<<<<<<< HEAD
   emailField,
+=======
+  accountFields[1],
+>>>>>>> f5ab951a3a07d4fc12f4051189098cee95b4b854
   phoneField,
   ...passwordFields,
 ];
@@ -164,7 +168,7 @@ export const teacherFields = [
     placeholder: "Bằng cấp/chứng chỉ",
     icon: Award,
     multiline: true,
-    maxLength: 500,
+    maxLength: 200,
     showCharacterCount: true,
   },
   {
@@ -246,6 +250,8 @@ export function validateRegistration(form, role, today = new Date()) {
   if (role === "center") {
     if (form.centerName.trim().length < 2)
       errors.centerName = "Vui lòng nhập tên trung tâm (ít nhất 2 ký tự).";
+    else if (form.centerName.trim().length > 200)
+      errors.centerName = "Tên trung tâm tối đa 200 ký tự.";
   } else {
     if (form.name.trim().length < 2)
       errors.name = "Vui lòng nhập họ và tên (ít nhất 2 ký tự).";
@@ -277,6 +283,9 @@ export function validateRegistration(form, role, today = new Date()) {
       if (!form[name].trim())
         errors[name] = `Vui lòng nhập ${label.toLowerCase()}.`;
     });
+    if (form.qualification.length > 200) errors.qualification = "Bằng cấp/tiêu đề nghề nghiệp tối đa 200 ký tự.";
+    const years = Number.parseInt(form.experience, 10);
+    if (!Number.isInteger(years) || years < 0 || years > 60) errors.experience = "Nhập số năm kinh nghiệm từ 0 đến 60 (ví dụ: 5 năm).";
   } else if (role === "center" && !form.centerDescription.trim()) {
     errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
   }
@@ -289,6 +298,8 @@ export function validateRegistration(form, role, today = new Date()) {
   }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";
+  else if (role === "center" && (Number(form.foundedYear) < 1950 || Number(form.foundedYear) > today.getFullYear()))
+    errors.foundedYear = "Năm thành lập phải từ 1950 đến năm hiện tại.";
   return errors;
 }
 
@@ -298,19 +309,25 @@ export function buildRegistrationPayload(form, role) {
     String(value || "").slice(0, SHORT_BIO_MAX_LENGTH).trim();
   const data = {
     name: (role === "center" ? form.centerName : form.name).trim(),
+    email: form.email.trim().toLowerCase(),
     phone: form.phone.replace(/[\s.-]/g, ""),
     password: form.password,
     password_confirmation: form.confirmPassword,
     role,
     fullName: (role === "center" ? form.centerName : form.name).trim(),
+<<<<<<< HEAD
     email: form.email.trim().toLowerCase(),
     ...(role !== "student" && { isPhonePublic: form.isPhonePublic }),
+=======
+    ...(role === "teacher" && { isPhonePublic: form.isPhonePublic }),
+>>>>>>> f5ab951a3a07d4fc12f4051189098cee95b4b854
   };
   if (role === "center") {
     return {
       ...data,
       bio: limitProfileText(form.centerDescription),
       foundedYear: form.foundedYear,
+      founded_year: Number(form.foundedYear),
       centerProfile: {
         description: limitProfileText(form.centerDescription),
         foundedYear: form.foundedYear,
@@ -324,6 +341,9 @@ export function buildRegistrationPayload(form, role) {
     dob: form.dateOfBirth,
     ...(role === "teacher" && {
       qualifications: limitProfileText(form.qualification),
+      headline: form.qualification.trim(),
+      experience_years: Number.parseInt(form.experience, 10) || 0,
+      show_phone: Boolean(form.isPhonePublic),
       experience: limitProfileText(form.experience),
       bio: limitProfileText(form.biography),
       teacherProfile: Object.fromEntries(
@@ -333,11 +353,13 @@ export function buildRegistrationPayload(form, role) {
   };
 }
 
-export function mapRegistrationErrors(serverErrors = {}) {
+export function mapRegistrationErrors(serverErrors = {}, role = 'student') {
   const aliases = {
     full_name: 'name', fullName: 'name',
     date_of_birth: 'dateOfBirth', dob: 'dateOfBirth',
     password_confirmation: 'confirmPassword',
+    headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear',
+    ...(role === 'center' ? { name: 'centerName', bio: 'centerDescription' } : role === 'teacher' ? { bio: 'biography', show_phone: 'isPhonePublic' } : {}),
   };
   return Object.fromEntries(Object.entries(serverErrors).map(([field, messages]) => [
     aliases[field] || field,

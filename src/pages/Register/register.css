@@ -211,7 +211,8 @@
 .register-control:focus-within {
   border-color: var(--register-green);
   background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgb(0 123 104 / 12%);
+  outline: none;
+  box-shadow: none;
 }
 .register-control.is-invalid {
   border-color: var(--color-danger);
@@ -350,37 +351,6 @@
   margin-top: 16px;
 }
 
-@media (min-width: 1024px) {
-  .register-page--teacher {
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .register-page--teacher .register-shell {
-    height: 100%;
-    min-height: 0;
-    align-items: stretch;
-  }
-  .register-page--teacher .register-card {
-    display: flex;
-    min-height: 0;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .register-page--teacher .register-heading,
-  .register-page--teacher .register-roles,
-  .register-page--teacher .register-login-copy {
-    flex: 0 0 auto;
-  }
-  .register-page--teacher .register-form {
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 6px;
-    scrollbar-gutter: stable;
-  }
-}
 .register-profile-fields {
   padding-top: 16px;
   border-top: 1px solid var(--register-line);
@@ -449,7 +419,8 @@
 .register-text-editor-modal__textarea:focus {
   border-color: var(--register-green);
   background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgb(0 123 104 / 12%);
+  outline: none;
+  box-shadow: none;
 }
 .register-text-editor-modal__count {
   margin: 0;
