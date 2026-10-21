@@ -152,11 +152,7 @@ export const centerAccountFields = [
     autoComplete: "organization",
     maxLength: 200,
   },
-<<<<<<< HEAD
-  emailField,
-=======
   accountFields[1],
->>>>>>> f5ab951a3a07d4fc12f4051189098cee95b4b854
   phoneField,
   ...passwordFields,
 ];
@@ -315,12 +311,7 @@ export function buildRegistrationPayload(form, role) {
     password_confirmation: form.confirmPassword,
     role,
     fullName: (role === "center" ? form.centerName : form.name).trim(),
-<<<<<<< HEAD
-    email: form.email.trim().toLowerCase(),
-    ...(role !== "student" && { isPhonePublic: form.isPhonePublic }),
-=======
     ...(role === "teacher" && { isPhonePublic: form.isPhonePublic }),
->>>>>>> f5ab951a3a07d4fc12f4051189098cee95b4b854
   };
   if (role === "center") {
     return {
