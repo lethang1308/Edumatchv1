@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BadgeCheck, BookOpen, CornerDownRight, Heart, Image as ImageIcon, MessageCircle, Newspaper, Send, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BadgeCheck, BookOpen, CornerDownRight, Heart, Image as ImageIcon, MessageCircle, Newspaper, Send, Share2, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { createNotification, deletePost, getCourses, getPosts, getProviderAffinity, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
+import { createNotification, deletePost, getCourses, getPosts, getProviderAffinity, savePost, trackProviderAffinity, updatePost } from '@/features/learning/marketplace';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { ImageAttachment } from '@/components/forms/ImageAttachment';
 import { ContentMenu } from '@/components/feedback/ContentMenu';
 import { LikesModal } from '@/components/feedback/LikesModal';
+import { Modal } from '@/components/feedback/Modal';
+import { PostImageDialog } from '@/components/feedback/PostImageDialog';
+import { ReactionCount } from '@/components/feedback/ReactionCount';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
 import './feed.css';
-
-const roleLabel = (role) => role === 'center' ? 'Trung tâm đào tạo' : role === 'student' ? 'Học viên EduMatch' : 'Giáo viên EduMatch';
 
 const getAuthor = (item, providers) => {
   const provider = providers.get(item.authorId || item.teacherId);
@@ -28,7 +29,36 @@ const shortTime = (dateValue) => {
   if (!dateValue) return 'Vừa xong';
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return 'Vừa xong';
-  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+
+const getMediaItems = (item) => Array.isArray(item?.mediaItems) && item.mediaItems.length
+  ? item.mediaItems
+  : item?.media
+    ? [item.media]
+    : [];
+
+const getOriginalSharedPost = (post, posts, getPostAuthor) => {
+  let snapshot = post.sharedPost;
+  const visited = new Set([post.id]);
+
+  while (snapshot?.id && !visited.has(snapshot.id)) {
+    visited.add(snapshot.id);
+    const sourcePost = posts.find((item) => item.id === snapshot.id);
+    if (!sourcePost) break;
+    if (!sourcePost.sharedPost) {
+      return {
+        id: sourcePost.id,
+        author: getPostAuthor(sourcePost),
+        text: sourcePost.text || '',
+        media: sourcePost.media || null,
+        mediaItems: sourcePost.mediaItems || [],
+      };
+    }
+    snapshot = sourcePost.sharedPost;
+  }
+
+  return snapshot;
 };
 
 const interactionScore = (post) =>
@@ -40,7 +70,9 @@ const affinityScore = (post, affinity) => {
   return Number(affinity[providerId] || affinity[alternateId] || 0);
 };
 
-export function FeedPage() {
+const POSTS_BATCH_SIZE = 12;
+
+export function FeedPage({ postId = null }) {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [posts, setPosts] = useState(() => getPosts().slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
@@ -49,9 +81,14 @@ export function FeedPage() {
   const [replyTarget, setReplyTarget] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replyMedia, setReplyMedia] = useState(null);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [shareText, setShareText] = useState('');
   const [openContentMenu, setOpenContentMenu] = useState(null);
   const [likesTarget, setLikesTarget] = useState(null);
+  const [imageViewer, setImageViewer] = useState(null);
   const [feedTab, setFeedTab] = useState('providers');
+  const [visiblePostCount, setVisiblePostCount] = useState(POSTS_BATCH_SIZE);
+  const loadMoreRef = useRef(null);
   const providers = useMemo(() => new Map(getCourses().map((course) => [course.teacher.id, course.teacher])), []);
   const rankedPosts = useMemo(() => {
     const affinity = getProviderAffinity(user?.id);
@@ -63,14 +100,24 @@ export function FeedPage() {
       return interactionDifference || new Date(second.createdAt) - new Date(first.createdAt);
     });
   }, [posts, user?.id]);
-  const visiblePosts = rankedPosts.filter((post) => (feedTab === 'students' ? getAuthor(post, providers).role === 'student' : getAuthor(post, providers).role !== 'student'));
+  const visiblePosts = postId
+    ? rankedPosts.filter((post) => post.id === postId)
+    : rankedPosts.filter((post) => post.sharedPost || (feedTab === 'students' ? getAuthor(post, providers).role === 'student' : getAuthor(post, providers).role !== 'student'));
+  const renderedPosts = postId ? visiblePosts : visiblePosts.slice(0, visiblePostCount);
 
   useEffect(() => {
-    const postId = window.location.hash.slice(1);
-    if (!postId) return undefined;
-    const timer = window.setTimeout(() => document.getElementById(postId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
-    return () => window.clearTimeout(timer);
-  }, [posts]);
+    if (postId || visiblePostCount >= visiblePosts.length) return undefined;
+    const target = loadMoreRef.current;
+    if (!target) return undefined;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setVisiblePostCount((current) => Math.min(current + POSTS_BATCH_SIZE, visiblePosts.length));
+    }, { rootMargin: '560px 0px' });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [postId, visiblePostCount, visiblePosts.length]);
 
   const requireAuth = () => {
     if (isAuthenticated) return true;
@@ -94,6 +141,45 @@ export function FeedPage() {
   const removePost = (post) => {
     if (!owns(post.authorId || post.teacherId) || !window.confirm('Xóa bài viết này?')) return;
     setPosts(deletePost(post.id).slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
+  };
+  const openShareDialog = (post) => {
+    if (!requireAuth()) return;
+    setShareTarget(post);
+    setShareText('');
+  };
+  const openImageViewer = (post, author, mediaItems, activeIndex = 0) => {
+    setImageViewer({ post, author, mediaItems, activeIndex });
+  };
+  const sharePost = (event) => {
+    event.preventDefault();
+    if (!shareTarget || !requireAuth()) return;
+    const post = shareTarget;
+    const originalPost = getOriginalSharedPost(post, posts, (item) => getAuthor(item, providers));
+    const source = originalPost?.author || getAuthor(post, providers);
+    const sharedPost = {
+      id: `post-share-${Date.now()}`,
+      teacherId: user.id,
+      authorId: user.id,
+      authorName: user.name || 'Thành viên EduMatch',
+      authorRole: user.role || 'student',
+      authorAvatar: user.avatar || '',
+      text: shareText.trim(),
+      sharedPost: {
+        id: originalPost?.id || post.id,
+        author: source,
+        text: originalPost?.text || '',
+        media: originalPost?.media || null,
+        mediaItems: originalPost?.mediaItems || [],
+      },
+      createdAt: new Date().toISOString(),
+      likes: [],
+      comments: [],
+    };
+    savePost(sharedPost);
+    setPosts((current) => [sharedPost, ...current]);
+    setShareTarget(null);
+    setShareText('');
+    toast.success('Bài viết đã được chia sẻ lên trang cá nhân của bạn.');
   };
   const editDiscussion = (postId, commentId, replyId = null) => {
     const post = posts.find((item) => item.id === postId);
@@ -136,7 +222,7 @@ export function FeedPage() {
           type: 'post_like',
           title: `${user.name || 'Một thành viên'} đã thích bài viết của bạn`,
           description: 'Bấm để xem bài viết trong Bảng Tin.',
-          link: `${ROUTES.FEED}#${postId}`,
+          link: ROUTES.POST_DETAIL(postId),
         });
       }
       return { ...post, likes: hasLiked ? likes.filter((id) => id !== user.id) : [...likes, user.id] };
@@ -172,7 +258,7 @@ export function FeedPage() {
         type: 'post_comment',
         title: `${user.name || 'Một thành viên'} đã bình luận về bài viết của bạn`,
         description: text,
-        link: `${ROUTES.FEED}#${postId}`,
+        link: ROUTES.POST_DETAIL(postId),
       });
     }
     saveInteraction(postId, (post) => ({ ...post, comments: [...(post.comments || []), comment] }));
@@ -213,7 +299,7 @@ export function FeedPage() {
         type: 'comment_reply',
         title: `${user.name || 'Một thành viên'} đã trả lời bình luận của bạn`,
         description: text,
-        link: `${ROUTES.FEED}#${replyTarget.postId}`,
+        link: ROUTES.POST_DETAIL(replyTarget.postId),
       });
     }
     saveInteraction(replyTarget.postId, (post) => ({
@@ -241,7 +327,7 @@ export function FeedPage() {
         type: 'post_comment',
         title: `${user.name || 'Một thành viên'} đã thích bình luận của bạn`,
         description: 'Bấm để xem cuộc trò chuyện trong Bảng Tin.',
-        link: `${ROUTES.FEED}#${postId}`,
+        link: ROUTES.POST_DETAIL(postId),
       });
     }
     saveInteraction(postId, (currentPost) => ({
@@ -260,6 +346,26 @@ export function FeedPage() {
       }),
     }));
   };
+
+  const viewerPost = imageViewer ? posts.find((post) => post.id === imageViewer.post.id) || imageViewer.post : null;
+  const viewerAuthor = imageViewer?.author || (viewerPost ? getAuthor(viewerPost, providers) : null);
+  const imageViewerDiscussion = viewerPost ? <><div className="post-image-dialog__comments">{(viewerPost.comments || []).map((comment) => {
+      const commentAuthor = getAuthor(comment, providers);
+      const isReplying = replyTarget?.postId === viewerPost.id && replyTarget?.commentId === comment.id;
+      const isCommentLiked = (comment.likes || []).includes(user?.id);
+      return <div className="post-image-dialog__comment" key={comment.id}>
+        {commentAuthor.id ? <Link to={ROUTES.TEACHER_PROFILE(commentAuthor.id)}><strong>{commentAuthor.name}</strong></Link> : <strong>{commentAuthor.name}</strong>}
+        {comment.text && <p>{comment.text}</p>}
+        {comment.media && (comment.media.type === 'video' ? <video className="discussion-image" src={comment.media.src} controls preload="metadata" /> : <img className="discussion-image" src={comment.media.src} alt={`Ảnh đính kèm từ ${commentAuthor.name}`} />)}
+        <div className="post-image-dialog__comment-actions"><button type="button" className={isCommentLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(viewerPost.id, comment.id)}>{isCommentLiked ? 'Đã thích' : 'Thích'}</button><button type="button" onClick={() => openReply(viewerPost.id, comment.id)}>Trả lời</button>{owns(comment.authorId) && <ContentMenu id={`viewer-comment-${comment.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(viewerPost.id, comment.id)} onDelete={() => removeDiscussion(viewerPost.id, comment.id)} label="bình luận" />}<ReactionCount count={comment.likes?.length} label="Xem những người đã thích bình luận này" onClick={() => setLikesTarget({ ids: comment.likes, label: 'Những người đã thích bình luận này' })} /></div>
+        {(comment.replies || []).map((reply) => {
+          const replyAuthor = getAuthor(reply, providers);
+          const isReplyLiked = (reply.likes || []).includes(user?.id);
+          return <div className="post-image-dialog__comment-reply" key={reply.id}>{replyAuthor.id ? <Link to={ROUTES.TEACHER_PROFILE(replyAuthor.id)}><strong>{replyAuthor.name}</strong></Link> : <strong>{replyAuthor.name}</strong>}{reply.text && <p>{reply.text}</p>}{reply.media && (reply.media.type === 'video' ? <video className="discussion-image" src={reply.media.src} controls preload="metadata" /> : <img className="discussion-image" src={reply.media.src} alt={`Ảnh đính kèm từ ${replyAuthor.name}`} />)}<div className="post-image-dialog__comment-actions"><button type="button" className={isReplyLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(viewerPost.id, comment.id, reply.id)}>{isReplyLiked ? 'Đã thích' : 'Thích'}</button>{owns(reply.authorId) && <ContentMenu id={`viewer-reply-${reply.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(viewerPost.id, comment.id, reply.id)} onDelete={() => removeDiscussion(viewerPost.id, comment.id, reply.id)} label="phản hồi" />}<ReactionCount count={reply.likes?.length} label="Xem những người đã thích phản hồi này" onClick={() => setLikesTarget({ ids: reply.likes, label: 'Những người đã thích phản hồi này' })} /></div></div>;
+        })}
+        {isReplying && <form className="feed-reply-form post-image-dialog__reply-form" onSubmit={submitReply}><textarea autoFocus value={replyText} onChange={(event) => setReplyText(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder={`Trả lời ${commentAuthor.name}...`} rows="2" /><ImageAttachment id={`viewer-reply-image-${comment.id}`} value={replyMedia} onChange={setReplyMedia} label="Tệp" /><button type="submit">Gửi</button></form>}
+      </div>;
+    })}</div><form className="feed-comment-form" onSubmit={(event) => submitComment(event, viewerPost.id)}><textarea autoFocus={!replyTarget || replyTarget.postId !== viewerPost.id} value={commentDrafts[viewerPost.id] || ''} onChange={(event) => setCommentDrafts((current) => ({ ...current, [viewerPost.id]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" /><ImageAttachment id={`viewer-comment-image-${viewerPost.id}`} value={commentMedia[viewerPost.id] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [viewerPost.id]: media }))} label="Tệp" /><button type="submit" aria-label="Gửi bình luận"><Send size={17} /></button></form></> : null;
 
   return (
     <><section className="feed-page">
@@ -293,35 +399,42 @@ export function FeedPage() {
           <main className="feed-page__main">
         <header className="feed-page__heading">
           <span><Newspaper size={17} /> BẢNG TIN EDUMATCH</span>
-          <h1>Những chia sẻ mới nhất từ cộng đồng</h1>
-          <p>Khám phá bài viết, tài liệu và những câu chuyện học tập từ cộng đồng EduMatch.</p>
+          <h1>{postId ? 'Bài viết' : 'Những chia sẻ mới nhất từ cộng đồng'}</h1>
+          <p>{postId ? 'Xem đầy đủ nội dung, lượt thích và bình luận của bài viết này.' : 'Khám phá bài viết, tài liệu và những câu chuyện học tập từ cộng đồng EduMatch.'}</p>
         </header>
-        <div className="feed-tabs" role="tablist" aria-label="Loại nội dung Bảng Tin">
-          <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => setFeedTab('providers')}>Giáo viên & Trung tâm</button>
-          <button type="button" role="tab" aria-selected={feedTab === 'students'} className={feedTab === 'students' ? 'is-active' : ''} onClick={() => setFeedTab('students')}>Chia sẻ từ học viên</button>
-        </div>
+        {!postId && <div className="feed-tabs" role="tablist" aria-label="Loại nội dung Bảng Tin">
+          <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => { setFeedTab('providers'); setVisiblePostCount(POSTS_BATCH_SIZE); }}>Giáo viên & Trung tâm</button>
+          <button type="button" role="tab" aria-selected={feedTab === 'students'} className={feedTab === 'students' ? 'is-active' : ''} onClick={() => { setFeedTab('students'); setVisiblePostCount(POSTS_BATCH_SIZE); }}>Chia sẻ từ học viên</button>
+        </div>}
         <div className="feed-page__list">
-          {visiblePosts.length ? visiblePosts.map((post) => {
+          {visiblePosts.length ? renderedPosts.map((post) => {
             const author = getAuthor(post, providers);
             const likes = post.likes || [];
             const comments = post.comments || [];
             const isLiked = likes.includes(user?.id);
-            const postMediaItems = post.mediaItems || (post.media ? [post.media] : []);
+            const postMediaItems = getMediaItems(post);
+            const originalSharedPost = post.sharedPost ? getOriginalSharedPost(post, posts, (item) => getAuthor(item, providers)) : null;
+            const sharedMediaItems = getMediaItems(originalSharedPost);
+            const shareIds = [...new Set(posts.filter((candidate) => candidate.sharedPost && getOriginalSharedPost(candidate, posts, (item) => getAuthor(item, providers))?.id === post.id).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))];
+            const shareCount = shareIds.length;
             return <article className="community-post" id={post.id} key={post.id}>
               <header className="community-post__header">
                 {author.avatar ? <img src={author.avatar} alt={`Ảnh đại diện của ${author.name}`} /> : <span>{author.name.slice(0, 1)}</span>}
-                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}{author.role === 'center' && author.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{roleLabel(author.role)} · {shortTime(post.createdAt)}</small></div>
+                <div>{author.id ? <Link className="community-post__author" to={ROUTES.TEACHER_PROFILE(author.id)}>{author.name}</Link> : <strong>{author.name}</strong>}{author.role === 'center' && author.licenseVerificationStatus === 'verified' && <small className="post-verification-badge"><BadgeCheck size={12} /> Đã xác thực pháp lý</small>}<small>{shortTime(post.createdAt)}</small></div>
                 {owns(post.authorId || post.teacherId) && <ContentMenu id={`post-${post.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editPost(post)} onDelete={() => removePost(post)} label="bài viết" />}
               </header>
               {post.text && <p className="community-post__text">{post.text}</p>}
-              {postMediaItems.length > 0 && <div className={`community-post__media ${postMediaItems.length > 1 ? 'is-album' : ''}`}>{postMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <img key={`${item.src}-${index}`} src={item.src} alt={`Ảnh ${index + 1} do ${author.name} chia sẻ`} />)}</div>}
-              <div className="community-post__summary">
+              {originalSharedPost && <div className="shared-post"><span>Đã chia sẻ <Link to={ROUTES.POST_DETAIL(originalSharedPost.id)}>bài viết gốc</Link> của</span>{originalSharedPost.author?.id ? <Link className="shared-post__author" to={ROUTES.TEACHER_PROFILE(originalSharedPost.author.id)}>{originalSharedPost.author.name}</Link> : <strong>{originalSharedPost.author?.name || 'Thành viên EduMatch'}</strong>}<p>{originalSharedPost.text || 'Bài viết gốc không có nội dung văn bản.'}</p>{sharedMediaItems.length > 0 && <div className="community-post__media">{sharedMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <button type="button" className="post-media-trigger" key={`${item.src}-${index}`} onClick={() => openImageViewer(posts.find((entry) => entry.id === originalSharedPost.id) || { ...originalSharedPost, likes: [], comments: [] }, originalSharedPost.author, sharedMediaItems, index)} aria-label={`Mở ảnh chia sẻ ${index + 1}`}><img src={item.src} alt={`Ảnh chia sẻ ${index + 1}`} /></button>)}</div>}</div>}
+              {postMediaItems.length > 0 && <div className={`community-post__media ${postMediaItems.length > 1 ? 'is-album' : ''}`}>{postMediaItems.map((item, index) => item.type === 'video' ? <video key={`${item.src}-${index}`} src={item.src} controls preload="metadata" /> : <button type="button" className="post-media-trigger" key={`${item.src}-${index}`} onClick={() => openImageViewer(post, author, postMediaItems, index)} aria-label={`Mở ảnh ${index + 1}`}><img src={item.src} alt={`Ảnh ${index + 1} do ${author.name} chia sẻ`} /></button>)}</div>}
+              <div className="community-post__summary"><div className="community-post__metrics">
                 {likes.length ? <button type="button" onClick={() => setLikesTarget({ ids: likes, label: 'Những người đã thích bài viết này' })}>{likes.length} lượt thích</button> : <span>Hãy là người đầu tiên thích bài viết này</span>}
                 {comments.length > 0 && <span>{comments.length} bình luận</span>}
-              </div>
+                {shareCount > 0 && <button type="button" onClick={() => setLikesTarget({ ids: shareIds, kind: 'share', title: 'Lượt chia sẻ', label: 'Những người đã chia sẻ bài viết này', emptyText: 'Chưa có lượt chia sẻ.' })}>{shareCount} lượt chia sẻ</button>}
+              </div></div>
               <div className="community-post__actions">
                 <button type="button" className={isLiked ? 'is-liked' : ''} onClick={() => toggleLike(post.id)}><Heart size={17} fill={isLiked ? 'currentColor' : 'none'} /> {isLiked ? 'Đã thích' : 'Thích'}</button>
                 <button type="button" onClick={() => document.getElementById(`comment-${post.id}`)?.focus()}><MessageCircle size={17} /> Bình luận</button>
+                <button type="button" onClick={() => openShareDialog(post)}><Share2 size={17} /> Chia sẻ</button>
               </div>
               {comments.length > 0 && <div className="community-post__comments">
                 {comments.map((comment) => {
@@ -332,13 +445,13 @@ export function FeedPage() {
                     {commentAuthor.avatar ? <img src={commentAuthor.avatar} alt="" /> : <span>{commentAuthor.name.slice(0, 1)}</span>}
                     <div className="feed-comment__body">
                       <div className="feed-comment__bubble">{commentAuthor.id ? <Link className="feed-comment__author" to={ROUTES.TEACHER_PROFILE(commentAuthor.id)}>{commentAuthor.name}</Link> : <strong>{commentAuthor.name}</strong>}{comment.text && <p>{comment.text}</p>}{comment.media && (comment.media.type === 'video' ? <video className="discussion-image" src={comment.media.src} controls preload="metadata" /> : <img className="discussion-image" src={comment.media.src} alt={`Ảnh đính kèm từ ${commentAuthor.name}`} />)}</div>
-                      <div className="feed-comment__meta"><span>{shortTime(comment.createdAt)}</span><button type="button" className={isCommentLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id)}><Heart size={13} fill={isCommentLiked ? 'currentColor' : 'none'} /> Thích</button>{comment.likes?.length > 0 && <button type="button" className="feed-likes-count" onClick={() => setLikesTarget({ ids: comment.likes, label: 'Những người đã thích bình luận này' })}>{comment.likes.length} lượt thích</button>}<button type="button" onClick={() => openReply(post.id, comment.id)}>Trả lời</button>{owns(comment.authorId) && <ContentMenu id={`comment-${comment.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(post.id, comment.id)} onDelete={() => removeDiscussion(post.id, comment.id)} label="bình luận" />}</div>
+                      <div className="feed-comment__meta"><span>{shortTime(comment.createdAt)}</span><button type="button" className={isCommentLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id)}>{isCommentLiked ? 'Đã thích' : 'Thích'}</button><button type="button" onClick={() => openReply(post.id, comment.id)}>Trả lời</button>{owns(comment.authorId) && <ContentMenu id={`comment-${comment.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(post.id, comment.id)} onDelete={() => removeDiscussion(post.id, comment.id)} label="bình luận" />}<ReactionCount count={comment.likes?.length} label="Xem những người đã thích bình luận này" onClick={() => setLikesTarget({ ids: comment.likes, label: 'Những người đã thích bình luận này' })} /></div>
                       {(comment.replies || []).map((reply) => {
                         const replyAuthor = getAuthor(reply, providers);
                         const isReplyLiked = (reply.likes || []).includes(user?.id);
                         return <div className="feed-comment__reply" key={reply.id}>
                           {replyAuthor.avatar ? <img src={replyAuthor.avatar} alt="" /> : <span>{replyAuthor.name.slice(0, 1)}</span>}
-                          <div><div className="feed-comment__bubble">{replyAuthor.id ? <Link className="feed-comment__author" to={ROUTES.TEACHER_PROFILE(replyAuthor.id)}>{replyAuthor.name}</Link> : <strong>{replyAuthor.name}</strong>}{reply.text && <p>{reply.text}</p>}{reply.media && (reply.media.type === 'video' ? <video className="discussion-image" src={reply.media.src} controls preload="metadata" /> : <img className="discussion-image" src={reply.media.src} alt={`Ảnh đính kèm từ ${replyAuthor.name}`} />)}</div><div className="feed-comment__meta feed-comment__meta--reply"><span>{shortTime(reply.createdAt)}</span><button type="button" className={isReplyLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id, reply.id)}><Heart size={13} fill={isReplyLiked ? 'currentColor' : 'none'} /> Thích</button>{reply.likes?.length > 0 && <button type="button" className="feed-likes-count" onClick={() => setLikesTarget({ ids: reply.likes, label: 'Những người đã thích phản hồi này' })}>{reply.likes.length} lượt thích</button>}{owns(reply.authorId) && <ContentMenu id={`reply-${reply.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(post.id, comment.id, reply.id)} onDelete={() => removeDiscussion(post.id, comment.id, reply.id)} label="phản hồi" />}</div></div>
+                          <div><div className="feed-comment__bubble">{replyAuthor.id ? <Link className="feed-comment__author" to={ROUTES.TEACHER_PROFILE(replyAuthor.id)}>{replyAuthor.name}</Link> : <strong>{replyAuthor.name}</strong>}{reply.text && <p>{reply.text}</p>}{reply.media && (reply.media.type === 'video' ? <video className="discussion-image" src={reply.media.src} controls preload="metadata" /> : <img className="discussion-image" src={reply.media.src} alt={`Ảnh đính kèm từ ${replyAuthor.name}`} />)}</div><div className="feed-comment__meta feed-comment__meta--reply"><span>{shortTime(reply.createdAt)}</span><button type="button" className={isReplyLiked ? 'is-liked' : ''} onClick={() => toggleCommentLike(post.id, comment.id, reply.id)}>{isReplyLiked ? 'Đã thích' : 'Thích'}</button>{owns(reply.authorId) && <ContentMenu id={`reply-${reply.id}`} openId={openContentMenu} onToggle={setOpenContentMenu} onEdit={() => editDiscussion(post.id, comment.id, reply.id)} onDelete={() => removeDiscussion(post.id, comment.id, reply.id)} label="phản hồi" />}<ReactionCount count={reply.likes?.length} label="Xem những người đã thích phản hồi này" onClick={() => setLikesTarget({ ids: reply.likes, label: 'Những người đã thích phản hồi này' })} /></div></div>
                         </div>;
                       })}
                       {isReplying && <form className="feed-reply-form" onSubmit={submitReply}><CornerDownRight size={15} /><textarea autoFocus value={replyText} onChange={(event) => setReplyText(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder={`Trả lời ${commentAuthor.name}...`} rows="1" /><ImageAttachment id={`reply-image-${post.id}-${comment.id}`} value={replyMedia} onChange={setReplyMedia} label="Tệp" /><button type="submit">Gửi</button></form>}
@@ -353,6 +466,7 @@ export function FeedPage() {
               </form>
             </article>;
           }) : <div className="feed-page__empty"><ImageIcon size={28} /><h2>Chưa có bài đăng nào</h2><p>Các chia sẻ từ cộng đồng EduMatch sẽ xuất hiện tại đây.</p></div>}
+          {!postId && renderedPosts.length < visiblePosts.length && <div ref={loadMoreRef} className="feed-page__load-more" aria-live="polite">Đang tải thêm bài viết…</div>}
         </div>
           </main>
           <aside className="feed-sidebar feed-sidebar--right" aria-label="Thông tin đối tác được tài trợ">
@@ -375,7 +489,7 @@ export function FeedPage() {
           </aside>
         </div>
       </div>
-    </section><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /></>
+    </section><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /><PostImageDialog key={imageViewer ? `${imageViewer.post.id}-${imageViewer.activeIndex}` : 'closed'} viewer={imageViewer && { ...imageViewer, post: viewerPost, author: viewerAuthor, publishedAt: shortTime(viewerPost?.createdAt) }} onClose={() => setImageViewer(null)} discussion={imageViewerDiscussion} onLike={() => toggleLike(viewerPost.id)} onShowLikes={() => setLikesTarget({ ids: viewerPost.likes || [], label: 'Những người đã thích bài viết này' })} onShare={() => openShareDialog(viewerPost)} shareCount={viewerPost ? [...new Set(posts.filter((candidate) => candidate.sharedPost && getOriginalSharedPost(candidate, posts, (item) => getAuthor(item, providers))?.id === viewerPost.id).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))].length : 0} onShowShares={() => setLikesTarget({ ids: [...new Set(posts.filter((candidate) => candidate.sharedPost && getOriginalSharedPost(candidate, posts, (item) => getAuthor(item, providers))?.id === viewerPost?.id).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))], kind: 'share', title: 'Lượt chia sẻ', label: 'Những người đã chia sẻ bài viết này', emptyText: 'Chưa có lượt chia sẻ.' })} isLiked={(viewerPost?.likes || []).includes(user?.id)} /><Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm"><form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form></Modal></>
   );
 }
 

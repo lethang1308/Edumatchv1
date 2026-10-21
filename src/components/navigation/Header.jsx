@@ -126,6 +126,11 @@ export const Header = ({ theme, onToggleTheme }) => {
     });
     setMobileMenuOpen(false);
   };
+  const openOwnProfile = (event) => {
+    if (location.pathname !== ROUTES.TEACHER_PROFILE(user?.id)) return;
+    event.preventDefault();
+    window.location.reload();
+  };
 
   return (
     <header className="edu-header">
@@ -215,7 +220,12 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} className="user-name user-profile-link" title="Đi đến trang cá nhân">
+              <Link
+                to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)}
+                className="user-name user-profile-link"
+                title={user.role === 'student' ? 'Đi đến trang cá nhân' : 'Đi đến hoặc tải lại trang cá nhân'}
+                onClick={user.role === 'student' ? undefined : openOwnProfile}
+              >
                 {user?.name}
               </Link>
               <Link to={ROUTES.PROFILE} className="theme-toggle" aria-label="Cài đặt tài khoản" title="Cài đặt tài khoản"><Settings size={17} /></Link>

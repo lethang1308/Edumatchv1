@@ -12,6 +12,7 @@ export const ROUTES = {
   CENTER_SUPPORT: '/ho-tro-trung-tam-dao-tao',
   CONTACT: '/lien-he',
   FEED: '/bang-tin',
+  POST_DETAIL: (postId = ':postId') => `/bai-viet/${postId}`,
   SEARCH_RESULTS: '/tim-kiem',
   MESSAGES: '/tin-nhan',
   CREATE_COURSE: '/khoa-hoc/them-moi',

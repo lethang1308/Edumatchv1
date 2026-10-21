@@ -559,7 +559,7 @@ const profileCourses = profile
         <div className="edu-container hero-grid">
           <div className="hero-copy">
             <span className="hero-eyebrow">
-              <GraduationCap size={15} /> CHỌN ĐÚNG THẦY, HỌC ĐÚNG CÁCH.
+              <GraduationCap size={15} /> CHỌN ĐÚNG NƠI, HỌC ĐÚNG CHỖ.
             </span>
             <h1 id="hero-title">
               Kết nối Học viên với

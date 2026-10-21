@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Modal } from './Modal';
 import { ROUTES } from '@/constants/routes';
@@ -33,14 +33,15 @@ export function LikesModal({ target, onClose }) {
     return (target?.ids || []).map((id) => directory.get(id) || { id, name: 'Thành viên EduMatch', avatar: '' });
   }, [target?.ids, user]);
 
-  return <Modal open={Boolean(target)} onClose={onClose} title="Lượt thích" description={target?.label || 'Những người đã bày tỏ sự yêu thích'} size="sm">
+  const icon = target?.kind === 'share' ? <Share2 size={15} aria-hidden="true" /> : <Heart size={15} fill="currentColor" aria-hidden="true" />;
+  return <Modal open={Boolean(target)} onClose={onClose} title={target?.title || 'Lượt thích'} description={target?.label || 'Những người đã bày tỏ sự yêu thích'} size="sm">
     <div className="likes-modal__list">
       {people.map((person, index) => <Link className="likes-modal__person" key={`${person.id}-${index}`} to={ROUTES.TEACHER_PROFILE(person.id)} onClick={onClose}>
         <span className="likes-modal__avatar">{person.avatar ? <img src={person.avatar} alt="" /> : person.name.slice(0, 1)}</span>
         <strong>{person.name}</strong>
-        <Heart size={15} fill="currentColor" aria-hidden="true" />
+        <span className={`likes-modal__marker ${target?.kind === 'share' ? 'is-share' : ''}`}>{icon}</span>
       </Link>)}
-      {!people.length && <p className="likes-modal__empty">Chưa có lượt thích.</p>}
+      {!people.length && <p className="likes-modal__empty">{target?.emptyText || 'Chưa có lượt thích.'}</p>}
     </div>
   </Modal>;
 }
