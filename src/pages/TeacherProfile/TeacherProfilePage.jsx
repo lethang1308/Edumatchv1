@@ -15,6 +15,7 @@ import { LikesModal } from '@/components/feedback/LikesModal';
 import { PostImageDialog } from '@/components/feedback/PostImageDialog';
 import { ReactionCount } from '@/components/feedback/ReactionCount';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
+import '@/components/feedback/expandableImage.css';
 import '@/components/courses/course.css';
 import '../Courses/courses.css';
 import { tutors } from '../Home/homeData';
@@ -81,6 +82,7 @@ export function TeacherProfilePage() {
   const [openContentMenu, setOpenContentMenu] = useState(null);
   const [likesTarget, setLikesTarget] = useState(null);
   const [imageViewer, setImageViewer] = useState(null);
+  const [expandedCommentImage, setExpandedCommentImage] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingDetailedProfile, setIsEditingDetailedProfile] = useState(false);
   const [isViewingProfileSummary, setIsViewingProfileSummary] = useState(false);
@@ -98,7 +100,7 @@ export function TeacherProfilePage() {
   const mediaInputRef = useRef(null);
   const portfolioImagesInputRef = useRef(null);
   const loadMorePostsRef = useRef(null);
-  const courses = getCourses().filter((course) => course.teacher.id === teacherId);
+  const courses = getCourses().filter((course) => String(course.teacher?.id) === String(teacherId));
   const ownsProfile = user?.id != null && String(user.id) === String(teacherId);
   const sampleTutor = tutors.find((tutor) => tutor.id === teacherId);
   const sampleProfile = sampleTutor ? {
@@ -320,12 +322,11 @@ export function TeacherProfilePage() {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
     if (files.some((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'))) { toast.error('Chỉ hỗ trợ tệp ảnh hoặc video.'); return; }
-    if (files.some((file) => file.size > 3 * 1024 * 1024)) { toast.error('Mỗi tệp tối đa 3 MB.'); return; }
     Promise.all(files.map((file) => new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve({ src: String(reader.result), type: file.type.startsWith('video/') ? 'video' : 'image', name: file.name });
       reader.readAsDataURL(file);
-    }))).then((nextItems) => setMedia((current) => [...current, ...nextItems].slice(0, 12)));
+    }))).then((nextItems) => setMedia((current) => [...current, ...nextItems]));
     event.target.value = '';
   };
   const clearMedia = (index = null) => {
@@ -536,16 +537,21 @@ export function TeacherProfilePage() {
   const coverStyle = profile.coverImage ? { backgroundImage: `url(${profile.coverImage})` } : undefined;
   const profileType = isCenterProfile ? 'TRUNG TÂM ĐÀO TẠO' : isTeacherProfile ? 'GIÁO VIÊN' : 'HỌC VIÊN';
   const subtitle = isCenterProfile ? 'Đối tác đào tạo của EduMatch' : isTeacherProfile ? (profile.dob ? `${getAge(profile.dob)} tuổi` : 'Giáo viên EduMatch') : 'Học viên EduMatch';
+  const openCommentImage = (event) => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement) || !image.matches('.discussion-image, .review-media')) return;
+    setExpandedCommentImage({ src: image.currentSrc || image.src, alt: image.alt || 'Ảnh đính kèm' });
+  };
 
-  return <><section className="learning-page teacher-public-page"><div className="learning-container">
+  return <div onClickCapture={openCommentImage}><section className="learning-page teacher-public-page"><div className="learning-container">
     <header className={`teacher-cover ${profile.coverImage ? 'has-custom-cover' : ''}`} style={coverStyle}>
       <div className="teacher-cover__avatar">{profile.avatar ? <img src={profile.avatar} alt={`Ảnh đại diện của ${profile.name}`} /> : profile.name?.slice(0, 1)}{ownsProfile && <label className="profile-avatar-upload" title="Cập nhật ảnh đại diện"><Camera size={15} /><input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'avatar')} /></label>}</div>
       <div><span>HỒ SƠ {profileType}</span><h1>{profile.name}</h1>{subtitle && <p>{subtitle}</p>}<div className="teacher-cover__status-list">{isEducationProviderProfile && (trustCount < 3 ? <small className="teacher-cover__trust-count is-new">Mới trên EduMatch</small> : <button type="button" className="teacher-cover__trust-count" onClick={() => setLikesTarget({ ids: trustUserIds, title: 'Lượt tin tưởng', label: 'Những thành viên đã tin tưởng hồ sơ này', emptyText: 'Danh sách thành viên tin tưởng đang được cập nhật.' })}><Heart size={14} fill="currentColor" /> {trustCount} lượt tin tưởng</button>)}<VerifiedBadge userId={profile.id} />{isCenterProfile && profile.licenseVerificationStatus === 'verified' && <span className="center-verification-badge"><BadgeCheck size={14} /> Đã xác thực pháp lý</span>}</div></div>
       {ownsProfile && <label className="profile-cover-upload teacher-cover__cover-upload"><ImagePlus size={16} /> Ảnh bìa<input type="file" accept="image/*" onChange={(event) => chooseProfileImage(event, 'coverImage')} /></label>}
     </header>
     <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Thông tin tổng quan</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{isEducationProviderProfile && !ownsProfile && (hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <p className="teacher-bio__portfolio-status">Hồ sơ năng lực đang được hoàn thiện.</p>)}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions">{hasDetailedProfile ? <button type="button" className="teacher-bio__portfolio" onClick={() => setIsViewingDetailedProfile(true)}><FileText size={15} /> Xem hồ sơ năng lực</button> : <button type="button" className="teacher-bio__portfolio" onClick={openDetailedProfileEditor}><FileText size={15} /> Tạo hồ sơ năng lực</button>}<Link className="teacher-bio__verify" to={ROUTES.VERIFICATION}><FileCheck2 size={15} /> Hồ sơ xác minh</Link>{isCenterProfile && <Link className="teacher-bio__support" to={ROUTES.CENTER_SUPPORT}><Handshake size={15} /> Đăng ký tư vấn</Link>}<Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}{isEducationProviderProfile && <section className="teacher-bio__courses" aria-labelledby="profile-open-courses"><div className="teacher-bio__courses-heading"><div><BookOpen size={16} aria-hidden="true" /><h3 id="profile-open-courses">Khóa học đang mở</h3></div>{courses.length > 0 && <span>{courses.length}</span>}</div>{courses.length > 0 ? <><div className="teacher-bio__course-list">{displayedProfileCourses.map((course) => { const isExpanded = Boolean(expandedProfileCourseIds[course.id]); return <div className={`teacher-bio__course-item ${isExpanded ? 'is-expanded' : ''}`} key={course.id}><Link className="teacher-bio__course-link" to={ROUTES.COURSE_DETAIL(course.id)}><span>{course.title}</span></Link><button type="button" className="teacher-bio__course-expand" aria-expanded={isExpanded} aria-label={`${isExpanded ? 'Thu gọn' : 'Xem đầy đủ'} tên khóa học`} onClick={() => setExpandedProfileCourseIds((current) => ({ ...current, [course.id]: !current[course.id] }))}><ChevronDown size={16} aria-hidden="true" /></button></div>; })}</div>{courses.length > 2 && <button type="button" className="teacher-bio__courses-toggle" onClick={() => setShowAllProfileCourses((current) => !current)}>{showAllProfileCourses ? 'Thu gọn' : `Xem tất cả ${courses.length} khóa học`}</button>}</> : <p className="teacher-bio__courses-empty">Chưa có khóa học đang mở.</p>}</section>}</aside>
-    <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2><p>{isCenterProfile ? 'Những chia sẻ mới nhất từ trung tâm.' : isTeacherProfile ? 'Những chia sẻ mới nhất từ giáo viên.' : 'Những chia sẻ mới nhất từ học viên.'}</p></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
-      {ownsProfile && <form className="post-composer" onSubmit={handlePublish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Chia sẻ suy nghĩ, tài liệu hoặc một trải nghiệm học tập..." />{media.length > 0 && <div className="post-composer__preview">{media.map((item, index) => <div key={`${item.name}-${index}`}>{item.type === 'video' ? <video src={item.src} controls /> : <img src={item.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={() => clearMedia(index)} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{item.name}</span></div>)}</div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" multiple onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><small>Tối đa 12 tệp, mỗi tệp 3 MB</small><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
+    <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
+      {ownsProfile && <form className="post-composer" onSubmit={handlePublish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Hãy chia sẻ để học viên hiểu hơn về bạn" />{media.length > 0 && <div className="post-composer__preview">{media.map((item, index) => <div key={`${item.name}-${index}`}>{item.type === 'video' ? <video src={item.src} controls /> : <img src={item.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={() => clearMedia(index)} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{item.name}</span></div>)}</div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" multiple onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
       {posts.length ? renderedPosts.map((post) => {
         const likes = post.likes || [];
         const comments = post.comments || [];
@@ -577,6 +583,9 @@ export function TeacherProfilePage() {
     </main></div>
   </div></section>
     <LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} />
+    <Modal open={Boolean(expandedCommentImage)} onClose={() => setExpandedCommentImage(null)} title="Ảnh đính kèm" size="xl" className="expandable-image-dialog">
+      <div className="expandable-image-dialog__content">{expandedCommentImage && <img src={expandedCommentImage.src} alt={expandedCommentImage.alt} />}</div>
+    </Modal>
     <PostImageDialog key={imageViewer ? `${imageViewer.post.id}-${imageViewer.activeIndex}` : 'closed'} viewer={imageViewer && { ...imageViewer, post: viewerPost, author: viewerAuthor, publishedAt: formatPublishedAt(viewerPost?.createdAt) }} interactionTarget={viewerMedia || null} onActiveIndexChange={(activeIndex) => setImageViewer((current) => current ? { ...current, activeIndex } : current)} onClose={() => setImageViewer(null)} discussion={imageViewerDiscussion} onLike={() => like(viewerPost.id, viewerMedia?.id)} onShowLikes={() => setLikesTarget({ ids: viewerInteractionTarget?.likes || [], label: viewerMedia ? 'Những người đã thích ảnh/video này' : 'Những người đã thích bài viết này' })} onShare={() => openShareDialog(viewerPost, viewerMedia)} shareCount={viewerPost ? [...new Set(getPosts().filter((candidate) => candidate.sharedPost?.id === viewerPost.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))].length : 0} onShowShares={() => setLikesTarget({ ids: [...new Set(getPosts().filter((candidate) => candidate.sharedPost?.id === viewerPost?.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))], kind: 'share', title: 'Lượt chia sẻ', label: viewerMedia ? 'Những người đã chia sẻ ảnh/video này' : 'Những người đã chia sẻ bài viết này', emptyText: 'Chưa có lượt chia sẻ.' })} isLiked={(viewerInteractionTarget?.likes || []).includes(user?.id)} />
     <Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm">
       <form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form>
@@ -720,5 +729,5 @@ export function TeacherProfilePage() {
       {selectedPortfolioImage && <img className="profile-portfolio-lightbox__image" src={selectedPortfolioImage.src} alt={`Ảnh minh họa ${selectedPortfolioImage.index + 1} trong hồ sơ năng lực của ${profile.name}`} />}
     </Modal>
 
-  </>;
+  </div>;
 }

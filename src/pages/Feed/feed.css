@@ -290,11 +290,6 @@
   min-height: 36px;
   padding: 0 11px;
 }
-.feed-composer__actions small {
-  color: var(--edu-muted);
-  font-size: var(--text-caption-xs);
-  line-height: var(--text-caption-xs--line-height);
-}
 .feed-composer__actions > button {
   display: inline-flex;
   align-items: center;
@@ -585,6 +580,7 @@
   border: 1px solid var(--edu-line);
   border-radius: 8px;
   object-fit: cover;
+  cursor: zoom-in;
 }
 .feed-comment__meta {
   display: flex;
@@ -764,10 +760,6 @@
   }
   .feed-composer__actions {
     flex-wrap: wrap;
-  }
-  .feed-composer__actions small {
-    order: 3;
-    flex-basis: 100%;
   }
 }
 

@@ -1,0 +1,31 @@
+.expandable-image {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  text-align: inherit;
+}
+
+.expandable-image:focus-visible {
+  outline: 3px solid #087b6a;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.expandable-image-dialog__content {
+  display: grid;
+  min-height: min(66vh, 680px);
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #132925;
+}
+
+.expandable-image-dialog__content img {
+  display: block;
+  width: 100%;
+  max-height: min(66vh, 680px);
+  object-fit: contain;
+}

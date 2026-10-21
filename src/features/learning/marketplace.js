@@ -430,7 +430,7 @@ export const getCourses = () => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const currentUser = read(STORAGE_KEYS.USER_INFO, null);
   const hydratedSavedCourses = saved.map((course) =>
-    course.teacher?.id === currentUser?.id
+    currentUser?.id != null && course.teacher?.id != null && String(course.teacher.id) === String(currentUser.id)
       ? {
           ...course,
           teacher: {
@@ -471,7 +471,7 @@ export const updateCourse = (courseId, updates) => {
 export const syncTeacherCourseProfile = (teacherId, profileUpdates) => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const next = saved.map((course) =>
-    course.teacher?.id === teacherId
+    course.teacher?.id != null && String(course.teacher.id) === String(teacherId)
       ? { ...course, teacher: { ...course.teacher, ...profileUpdates } }
       : course
   );

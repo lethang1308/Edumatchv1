@@ -225,8 +225,7 @@ const [profile, setProfile] = useState(null);
 const profileCourses = profile
   ? getCourses().filter(
       (course) =>
-        (course.teacher?.id === profile.id || course.teacher?.id === `teacher-${profile.id}`) &&
-        course.enrollmentStatus !== 'closed'
+        (course.teacher?.id === profile.id || course.teacher?.id === `teacher-${profile.id}`)
     )
   : [];
   const [consultationComplete, setConsultationComplete] = useState(false);
@@ -277,7 +276,6 @@ const profileCourses = profile
     ? rankedCourses.slice((coursePage - 1) * coursePageSize, coursePage * coursePageSize)
     : rankedCourses.slice(0, 6);
   const sponsoredCourses = getCourses()
-    .filter((course) => course.enrollmentStatus !== 'closed')
     .map((course) => ({ ...course, ranking: getCourseRating(course.id) }))
     .sort((first, second) => second.ranking.total - first.ranking.total
       || second.ranking.average - first.ranking.average

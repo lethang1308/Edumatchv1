@@ -2,9 +2,7 @@ import { ImagePlus, Video, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRef } from 'react';
 
-const MAX_MEDIA_SIZE = 10 * 1024 * 1024;
-
-export function MediaAttachment({ value, onChange, id, label = 'Ảnh / video', multiple = false, maxFiles = 12 }) {
+export function MediaAttachment({ value, onChange, id, label = 'Ảnh / video', multiple = false }) {
   const inputRef = useRef(null);
 
   const chooseMedia = (event) => {
@@ -12,11 +10,6 @@ export function MediaAttachment({ value, onChange, id, label = 'Ảnh / video', 
     if (!files.length) return;
     const validFiles = files.filter((file) => file.type.startsWith('image/') || file.type.startsWith('video/'));
     if (validFiles.length !== files.length) toast.error('Chỉ có thể chọn tệp ảnh hoặc video.');
-    if (validFiles.some((file) => file.size > MAX_MEDIA_SIZE)) {
-      toast.error('Mỗi tệp đính kèm tối đa 10 MB.');
-      return;
-    }
-
     const readFile = (file) => new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve({ src: String(reader.result), name: file.name, type: file.type.startsWith('video/') ? 'video' : 'image' });
@@ -29,9 +22,7 @@ export function MediaAttachment({ value, onChange, id, label = 'Ảnh / video', 
         return;
       }
       const currentItems = Array.isArray(value) ? value : [];
-      const merged = [...currentItems, ...nextItems].slice(0, maxFiles);
-      if (merged.length < currentItems.length + nextItems.length) toast.error(`Mỗi album tối đa ${maxFiles} tệp.`);
-      onChange(merged);
+      onChange([...currentItems, ...nextItems]);
     });
   };
 
