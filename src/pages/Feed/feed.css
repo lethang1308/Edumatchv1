@@ -8,14 +8,14 @@
   color: var(--edu-ink);
 }
 .feed-page__container {
-  width: var(--app-container-width);
+  width: min(1440px, calc(100% - 64px));
 }
 .feed-page__layout {
   display: grid;
-  grid-template-columns: 210px minmax(0, 720px) 210px;
+  grid-template-columns: minmax(180px, 190px) minmax(0, 840px) minmax(180px, 190px);
   justify-content: center;
   align-items: start;
-  gap: 24px;
+  gap: 28px;
 }
 .feed-page__main {
   min-width: 0;
@@ -252,6 +252,73 @@
   border-color: var(--color-line-strong);
   background: var(--edu-tag);
   color: var(--edu-green);
+}
+.feed-composer {
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid var(--edu-line);
+  border-radius: 16px;
+  background: var(--edu-surface);
+  box-shadow: 0 8px 24px rgb(32 91 70 / 4%);
+}
+.feed-composer textarea {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 13px;
+  border: 1px solid var(--edu-line);
+  border-radius: 11px;
+  outline: none;
+  background: var(--edu-bg);
+  color: var(--edu-ink);
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  resize: vertical;
+}
+.feed-composer textarea:focus {
+  border-color: var(--edu-green);
+  box-shadow: 0 0 0 3px rgb(8 128 108 / 10%);
+}
+.feed-composer__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
+}
+.feed-composer__actions .image-attachment label {
+  min-height: 36px;
+  padding: 0 11px;
+}
+.feed-composer__actions small {
+  color: var(--edu-muted);
+  font-size: var(--text-caption-xs);
+  line-height: var(--text-caption-xs--line-height);
+}
+.feed-composer__actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 700;
+  line-height: var(--text-control--line-height);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.feed-composer__actions > button:hover {
+  background: var(--edu-green-hover);
+}
+.feed-composer__actions > button:active {
+  transform: scale(0.98);
 }
 .feed-page__list {
   display: grid;
@@ -651,7 +718,7 @@
 }
 @media (max-width: 1120px) {
   .feed-page__container {
-    width: var(--app-container-width);
+    width: min(960px, calc(100% - 48px));
   }
   .feed-page__layout {
     display: block;
@@ -665,7 +732,7 @@
     padding: 30px 0 55px;
   }
   .feed-page__container {
-    width: var(--app-container-width);
+    width: calc(100% - 32px);
   }
   .community-post {
     padding: 17px;
@@ -694,6 +761,13 @@
   .feed-reply-form button {
     min-width: 38px;
     padding: 0 9px;
+  }
+  .feed-composer__actions {
+    flex-wrap: wrap;
+  }
+  .feed-composer__actions small {
+    order: 3;
+    flex-basis: 100%;
   }
 }
 

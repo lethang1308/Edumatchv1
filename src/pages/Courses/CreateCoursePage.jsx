@@ -15,6 +15,7 @@ const emptyForm = {
   sessionsPerWeek: '', schedule: '', learningMode: 'online', inPersonType: 'classroom', enrollmentStatus: 'open', province: '', ward: '',
 };
 
+const COURSE_TITLE_MAX_LENGTH = 120;
 const parseVnd = (value) => Number(String(value).replace(/[^\d]/g, ''));
 
 export function CreateCoursePage() {
@@ -34,10 +35,11 @@ export function CreateCoursePage() {
   }), [isCenter, user]);
   const update = (event) => {
     const { name, value } = event.target;
+    const nextValue = name === 'title' ? value.slice(0, COURSE_TITLE_MAX_LENGTH) : value;
     setForm((current) => {
-      if (name === 'learningMode' && value === 'recorded') return { ...current, learningMode: value, paymentType: 'full-course' };
+      if (name === 'learningMode' && nextValue === 'recorded') return { ...current, learningMode: nextValue, paymentType: 'full-course' };
       if (name === 'paymentType' && current.learningMode === 'recorded') return current;
-      return { ...current, [name]: value };
+      return { ...current, [name]: nextValue };
     });
   };
   const { administrativeProvinces, wardOptions, error: areaError } = useAdministrativeOptions(form.province);
@@ -51,6 +53,7 @@ export function CreateCoursePage() {
     event.preventDefault();
     const nextErrors = {};
     ['title', 'description'].forEach((name) => { if (!String(form[name]).trim()) nextErrors[name] = 'Vui lòng điền thông tin này'; });
+    if (String(form.title).length > COURSE_TITLE_MAX_LENGTH) nextErrors.title = `Tên khóa học không được vượt quá ${COURSE_TITLE_MAX_LENGTH} ký tự`;
     const price = parseVnd(form.price);
     if (form.price && (!Number.isFinite(price) || price <= 0)) nextErrors.price = 'Học phí cần lớn hơn 0';
     const paymentType = form.learningMode === 'recorded' ? 'full-course' : form.paymentType;
@@ -78,7 +81,7 @@ export function CreateCoursePage() {
         <form className="course-form" onSubmit={submit} noValidate>
           <section className="form-surface form-surface--main">
             <div className="form-heading"><h2>Thông tin khóa học</h2><p>Hãy mô tả ngắn gọn giá trị học viên sẽ nhận được.</p></div>
-            <Field label="Tên khóa học" error={errors.title}><input name="title" value={form.title} onChange={update} placeholder="Ví dụ: Luyện thi IELTS từ nền tảng đến 6.5" /></Field>
+            <Field label="Tên khóa học" error={errors.title}><input name="title" value={form.title} onChange={update} maxLength={COURSE_TITLE_MAX_LENGTH} aria-describedby="course-title-counter" aria-invalid={form.title.length >= COURSE_TITLE_MAX_LENGTH} className={form.title.length >= COURSE_TITLE_MAX_LENGTH ? 'is-limit' : ''} placeholder="Ví dụ: Luyện thi IELTS từ nền tảng đến 6.5" /><small id="course-title-counter" className={`course-title-counter ${form.title.length >= COURSE_TITLE_MAX_LENGTH ? 'is-limit' : ''}`} aria-live="polite">{form.title.length}/{COURSE_TITLE_MAX_LENGTH} ký tự</small></Field>
             {(catalog.error || areaError) && <p className="field-error" role="alert">{catalog.error || areaError}</p>}
             <div className="form-split"><Field label="Môn học"><select name="subject" value={form.subject} onChange={update}><option value="">Chọn môn học</option>{catalog.subjects.map((subject) => <option key={subject.id} value={subject.name}>{subject.name}</option>)}</select></Field><Field label="Cấp lớp"><select name="educationLevel" value={form.educationLevel} onChange={update}><option value="">Chọn cấp lớp</option>{catalog.levels.map((level) => <option key={level.id} value={level.code}>{level.name}</option>)}</select></Field></div>
             <Field label="Mô tả khóa học" error={errors.description}><textarea name="description" value={form.description} onChange={update} rows="5" placeholder="Mục tiêu, lộ trình và phương pháp giảng dạy của khóa học..." /></Field>

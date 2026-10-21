@@ -9,6 +9,7 @@
 .post-image-dialog__nav--previous { left: 14px; }
 .post-image-dialog__nav--next { right: 14px; }
 .post-image-dialog__counter { position: absolute; right: 14px; bottom: 14px; padding: 5px 9px; border-radius: 999px; background: rgb(19 41 37 / 80%); color: #fff; font-size: var(--text-caption-xs); font-weight: 700; }
+.post-image-dialog__keyboard-hint { position: absolute; left: 14px; bottom: 14px; padding: 5px 9px; border-radius: var(--radius-control); background: rgb(19 41 37 / 80%); color: #fff; font-size: var(--text-caption-xs); font-weight: 600; }
 .post-image-dialog__panel { display: flex; min-height: 0; flex-direction: column; background: var(--edu-surface); }
 .post-image-dialog__author { display: flex; gap: 10px; align-items: center; padding: 18px 18px 12px; }
 .post-image-dialog__author > span { display: grid; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: 50%; background: var(--edu-tag); color: var(--edu-green); font-weight: 800; }

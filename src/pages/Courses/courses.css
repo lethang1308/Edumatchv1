@@ -152,6 +152,21 @@
   color: var(--color-danger);
   font-weight: 500;
 }
+.course-title-counter {
+  display: block;
+  margin-top: 5px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption-xs);
+  font-weight: 500;
+  line-height: var(--text-caption-xs--line-height);
+  text-align: right;
+}
+.course-title-counter.is-limit {
+  color: var(--color-danger);
+}
+.form-field input.is-limit {
+  border-color: var(--color-danger);
+}
 .form-location-field {
   min-width: 0;
   margin: 0 0 19px;
@@ -983,6 +998,11 @@
 }
 .teacher-bio {
   align-self: start;
+  position: sticky;
+  top: 92px;
+  max-height: calc(100dvh - 112px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px;
   border: 1px solid var(--edu-line);
   border-radius: var(--radius-surface);
@@ -996,6 +1016,131 @@
   letter-spacing: 0.06em;
   font-weight: 700;
   line-height: var(--text-caption-xs--line-height);
+}
+.teacher-bio__courses {
+  margin: 24px 0 0;
+  padding: 14px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: linear-gradient(135deg, var(--edu-mint), var(--edu-surface));
+}
+.teacher-bio__courses-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.teacher-bio__courses-heading h3 {
+  margin: 0;
+}
+.teacher-bio__courses-heading > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--edu-green);
+}
+.teacher-bio__courses-heading span {
+  display: inline-grid;
+  min-width: 22px;
+  min-height: 22px;
+  place-items: center;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--edu-tag);
+  color: var(--edu-green);
+  font-size: var(--text-caption-xs);
+  font-weight: 800;
+}
+.teacher-bio__course-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.teacher-bio__course-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 7px;
+  align-items: start;
+}
+.teacher-bio__course-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid rgb(255 255 255 / 75%);
+  background: rgb(255 255 255 / 72%);
+  color: var(--edu-green);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  line-height: var(--text-caption--line-height);
+  text-decoration: none;
+}
+.teacher-bio__course-link:hover {
+  background: var(--edu-tag);
+  color: var(--edu-green);
+}
+.teacher-bio__course-list span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+.teacher-bio__course-item.is-expanded span {
+  display: block;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+.teacher-bio__course-expand {
+  display: grid;
+  width: 34px;
+  min-height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 75%);
+  border-radius: var(--radius-control);
+  background: rgb(255 255 255 / 72%);
+  color: var(--edu-green);
+  cursor: pointer;
+}
+.teacher-bio__course-expand:hover {
+  background: var(--edu-tag);
+}
+.teacher-bio__course-expand svg {
+  transition: transform 160ms ease;
+}
+.teacher-bio__course-item.is-expanded .teacher-bio__course-expand svg {
+  transform: rotate(180deg);
+}
+.teacher-bio__courses-toggle {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--edu-green);
+  font: inherit;
+  font-size: var(--text-caption-xs);
+  font-weight: 800;
+  cursor: pointer;
+}
+.teacher-bio__courses-toggle:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.teacher-bio__courses-toggle:focus-visible,
+.teacher-bio__course-link:focus-visible,
+.teacher-bio__course-expand:focus-visible {
+  outline: 2px solid var(--edu-green);
+  outline-offset: 3px;
+}
+.teacher-bio__courses-empty {
+  margin: 8px 0 0;
+  color: var(--edu-muted);
+  font-size: var(--text-caption);
 }
 .teacher-bio__overview {
   display: flex;
@@ -1801,6 +1946,11 @@
   }
   .teacher-cover > a {
     margin: 0;
+  }
+  .teacher-bio {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
   .teacher-workspace__actions {
     width: 100%;
