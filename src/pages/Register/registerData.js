@@ -101,6 +101,15 @@ const phoneField = {
   maxLength: 12,
 };
 
+const emailField = {
+  name: "email",
+  label: "Email",
+  icon: Mail,
+  type: "email",
+  autoComplete: "email",
+  maxLength: 191,
+};
+
 // Keep the two supported formats easy to enter: 0xxxxxxxxx or +84xxxxxxxxx.
 // The local format is capped at 10 digits while typing so an accidental extra
 // digit cannot leave the form in an invalid state.
@@ -122,14 +131,7 @@ export const accountFields = [
     autoComplete: "name",
     maxLength: 150,
   },
-  {
-    name: "email",
-    label: "Email",
-    icon: Mail,
-    type: "email",
-    autoComplete: "email",
-    maxLength: 191,
-  },
+  emailField,
   phoneField,
   {
     name: "dateOfBirth",
@@ -150,6 +152,7 @@ export const centerAccountFields = [
     autoComplete: "organization",
     maxLength: 150,
   },
+  emailField,
   phoneField,
   ...passwordFields,
 ];
@@ -248,11 +251,11 @@ export function validateRegistration(form, role, today = new Date()) {
       errors.name = "Vui lòng nhập họ và tên (ít nhất 2 ký tự).";
     else if (form.name.trim().length > 150)
       errors.name = "Họ và tên tối đa 150 ký tự.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-      errors.email = "Vui lòng nhập email hợp lệ.";
-    else if (form.email.trim().length > 191)
-      errors.email = "Email tối đa 191 ký tự.";
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
+    errors.email = "Vui lòng nhập email hợp lệ.";
+  else if (form.email.trim().length > 191)
+    errors.email = "Email tối đa 191 ký tự.";
   if (!/^(?:0|\+84)[35789]\d{8}$/.test(form.phone.replace(/[\s.-]/g, "")))
     errors.phone = "Nhập 10 số (ví dụ 0989898989), hoặc +84 rồi 9 số.";
   if (role !== "center") {
@@ -300,6 +303,7 @@ export function buildRegistrationPayload(form, role) {
     password_confirmation: form.confirmPassword,
     role,
     fullName: (role === "center" ? form.centerName : form.name).trim(),
+    email: form.email.trim().toLowerCase(),
     ...(role !== "student" && { isPhonePublic: form.isPhonePublic }),
   };
   if (role === "center") {
@@ -315,7 +319,6 @@ export function buildRegistrationPayload(form, role) {
   }
   return {
     ...data,
-    email: form.email.trim().toLowerCase(),
     date_of_birth: form.dateOfBirth,
     dateOfBirth: form.dateOfBirth,
     dob: form.dateOfBirth,
