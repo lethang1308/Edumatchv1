@@ -13,14 +13,11 @@ import {
   Newspaper,
   Phone,
   Search,
-  Settings,
-  ShieldCheck,
   Sun,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
-import { Button } from '@/components/common/Button';
 import { accountNotificationService } from '@/services/accountNotificationService';
 import { subscribeUserNotifications } from '@/services/pusherService';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/features/learning/marketplace';
@@ -40,6 +37,7 @@ const notificationTime = (value) => {
 
 export const Header = ({ theme, onToggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [params] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,6 +47,7 @@ export const Header = ({ theme, onToggleTheme }) => {
   const [notifications, setNotifications] = useState(() => user?.id ? getNotifications(user.id) : []);
   const [serverNotifications, setServerNotifications] = useState({ userId: null, items: [] });
   const receivedServerNotificationIds = useRef(new Set());
+  const accountMenuRef = useRef(null);
   const allNotifications = [...(serverNotifications.userId === user?.id ? serverNotifications.items : []), ...notifications]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const isEducationProvider = isAuthenticated && ['teacher', 'center'].includes(user?.role);
@@ -57,6 +56,14 @@ export const Header = ({ theme, onToggleTheme }) => {
   const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
   const unreadNotifications = allNotifications.filter((notification) => !notification.isRead).length;
   const notificationOpen = notificationPanel.open && notificationPanel.locationKey === locationKey;
+  const userAvatarUrl = user?.avatar
+    ? (user.avatarVersion && !user.avatar.startsWith('data:image/') && !user.avatar.startsWith('blob:')
+        ? `${user.avatar}${user.avatar.includes('?') ? '&' : '?'}v=${encodeURIComponent(user.avatarVersion)}`
+        : user.avatar)
+    : '';
+  const avatarKey = `${userAvatarUrl}-${user?.avatarVersion || ''}`;
+  const [failedAvatarKey, setFailedAvatarKey] = useState(null);
+  const isAvatarVisible = Boolean(userAvatarUrl && failedAvatarKey !== avatarKey);
 
   useEffect(() => {
     const refreshNotifications = () => setNotifications(user?.id ? getNotifications(user.id) : []);
@@ -93,6 +100,14 @@ export const Header = ({ theme, onToggleTheme }) => {
       unsubscribe();
     };
   }, [isAuthenticated, user?.id]);
+
+  useEffect(() => {
+    const closeAccountMenu = (event) => {
+      if (!accountMenuRef.current?.contains(event.target)) setAccountMenuOpen(false);
+    };
+    document.addEventListener('mousedown', closeAccountMenu);
+    return () => document.removeEventListener('mousedown', closeAccountMenu);
+  }, []);
 
   const openNotification = (notificationId) => {
     if (String(notificationId).startsWith('server-')) {
@@ -220,24 +235,30 @@ export const Header = ({ theme, onToggleTheme }) => {
           </button>
           {isAuthenticated ? (
             <>
-              <Link
-                to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)}
-                className="user-name user-profile-link"
-                title={user.role === 'student' ? 'Đi đến trang cá nhân' : 'Đi đến hoặc tải lại trang cá nhân'}
-                onClick={user.role === 'student' ? undefined : openOwnProfile}
-              >
-                {user?.name}
-              </Link>
-              <Link to={ROUTES.PROFILE} className="theme-toggle" aria-label="Cài đặt tài khoản" title="Cài đặt tài khoản"><Settings size={17} /></Link>
-              {isEducationProvider && <Link to={ROUTES.VERIFICATION} className="theme-toggle" aria-label="Xác minh hồ sơ" title="Xác minh hồ sơ"><ShieldCheck size={17} /></Link>}
-              <Button
-                variant="outline"
-                className="edu-button edu-button-outline"
-                size="sm"
-                onClick={logout}
-              >
-                Đăng xuất
-              </Button>
+              <div className="account-menu" ref={accountMenuRef}>
+                <button type="button" className="account-menu__trigger user-name" onClick={() => setAccountMenuOpen((current) => !current)} aria-expanded={accountMenuOpen} aria-haspopup="menu" title="Mở tùy chọn tài khoản">
+                  <span className="account-menu__avatar" aria-hidden="true">
+                    {isAvatarVisible ? (
+                      <img
+                        key={avatarKey}
+                        src={userAvatarUrl}
+                        alt=""
+                        onError={() => setFailedAvatarKey(avatarKey)}
+                      />
+                    ) : (
+                      <span className="account-menu__avatar-fallback">
+                        {user?.name?.trim().slice(0, 1) || 'U'}
+                      </span>
+                    )}
+                  </span>
+                  <span className="account-menu__name">{user?.name}</span>
+                </button>
+                {accountMenuOpen && <div className="account-menu__popover" role="menu" aria-label="Tùy chọn tài khoản">
+                  <Link role="menuitem" to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} onClick={(event) => { setAccountMenuOpen(false); if (user.role !== 'student') openOwnProfile(event); }}>{user?.name}</Link>
+                  <Link role="menuitem" to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setAccountMenuOpen(false)}>Đổi mật khẩu</Link>
+                  <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); logout(); }}>Đăng xuất</button>
+                </div>}
+              </div>
             </>
           ) : (
             <>
@@ -303,8 +324,30 @@ export const Header = ({ theme, onToggleTheme }) => {
               <span><strong>{notification.title}</strong><small>{notificationTime(notification.createdAt)}</small></span>
             </Link>) : <p>Chưa có thông báo nào.</p>}
           </section>}
-          {isAuthenticated && <Link to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} onClick={() => setMobileMenuOpen(false)}>Trang cá nhân</Link>}
-          {isAuthenticated && <Link to={ROUTES.PROFILE} onClick={() => setMobileMenuOpen(false)}>Cài đặt tài khoản</Link>}
+          {isAuthenticated && (
+            <Link
+              to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)}
+              onClick={() => setMobileMenuOpen(false)}
+              className="mobile-navigation__profile-link"
+            >
+              <span className="account-menu__avatar" aria-hidden="true">
+                {isAvatarVisible ? (
+                  <img
+                    key={`mobile-${avatarKey}`}
+                    src={userAvatarUrl}
+                    alt=""
+                    onError={() => setFailedAvatarKey(avatarKey)}
+                  />
+                ) : (
+                  <span className="account-menu__avatar-fallback">
+                    {user?.name?.trim().slice(0, 1) || 'U'}
+                  </span>
+                )}
+              </span>
+              <span>Trang cá nhân ({user?.name})</span>
+            </Link>
+          )}
+          {isAuthenticated && <Link to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setMobileMenuOpen(false)}>Đổi mật khẩu</Link>}
           {isAuthenticated ? (
             <button
               onClick={() => {

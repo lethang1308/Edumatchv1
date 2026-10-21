@@ -1418,6 +1418,7 @@
   color: var(--color-trust);
 }
 .post-comment__reaction { display: flex; align-items: center; gap: 9px; min-height: 22px; }
+.post-comment__time { color: var(--edu-muted); font-size: var(--text-caption-xs); line-height: var(--text-caption-xs--line-height); white-space: nowrap; }
 .post-comment__reaction .post-comment__like,
 .post-comment__reaction .social-likes-count { margin-top: 0; line-height: var(--text-caption-xs--line-height); }
 .post-comment__reply-button {

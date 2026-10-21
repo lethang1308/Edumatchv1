@@ -311,7 +311,7 @@ export function buildRegistrationPayload(form, role) {
     password_confirmation: form.confirmPassword,
     role,
     fullName: (role === "center" ? form.centerName : form.name).trim(),
-    ...(role === "teacher" && { isPhonePublic: form.isPhonePublic }),
+    ...(role === "teacher" && { isPhonePublic: form.isPhonePublic, show_phone: Boolean(form.isPhonePublic) }),
   };
   if (role === "center") {
     return {

@@ -2,7 +2,10 @@ import api from './api';
 import { sharedGet } from './sharedGet';
 import { normalizeAuthUser } from './authService';
 
-const withUser = (response) => ({ ...response, user: normalizeAuthUser(response.user) });
+const withUser = (response) => {
+  const userPayload = response?.user || response?.data?.user || (response?.data?.id ? response.data : null);
+  return { ...response, user: userPayload ? normalizeAuthUser(userPayload) : response?.user };
+};
 
 export const profileService = {
   async get() {

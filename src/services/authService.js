@@ -3,17 +3,69 @@ import { sharedGet } from './sharedGet';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 import { storage } from '@/utils/storage';
 
+const apiOrigin = (() => {
+  try {
+    return new URL(
+      import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
+    ).origin;
+  } catch {
+    return '';
+  }
+})();
+
+const resolveAssetUrl = (value) => {
+  if (!value) return '';
+  const stringValue = String(value).trim();
+  if (/^(?:https?:|data:|blob:)/i.test(stringValue)) return stringValue;
+
+  const normalized = stringValue.replace(/\\/g, '/');
+  let pathWithStorage = normalized;
+  if (!/^\/?storage\//i.test(normalized) && /^(?:avatars|uploads|profiles|images)\//i.test(normalized.replace(/^\//, ''))) {
+    pathWithStorage = `/storage/${normalized.replace(/^\//, '')}`;
+  } else if (!pathWithStorage.startsWith('/')) {
+    pathWithStorage = `/${pathWithStorage}`;
+  }
+
+  return apiOrigin ? new URL(pathWithStorage, apiOrigin).toString() : pathWithStorage;
+};
+
 export function normalizeAuthUser(user) {
+  if (!user) return null;
   const profile = user.student_profile || user.teacher_profile || user.center || {};
+  const phoneVisibilityProvided = [user, profile].some((item) =>
+    Object.prototype.hasOwnProperty.call(item || {}, 'show_phone') || Object.prototype.hasOwnProperty.call(item || {}, 'isPhonePublic'),
+  );
+  const rawAvatar =
+    user.avatar ||
+    user.avatar_url ||
+    user.profile_photo_url ||
+    user.image ||
+    profile.avatar ||
+    profile.avatar_url ||
+    profile.logo ||
+    profile.logo_url ||
+    profile.image ||
+    user.center?.avatar ||
+    user.center?.avatar_url ||
+    user.center?.logo ||
+    user.center?.logo_url ||
+    user.teacher_profile?.avatar ||
+    user.teacher_profile?.avatar_url ||
+    user.student_profile?.avatar ||
+    user.student_profile?.avatar_url ||
+    '';
+
   return {
     ...user,
     name: user.center?.name || user.name,
     dob: profile.date_of_birth?.slice(0, 10) || user.dob || '',
     bio: profile.bio ?? user.bio ?? '',
-    avatar: user.avatar_url || user.avatar || '',
+    avatar: resolveAssetUrl(rawAvatar),
+    avatarVersion: user.avatarVersion || user.avatar_version || undefined,
     qualifications: user.teacher_profile?.headline || user.qualifications || '',
     experience: user.teacher_profile ? `${user.teacher_profile.experience_years ?? 0} năm kinh nghiệm` : user.experience || '',
-    isPhonePublic: user.teacher_profile?.show_phone ?? user.isPhonePublic ?? false,
+    isPhonePublic: profile.show_phone ?? user.show_phone ?? user.isPhonePublic ?? false,
+    phoneVisibilityProvided,
     foundedYear: user.center?.founded_year ? String(user.center.founded_year) : user.foundedYear || '',
     verificationStatus: profile.verification_status || 'unverified',
     verifiedAt: profile.verified_at || null,

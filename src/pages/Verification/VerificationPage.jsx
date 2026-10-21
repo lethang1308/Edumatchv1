@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { FileCheck2, FilePlus2, ShieldCheck, Trash2 } from 'lucide-react';
+import { FileCheck2, FilePlus2, PhoneCall, ShieldCheck, Trash2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -197,6 +197,7 @@ export function VerificationPage() {
   };
   const status = data?.verification_status || 'unverified';
   const canSubmit = data && !['pending', 'verified'].includes(status);
+  const latestRequest = data?.requests?.data?.[0] || null;
   const renderError = (index, field) =>
     errors[`documents.${index}.${field}`] && (
       <small className="account-error">{errors[`documents.${index}.${field}`]}</small>
@@ -210,12 +211,19 @@ export function VerificationPage() {
     <main className="verification-page">
       <header className="verification-heading">
         <span>
-          <ShieldCheck size={18} /> TRUNG TÂM XÁC MINH
+          <ShieldCheck size={18} /> {isCenter ? 'HỒ SƠ TRUNG TÂM' : 'HỒ SƠ GIÁO VIÊN'}
         </span>
-        <h1>{isCenter ? 'Xác minh hồ sơ trung tâm' : 'Xác minh chuyên môn giáo viên'}</h1>
-        <p>Nộp tài liệu để EduMatch thẩm định và cấp huy hiệu xác minh trên hồ sơ của bạn.</p>
+        <h1>{status === 'pending' ? 'Hồ sơ đang được xét duyệt' : isCenter ? 'Xác minh hồ sơ trung tâm' : 'Xác minh chuyên môn giáo viên'}</h1>
+        <p>{status === 'pending' ? 'EduMatch đã tiếp nhận hồ sơ của bạn và sẽ thông báo ngay khi có kết quả.' : 'Nộp tài liệu để EduMatch thẩm định và cấp huy hiệu xác minh trên hồ sơ của bạn.'}</p>
       </header>
-      {!(isCenter && status === 'unverified') && <section className={`verification-state is-${status}`}>
+      {status === 'pending' ? <section className="verification-pending-card" aria-label="Trạng thái hồ sơ xác minh">
+        <div className="verification-pending-card__icon"><FileCheck2 size={21} /></div>
+        <div>
+          <strong>Đã tiếp nhận hồ sơ</strong>
+          <p>Đội ngũ EduMatch đang đối chiếu thông tin và tài liệu bạn đã gửi.</p>
+        </div>
+        {latestRequest?.submitted_at && <time dateTime={latestRequest.submitted_at}>Đã gửi {new Date(latestRequest.submitted_at).toLocaleString('vi-VN')}</time>}
+      </section> : !(isCenter && status === 'unverified') && <section className={`verification-state is-${status}`}>
         <FileCheck2 size={24} />
         <div>
           <strong>{statusLabels[status]}</strong>
@@ -229,6 +237,7 @@ export function VerificationPage() {
         </div>
         <VerifiedBadge userId={user.id} />
       </section>}
+      {isCenter && <a className="verification-support-contact" href="tel:19001234"><PhoneCall size={16} /> Hotline hỗ trợ Giáo viên & đối tác: <strong>19001234</strong></a>}
       {error && (
         <div className="account-error" role="alert">
           {error}{' '}
@@ -419,7 +428,7 @@ export function VerificationPage() {
           </div>
         </form>
       )}
-      {data && (
+      {data && status !== 'pending' && (
         <section className="verification-history">
           <h2>Lịch sử hồ sơ</h2>
           {data.requests.data.length ? (
@@ -443,10 +452,9 @@ export function VerificationPage() {
                   {record.documents.map((doc) => (
                     <li key={doc.id}>
                       <div>
-                        <strong>{doc.document_name || doc.original_name}</strong>
+                        <strong>{data.document_types[doc.document_type] || 'Tài liệu xác minh'}</strong>
                         <small>
-                          {data.document_types[doc.document_type]} · {doc.issuing_authority} ·{' '}
-                          {doc.issued_year}
+                          Tài liệu đã gửi{doc.issued_year ? ` · Năm cấp ${doc.issued_year}` : ''}
                         </small>
                       </div>
                       <button

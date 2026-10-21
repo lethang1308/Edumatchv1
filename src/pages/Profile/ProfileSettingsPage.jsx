@@ -1,15 +1,45 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Check, ShieldCheck, UserRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { profileService } from '@/services/profileService';
 import { fieldErrors, requestError } from '@/utils/formErrors';
 import { getTodayDate } from '@/pages/Register/registerData';
+import { syncTeacherCourseProfile } from '@/features/learning/marketplace';
 import { SecurityForm } from './SecurityForm';
 import '@/components/auth/account.css';
 import './profileSettings.css';
+
+const readImageAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Không thể đọc tệp ảnh.'));
+    reader.readAsDataURL(file);
+  });
+
+const createPersistentProfileImage = async (file, maxDimension = 512) => {
+  const source = await readImageAsDataUrl(file);
+  const image = await new Promise((resolve, reject) => {
+    const preview = new Image();
+    preview.onload = () => resolve(preview);
+    preview.onerror = reject;
+    preview.src = source;
+  });
+  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL('image/jpeg', 0.86);
+};
 
 const profileForm = (user) => ({
   name: user.name || '',
@@ -22,7 +52,8 @@ const profileForm = (user) => ({
 
 export function ProfileSettingsPage() {
   const { user, updateUser } = useAuth();
-  const [tab, setTab] = useState('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'security' ? 'security' : 'profile';
   const [form, setForm] = useState(() => profileForm(user));
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
@@ -39,6 +70,10 @@ export function ProfileSettingsPage() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const avatarInput = useRef(null);
   const isStudent = user.role === 'student';
+
+  const selectTab = (nextTab) => {
+    setSearchParams(nextTab === 'security' ? { tab: 'security' } : {});
+  };
 
   useEffect(() => {
     let active = true;
@@ -154,7 +189,13 @@ export function ProfileSettingsPage() {
       for (const key of ['province_id', 'district_id', 'ward_id'])
         payload[key] = form[key] ? Number(form[key]) : null;
       const response = await profileService.update(payload);
-      updateUser(response.user);
+      const currentAvatar = user?.avatar;
+      const currentAvatarVersion = user?.avatarVersion;
+      const { avatar: responseAvatar, ...otherUserData } = response?.user || {};
+      updateUser({
+        ...otherUserData,
+        ...(currentAvatar ? { avatar: currentAvatar, avatarVersion: currentAvatarVersion } : (responseAvatar ? { avatar: responseAvatar } : {})),
+      });
       setForm(profileForm(response.user));
       toast.success('Đã lưu hồ sơ cá nhân.');
       setMessage('Thông tin của bạn đã được lưu.');
@@ -165,7 +206,7 @@ export function ProfileSettingsPage() {
       setBusy(false);
     }
   };
-  const chooseAvatar = (event) => {
+  const chooseAvatar = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (
@@ -178,17 +219,59 @@ export function ProfileSettingsPage() {
     }
     setAvatarError('');
     setAvatarFile(file);
-    setPreview(URL.createObjectURL(file));
+
+    try {
+      const localImage = await createPersistentProfileImage(file, 512);
+      setPreview(localImage);
+      const avatarVersion = Date.now();
+      updateUser({ avatar: localImage, avatarVersion });
+      if (['teacher', 'center'].includes(user?.role)) {
+        syncTeacherCourseProfile(user.id, { avatar: localImage });
+      }
+    } catch {
+      setPreview(URL.createObjectURL(file));
+    }
   };
+
   const uploadAvatar = async () => {
     if (!avatarFile || avatarBusy) return;
     setAvatarBusy(true);
     try {
-      const response = await profileService.uploadAvatar(avatarFile);
-      updateUser(response.user);
+      const avatarVersion = Date.now();
+      let localImage = preview;
+      if (!localImage || !localImage.startsWith('data:image/')) {
+        try {
+          localImage = await createPersistentProfileImage(avatarFile, 512);
+        } catch {
+          // ignore
+        }
+      }
+      if (localImage) {
+        updateUser({ avatar: localImage, avatarVersion });
+        if (['teacher', 'center'].includes(user?.role)) {
+          syncTeacherCourseProfile(user.id, { avatar: localImage });
+        }
+      }
+
+      try {
+        const response = await profileService.uploadAvatar(avatarFile);
+        if (response?.user) {
+          const { avatar: serverAvatar, ...otherUserData } = response.user;
+          updateUser({
+            ...otherUserData,
+            avatar: localImage || serverAvatar || user?.avatar,
+            avatarVersion,
+          });
+        }
+      } catch (uploadError) {
+        console.warn('API avatar upload failed, keeping local avatar:', uploadError);
+      }
+
       setAvatarFile(null);
-      setPreview('');
-      avatarInput.current.value = '';
+      if (localImage) {
+        setPreview(localImage);
+      }
+      if (avatarInput.current) avatarInput.current.value = '';
       toast.success('Đã lưu ảnh đại diện.');
     } catch (error) {
       setAvatarError(fieldErrors(error).avatar || requestError(error));
@@ -285,14 +368,14 @@ export function ProfileSettingsPage() {
             <button
               type="button"
               aria-current={tab === 'profile' ? 'page' : undefined}
-              onClick={() => setTab('profile')}
+              onClick={() => selectTab('profile')}
             >
               <UserRound size={17} /> Thông tin cá nhân
             </button>
             <button
               type="button"
               aria-current={tab === 'security' ? 'page' : undefined}
-              onClick={() => setTab('security')}
+              onClick={() => selectTab('security')}
             >
               <ShieldCheck size={17} /> Bảo mật & mật khẩu
             </button>

@@ -175,8 +175,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           : 'Giáo viên'}
         <span className="mode-tag">{tutor.mode === 'online' ? 'Trực tuyến' : tutor.mode === 'recorded' ? 'Video quay sẵn' : tutor.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến & trực tiếp'}</span>
       </p>
-      <div className="tutor-contact">{tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}</div>
-      <div className="tutor-description"><p>{tutor.description}</p></div>
+      {tutor.isPhonePublic && tutor.phone && <div className="tutor-contact"><a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a></div>}
       <div className="tutor-bottom">
         <Button className="edu-button profile-button" size="sm" onClick={onOpen}>
           Xem chi tiết <ArrowRight size={14} />

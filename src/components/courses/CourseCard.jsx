@@ -36,7 +36,6 @@ export function CourseCard({ course, editable = false, sponsored = false }) {
         </span>}
         <VerifiedBadge userId={course.teacher.id} />
       </div>
-      <div className="course-card__description"><p>{course.description || ' '}</p><Link to={ROUTES.COURSE_DETAIL(course.id)}>Xem thêm</Link></div>
       <div className="course-card__facts">
         <span><CalendarDays size={15} /> {paymentLabel(course.paymentType)}</span>
         {course.sessions && <span><Clock3 size={15} /> {course.sessions} buổi</span>}
