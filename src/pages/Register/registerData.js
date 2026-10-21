@@ -101,6 +101,15 @@ const phoneField = {
   maxLength: 12,
 };
 
+const emailField = {
+  name: "email",
+  label: "Email",
+  icon: Mail,
+  type: "email",
+  autoComplete: "email",
+  maxLength: 191,
+};
+
 // Keep the two supported formats easy to enter: 0xxxxxxxxx or +84xxxxxxxxx.
 // The local format is capped at 10 digits while typing so an accidental extra
 // digit cannot leave the form in an invalid state.
@@ -122,14 +131,7 @@ export const accountFields = [
     autoComplete: "name",
     maxLength: 150,
   },
-  {
-    name: "email",
-    label: "Email",
-    icon: Mail,
-    type: "email",
-    autoComplete: "email",
-    maxLength: 191,
-  },
+  emailField,
   phoneField,
   {
     name: "dateOfBirth",
