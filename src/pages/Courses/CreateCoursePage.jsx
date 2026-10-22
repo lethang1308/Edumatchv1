@@ -6,6 +6,7 @@ import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { getCourse, saveCourse, updateCourse } from '@/features/learning/marketplace';
 import { AdministrativePicker } from '@/components/forms/AdministrativePicker';
+import { Modal } from '@/components/feedback/Modal';
 import { useAdministrativeOptions } from '@/hooks/useAdministrativeOptions';
 import './courses.css';
 
@@ -27,6 +28,7 @@ export function CreateCoursePage() {
   const isEditing = Boolean(editingCourse);
   const [form, setForm] = useState(() => isEditing ? { ...emptyForm, ...editingCourse } : emptyForm);
   const [errors, setErrors] = useState({});
+  const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
   const isCenter = user?.role === 'center';
   const isEducationProvider = ['teacher', 'center'].includes(user?.role);
   const summary = useMemo(() => ({
@@ -88,7 +90,7 @@ export function CreateCoursePage() {
             <div className="form-heading"><h2>Thông tin khóa học</h2></div>
             <Field label="Tên khóa học" error={errors.title}><input name="title" value={form.title} onChange={update} maxLength={COURSE_TITLE_MAX_LENGTH} aria-describedby="course-title-counter" aria-invalid={form.title.length >= COURSE_TITLE_MAX_LENGTH} className={form.title.length >= COURSE_TITLE_MAX_LENGTH ? 'is-limit' : ''} placeholder="Ví dụ: Luyện thi IELTS từ nền tảng đến 6.5" /><small id="course-title-counter" className={`course-title-counter ${form.title.length >= COURSE_TITLE_MAX_LENGTH ? 'is-limit' : ''}`} aria-live="polite">{form.title.length}/{COURSE_TITLE_MAX_LENGTH} ký tự</small></Field>
             {areaError && <p className="field-error" role="alert">{areaError}</p>}
-            <Field label="Mô tả khóa học" error={errors.description}><textarea name="description" value={form.description} onChange={update} rows="3" maxLength={COURSE_DESCRIPTION_MAX_LENGTH} aria-describedby="course-description-counter" aria-invalid={form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH} className={form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH ? 'is-limit' : ''} placeholder="Mục tiêu, lộ trình và phương pháp giảng dạy của khóa học..." /><small id="course-description-counter" className={`course-title-counter ${form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH ? 'is-limit' : ''}`} aria-live="polite">{form.description.length}/{COURSE_DESCRIPTION_MAX_LENGTH} ký tự</small></Field>
+            <Field label="Mô tả khóa học" error={errors.description}><textarea name="description" value={form.description} readOnly onClick={() => setIsDescriptionEditorOpen(true)} rows="3" aria-describedby="course-description-counter" aria-invalid={form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH} className={`course-description-preview ${form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH ? 'is-limit' : ''}`} placeholder="Mục tiêu, lộ trình và phương pháp giảng dạy của khóa học..." /><small id="course-description-counter" className={`course-title-counter ${form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH ? 'is-limit' : ''}`} aria-live="polite">{form.description.length}/{COURSE_DESCRIPTION_MAX_LENGTH} ký tự</small></Field>
             <Field label="Mức học phí (VNĐ)" hint="Không bắt buộc" error={errors.price}><input name="price" value={form.price} onChange={update} inputMode="numeric" placeholder="Điền học phí" /></Field>
             <fieldset className="radio-field"><legend>Hình thức đóng học phí</legend><div className="segmented-control">
               {[['full-course','Đóng trọn khóa'],['monthly','Đóng theo tháng'],['session','Đóng theo buổi']].map(([value,label]) => {
@@ -117,6 +119,20 @@ export function CreateCoursePage() {
             <button className="publish-course" type="submit">{isEditing ? 'Lưu thay đổi' : 'Đăng khóa học'}</button>
           </aside>
         </form>
+        <Modal
+          open={isDescriptionEditorOpen}
+          onClose={() => setIsDescriptionEditorOpen(false)}
+          title="Mô tả khóa học"
+          description="Soạn nội dung đầy đủ để học viên hiểu rõ khóa học của bạn."
+          size="xl"
+          className="course-description-editor"
+          footer={<button type="button" className="course-description-editor__done" onClick={() => setIsDescriptionEditorOpen(false)}>Xong</button>}
+        >
+          <div className="course-description-editor__body">
+            <textarea autoFocus name="description" value={form.description} onChange={update} rows="16" maxLength={COURSE_DESCRIPTION_MAX_LENGTH} placeholder="Mục tiêu, lộ trình và phương pháp giảng dạy của khóa học..." aria-label="Mô tả khóa học" />
+            <p className={form.description.length >= COURSE_DESCRIPTION_MAX_LENGTH ? 'is-limit' : ''}>{form.description.length}/{COURSE_DESCRIPTION_MAX_LENGTH} ký tự</p>
+          </div>
+        </Modal>
       </div>
     </section>
   );

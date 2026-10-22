@@ -159,7 +159,7 @@ export function CourseDetailPage() {
     event.preventDefault();
     if (!isAuthenticated) { toast.error(`Vui lòng đăng nhập để nhắn tin với ${providerType}.`); return; }
     if (!message.trim()) return;
-    saveConversation({ id: createConversationId('conversation'), courseId, teacherId: course.teacher.id, teacherName: course.teacher.name, studentId: user.id, studentName: user.name || 'Học viên EduMatch', senderId: user.id, text: message.trim(), createdAt: 'Vừa xong' });
+    saveConversation({ id: createConversationId('conversation'), courseId, teacherId: course.teacher.id, teacherName: course.teacher.name, teacherAvatar: course.teacher.avatar || '', studentId: user.id, studentName: user.name || 'Học viên EduMatch', studentAvatar: user.avatar || '', senderId: user.id, text: message.trim(), createdAt: 'Vừa xong' });
     setShowMessage(false); toast.success(`Tin nhắn đã được gửi đến ${providerType}.`);
   };
   return <><section className="learning-page"><div className="learning-container course-detail">

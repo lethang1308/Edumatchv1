@@ -118,15 +118,23 @@ export const Header = ({ theme, onToggleTheme }) => {
     } else markNotificationRead(notificationId);
     setNotificationPanel({ open: false, locationKey });
   };
+  const markAllAsRead = () => {
+    if (user?.id) {
+      markAllNotificationsRead(user.id);
+      setNotifications((current) => current.map((notification) => ({ ...notification, isRead: true })));
+    }
+    setServerNotifications((current) => ({ ...current, items: current.items.map((notification) => ({ ...notification, isRead: true })) }));
+    accountNotificationService.readAll().catch(() => {});
+  };
   const toggleNotifications = () => {
+    markAllAsRead();
     setNotificationPanel((current) => ({
       open: !(current.open && current.locationKey === locationKey),
       locationKey,
     }));
   };
   const readAllNotifications = () => {
-    if (user?.id) markAllNotificationsRead(user.id);
-    accountNotificationService.readAll().then(() => setServerNotifications((current) => ({ ...current, items: current.items.map((n) => ({ ...n, isRead: true })) }))).catch(() => {});
+    markAllAsRead();
   };
   const openDialog = (name) => {
     setMobileMenuOpen(false);
@@ -255,7 +263,7 @@ export const Header = ({ theme, onToggleTheme }) => {
                 </button>
                 {accountMenuOpen && <div className="account-menu__popover" role="menu" aria-label="Tùy chọn tài khoản">
                   <Link role="menuitem" to={user.role === 'student' ? ROUTES.PROFILE : ROUTES.TEACHER_PROFILE(user.id)} onClick={(event) => { setAccountMenuOpen(false); if (user.role !== 'student') openOwnProfile(event); }}>{user?.name}</Link>
-                  <Link role="menuitem" to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setAccountMenuOpen(false)}>Đổi mật khẩu</Link>
+                  <Link role="menuitem" to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setAccountMenuOpen(false)}>Thông tin và bảo mật</Link>
                   <button type="button" role="menuitem" onClick={() => { setAccountMenuOpen(false); logout(); }}>Đăng xuất</button>
                 </div>}
               </div>
@@ -347,7 +355,7 @@ export const Header = ({ theme, onToggleTheme }) => {
               <span>Trang cá nhân ({user?.name})</span>
             </Link>
           )}
-          {isAuthenticated && <Link to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setMobileMenuOpen(false)}>Đổi mật khẩu</Link>}
+          {isAuthenticated && <Link to={`${ROUTES.PROFILE}?tab=security`} onClick={() => setMobileMenuOpen(false)}>Thông tin và bảo mật</Link>}
           {isAuthenticated ? (
             <button
               onClick={() => {

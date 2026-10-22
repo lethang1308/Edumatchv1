@@ -17,7 +17,6 @@ import {
   Users,
 } from "lucide-react";
 
-export const SHORT_BIO_MAX_LENGTH = 5000;
 
 export const registrationRoles = [
   {
@@ -178,11 +177,10 @@ export const teacherFields = [
   },
   {
     name: "biography",
-    label: "Thông tin tổng quan",
+    label: "Hồ sơ năng lực",
     placeholder: "Chia sẻ về bản thân để học viên hiểu hơn về bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -196,11 +194,10 @@ export const centerFields = [
   },
   {
     name: "centerDescription",
-    label: "Thông tin tổng quan",
+    label: "Hồ sơ năng lực",
     placeholder: "Chia sẻ thêm để học viên hiểu hơn về trung tâm của bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -285,13 +282,6 @@ export function validateRegistration(form, role, today = new Date()) {
   } else if (role === "center" && !form.centerDescription.trim()) {
     errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
   }
-  if (
-    (role === "teacher" && form.biography.length > SHORT_BIO_MAX_LENGTH) ||
-    (role === "center" && form.centerDescription.length > SHORT_BIO_MAX_LENGTH)
-  ) {
-    errors[role === "teacher" ? "biography" : "centerDescription"] =
-      `Thông tin tổng quan tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`;
-  }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";
   else if (role === "center" && (Number(form.foundedYear) < 1950 || Number(form.foundedYear) > today.getFullYear()))
@@ -301,8 +291,7 @@ export function validateRegistration(form, role, today = new Date()) {
 
 // Only include the active role's fields; hidden profile values never reach the API.
 export function buildRegistrationPayload(form, role) {
-  const limitProfileText = (value) =>
-    String(value || "").slice(0, SHORT_BIO_MAX_LENGTH).trim();
+  const profileText = (value) => String(value || "").trim();
   const data = {
     name: (role === "center" ? form.centerName : form.name).trim(),
     email: form.email.trim().toLowerCase(),
@@ -316,11 +305,11 @@ export function buildRegistrationPayload(form, role) {
   if (role === "center") {
     return {
       ...data,
-      bio: limitProfileText(form.centerDescription),
+      bio: profileText(form.centerDescription),
       foundedYear: form.foundedYear,
       founded_year: Number(form.foundedYear),
       centerProfile: {
-        description: limitProfileText(form.centerDescription),
+        description: profileText(form.centerDescription),
         foundedYear: form.foundedYear,
       },
     };
@@ -331,14 +320,14 @@ export function buildRegistrationPayload(form, role) {
     dateOfBirth: form.dateOfBirth,
     dob: form.dateOfBirth,
     ...(role === "teacher" && {
-      qualifications: limitProfileText(form.qualification),
+      qualifications: profileText(form.qualification),
       headline: form.qualification.trim(),
       experience_years: Number.parseInt(form.experience, 10) || 0,
       show_phone: Boolean(form.isPhonePublic),
-      experience: limitProfileText(form.experience),
-      bio: limitProfileText(form.biography),
+      experience: profileText(form.experience),
+      bio: profileText(form.biography),
       teacherProfile: Object.fromEntries(
-        teacherFields.map(({ name }) => [name, limitProfileText(form[name])]),
+        teacherFields.map(({ name }) => [name, profileText(form[name])]),
       ),
     }),
   };

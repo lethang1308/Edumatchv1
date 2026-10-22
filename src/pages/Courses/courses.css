@@ -78,6 +78,27 @@
 .course-editor .payment-lock-note {
   margin-top: 6px;
 }
+.course-description-preview {
+  cursor: text;
+  resize: none;
+}
+.course-description-editor__body textarea {
+  width: 100%;
+  min-height: min(54vh, 620px);
+  resize: vertical;
+}
+.course-description-editor__body p {
+  margin: 8px 0 0;
+  color: var(--edu-muted);
+  font-size: var(--text-caption);
+  text-align: right;
+}
+.course-description-editor__body p.is-limit {
+  color: var(--edu-danger, #c45463);
+}
+.course-description-editor__done {
+  min-width: 104px;
+}
 .course-editor .publish-course {
   margin-top: 2px;
 }
@@ -1158,20 +1179,7 @@
   margin: 0;
 }
 .teacher-bio__edit-link {
-  flex: 0 0 auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--edu-green);
-  font: inherit;
-  font-size: var(--text-caption-xs);
-  font-weight: 700;
-  line-height: var(--text-caption-xs--line-height);
-  cursor: pointer;
-}
-.teacher-bio__edit-link:hover {
-  color: var(--edu-green-hover);
-  text-decoration: underline;
+  display: none;
   text-underline-offset: 3px;
 }
 .teacher-bio__edit-link:focus-visible {
@@ -1239,6 +1247,15 @@
   font-size: var(--text-control);
   line-height: var(--text-control--line-height);
   white-space: pre-line;
+}
+.profile-capability-dialog {
+  width: min(1120px, calc(100vw - 48px)) !important;
+  max-width: none !important;
+}
+.profile-capability-dialog .teacher-profile-summary > section:first-child > p {
+  max-width: 88ch;
+  font-size: var(--text-body);
+  line-height: 1.72;
 }
 .teacher-profile-summary a {
   display: inline-flex;
@@ -2876,9 +2893,12 @@ button.teacher-cover__trust-count:hover { text-decoration: underline; text-under
   font-size: 0;
 }
 .teacher-bio__verify::after {
-  content: 'Xác minh hồ sơ';
+  content: 'Xác Minh Hồ Sơ';
   font-size: var(--text-caption);
   line-height: var(--text-caption--line-height);
+}
+.has-submitted-verification .teacher-bio__verify::after {
+  content: 'Hồ Sơ Xác Minh';
 }
 .teacher-bio__verify:hover {
   background: var(--edu-tag);

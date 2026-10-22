@@ -477,7 +477,7 @@ export function Register() {
         open={Boolean(activeRegistrationTextField)}
         onClose={() => setActiveRegistrationTextField(null)}
         title={activeRegistrationTextField?.label}
-        description={`Soạn nội dung chi tiết. Tối đa ${activeRegistrationTextField?.maxLength || 500} ký tự.`}
+        description={activeRegistrationTextField?.maxLength ? `Soạn nội dung chi tiết. Tối đa ${activeRegistrationTextField.maxLength} ký tự.` : 'Soạn nội dung đầy đủ để học viên hiểu rõ hơn về bạn.'}
         size="xl"
         className="register-text-editor-modal"
         footer={<button type="button" className="register-text-editor-modal__done" onClick={() => setActiveRegistrationTextField(null)}>Xong</button>}
@@ -491,13 +491,13 @@ export function Register() {
             value={form[activeRegistrationTextField.name] || ""}
             onChange={updateField}
             rows="16"
-            maxLength={activeRegistrationTextField.maxLength}
+            maxLength={activeRegistrationTextField.maxLength || undefined}
             placeholder={activeRegistrationTextField.placeholder}
             aria-label={activeRegistrationTextField.label}
           />
-          <p className={`register-text-editor-modal__count ${form[activeRegistrationTextField.name].length >= activeRegistrationTextField.maxLength ? "is-limit" : ""}`}>
+          {activeRegistrationTextField.maxLength && <p className={`register-text-editor-modal__count ${form[activeRegistrationTextField.name].length >= activeRegistrationTextField.maxLength ? "is-limit" : ""}`}>
             {form[activeRegistrationTextField.name].length}/{activeRegistrationTextField.maxLength} ký tự
-          </p>
+          </p>}
         </div>}
       </Modal>
       <Modal

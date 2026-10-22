@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Check, ShieldCheck, UserRound } from 'lucide-react';
+import { Camera, Check, ImagePlus, ShieldCheck, UserRound } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,8 @@ import { ROUTES } from '@/constants/routes';
 import { profileService } from '@/services/profileService';
 import { fieldErrors, requestError } from '@/utils/formErrors';
 import { getTodayDate } from '@/pages/Register/registerData';
-import { syncTeacherCourseProfile } from '@/features/learning/marketplace';
+import { getPostMediaItems, getPosts, syncTeacherCourseProfile } from '@/features/learning/marketplace';
+import { Modal } from '@/components/feedback/Modal';
 import { SecurityForm } from './SecurityForm';
 import '@/components/auth/account.css';
 import './profileSettings.css';
@@ -44,7 +45,7 @@ const createPersistentProfileImage = async (file, maxDimension = 512) => {
 const profileForm = (user) => ({
   name: user.name || '',
   date_of_birth: user.dob || '',
-  bio: user.bio || '',
+  bio: user.detailedProfile || user.bio || '',
   province_id: user.student_profile?.province_id || '',
   district_id: user.student_profile?.district_id || '',
   ward_id: user.student_profile?.ward_id || '',
@@ -68,8 +69,16 @@ export function ProfileSettingsPage() {
   const [preview, setPreview] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [isAvatarSourceOpen, setIsAvatarSourceOpen] = useState(false);
+  const [isAvatarAlbumOpen, setIsAvatarAlbumOpen] = useState(false);
+  const [isBioEditorOpen, setIsBioEditorOpen] = useState(false);
   const avatarInput = useRef(null);
   const isStudent = user.role === 'student';
+  const hasSubmittedVerification = Boolean(user?.verificationStatus && user.verificationStatus !== 'unverified');
+  const avatarAlbumItems = getPosts()
+    .filter((post) => String(post.authorId || post.teacherId) === String(user.id))
+    .flatMap((post) => getPostMediaItems(post))
+    .filter((item) => item.type === 'image' && item.src);
 
   const selectTab = (nextTab) => {
     setSearchParams(nextTab === 'security' ? { tab: 'security' } : {});
@@ -192,11 +201,19 @@ export function ProfileSettingsPage() {
       const currentAvatar = user?.avatar;
       const currentAvatarVersion = user?.avatarVersion;
       const { avatar: responseAvatar, ...otherUserData } = response?.user || {};
-      updateUser({
+      const profileUpdates = {
         ...otherUserData,
+        name: otherUserData.name || payload.name,
+        bio: otherUserData.bio || payload.bio,
+        detailedProfile: otherUserData.detailedProfile || payload.bio,
+        ...(payload.date_of_birth ? { dob: otherUserData.dob || payload.date_of_birth } : {}),
         ...(currentAvatar ? { avatar: currentAvatar, avatarVersion: currentAvatarVersion } : (responseAvatar ? { avatar: responseAvatar } : {})),
-      });
-      setForm(profileForm(response.user));
+      };
+      updateUser(profileUpdates);
+      if (['teacher', 'center'].includes(user?.role)) {
+        syncTeacherCourseProfile(user.id, profileUpdates);
+      }
+      setForm(profileForm({ ...user, ...profileUpdates }));
       toast.success('Đã lưu hồ sơ cá nhân.');
       setMessage('Thông tin của bạn đã được lưu.');
     } catch (error) {
@@ -218,30 +235,33 @@ export function ProfileSettingsPage() {
       return;
     }
     setAvatarError('');
-    setAvatarFile(file);
+      setAvatarFile(file);
 
     try {
       const localImage = await createPersistentProfileImage(file, 512);
       setPreview(localImage);
-      const avatarVersion = Date.now();
+      const avatarVersion = `${file.name}-${file.size}-${file.lastModified}`;
       updateUser({ avatar: localImage, avatarVersion });
       if (['teacher', 'center'].includes(user?.role)) {
         syncTeacherCourseProfile(user.id, { avatar: localImage });
       }
+      await uploadAvatar(file, localImage);
     } catch {
-      setPreview(URL.createObjectURL(file));
+      const fallbackPreview = URL.createObjectURL(file);
+      setPreview(fallbackPreview);
+      await uploadAvatar(file, fallbackPreview);
     }
   };
 
-  const uploadAvatar = async () => {
-    if (!avatarFile || avatarBusy) return;
+  const uploadAvatar = async (fileToUpload = avatarFile, imageOverride = preview) => {
+    if (!fileToUpload || avatarBusy) return;
     setAvatarBusy(true);
     try {
-      const avatarVersion = Date.now();
-      let localImage = preview;
+      const avatarVersion = `${fileToUpload.name}-${fileToUpload.size}-${fileToUpload.lastModified}`;
+      let localImage = imageOverride;
       if (!localImage || !localImage.startsWith('data:image/')) {
         try {
-          localImage = await createPersistentProfileImage(avatarFile, 512);
+          localImage = await createPersistentProfileImage(fileToUpload, 512);
         } catch {
           // ignore
         }
@@ -254,7 +274,7 @@ export function ProfileSettingsPage() {
       }
 
       try {
-        const response = await profileService.uploadAvatar(avatarFile);
+        const response = await profileService.uploadAvatar(fileToUpload);
         if (response?.user) {
           const { avatar: serverAvatar, ...otherUserData } = response.user;
           updateUser({
@@ -278,6 +298,16 @@ export function ProfileSettingsPage() {
     } finally {
       setAvatarBusy(false);
     }
+  };
+  const chooseAvatarFromAlbum = (image) => {
+    const avatarVersion = image.id || image.src;
+    setPreview(image.src);
+    updateUser({ avatar: image.src, avatarVersion });
+    if (['teacher', 'center'].includes(user?.role)) {
+      syncTeacherCourseProfile(user.id, { avatar: image.src });
+    }
+    setIsAvatarAlbumOpen(false);
+    toast.success('Đã chọn ảnh đại diện từ album.');
   };
   const districts = provinceChildren.filter((area) => area.level === 'district');
   const wards = form.district_id
@@ -310,7 +340,6 @@ export function ProfileSettingsPage() {
       <header className="profile-settings-heading">
         <p>TÀI KHOẢN EDUMATCH</p>
         <h1>Hồ sơ & bảo mật</h1>
-        <span>Quản lý thông tin cá nhân và các lựa chọn bảo mật của bạn.</span>
       </header>
       <div className="profile-settings-layout">
         <aside className="profile-settings-sidebar">
@@ -320,6 +349,9 @@ export function ProfileSettingsPage() {
             ) : (
               <UserRound size={42} />
             )}
+            <button type="button" className="profile-settings-avatar__camera" onClick={() => setIsAvatarSourceOpen((current) => !current)} aria-label="Đổi ảnh đại diện" aria-expanded={isAvatarSourceOpen}>
+              <Camera size={17} />
+            </button>
           </div>
           <h2>{user.name}</h2>
           <p>
@@ -331,37 +363,18 @@ export function ProfileSettingsPage() {
                   ? 'Trung tâm đào tạo'
                   : 'Tài khoản quản trị'}
           </p>
-          <label className="account-secondary profile-avatar-label">
-            <Camera size={16} /> Chọn ảnh đại diện
-            <input
-              ref={avatarInput}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={chooseAvatar}
-              disabled={avatarBusy}
-            />
-          </label>
-          <small>JPG, PNG, WebP · tối đa 2 MB</small>
-          {['teacher', 'center'].includes(user.role) && <Link to={ROUTES.VERIFICATION}>Hồ sơ xác minh chuyên môn / pháp lý</Link>}
-          {avatarFile && (
-            <>
-              <small>Ảnh xem trước chưa được lưu.</small>
-              <button
-                type="button"
-                className="account-primary"
-                disabled={avatarBusy}
-                onClick={uploadAvatar}
-              >
-                {avatarBusy ? 'Đang tải ảnh...' : 'Lưu ảnh đại diện'}
-              </button>
-            </>
-          )}
+          <input ref={avatarInput} className="profile-avatar-file-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={chooseAvatar} disabled={avatarBusy} />
+          {isAvatarSourceOpen && <div className="profile-avatar-source-menu" role="menu" aria-label="Nguồn ảnh đại diện">
+            <button type="button" role="menuitem" onClick={() => { setIsAvatarSourceOpen(false); avatarInput.current?.click(); }} disabled={avatarBusy}><Camera size={16} /> Tải ảnh lên</button>
+            <button type="button" role="menuitem" onClick={() => { setIsAvatarSourceOpen(false); setIsAvatarAlbumOpen(true); }}><ImagePlus size={16} /> Chọn từ album ảnh</button>
+          </div>}
           {avatarError && (
             <p className="account-error" role="alert">
               {avatarError}
             </p>
           )}
-          {!isStudent && <Link to={ROUTES.TEACHER_PROFILE(user.id)}>Xem hồ sơ cá nhân</Link>}
+          {['teacher', 'center'].includes(user.role) && <Link className="profile-sidebar-link" to={ROUTES.VERIFICATION}><ShieldCheck size={16} /><span>{hasSubmittedVerification ? 'Hồ Sơ Xác Minh' : 'Xác Minh Hồ Sơ'}</span></Link>}
+          {!isStudent && <Link className="profile-sidebar-link" to={ROUTES.TEACHER_PROFILE(user.id)}><UserRound size={16} /><span>Xem hồ sơ cá nhân</span></Link>}
         </aside>
         <section className="profile-settings-panel">
           <nav className="profile-settings-tabs" aria-label="Cài đặt tài khoản">
@@ -370,7 +383,7 @@ export function ProfileSettingsPage() {
               aria-current={tab === 'profile' ? 'page' : undefined}
               onClick={() => selectTab('profile')}
             >
-              <UserRound size={17} /> Thông tin cá nhân
+              <UserRound size={17} /> Hồ sơ năng lực
             </button>
             <button
               type="button"
@@ -389,12 +402,7 @@ export function ProfileSettingsPage() {
               <div className="profile-section-heading">
                 <UserRound size={23} />
                 <div>
-                  <h2>Thông tin cá nhân</h2>
-                  <p>
-                    {isStudent
-                      ? 'Thông tin chính xác giúp EduMatch hiểu nhu cầu học tập của bạn.'
-                      : 'Thông tin tài khoản và hồ sơ đã đăng ký.'}
-                  </p>
+                  <h2>Hồ sơ năng lực</h2>
                 </div>
               </div>
               {message && (
@@ -410,7 +418,6 @@ export function ProfileSettingsPage() {
                     value={form.name}
                     onChange={change}
                     maxLength={150}
-                    readOnly={!isStudent}
                     required
                     aria-invalid={Boolean(errors.name)}
                   />
@@ -435,7 +442,6 @@ export function ProfileSettingsPage() {
                       value={form.date_of_birth}
                       onChange={change}
                       max={getTodayDate()}
-                      readOnly={!isStudent}
                     />
                     {errors.date_of_birth && (
                       <small className="account-error">{errors.date_of_birth}</small>
@@ -464,31 +470,34 @@ export function ProfileSettingsPage() {
                   </>
                 )}
                 <label className="account-field">
-                  <span>{isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Giới thiệu'}</span>
+                  <span>{isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Hồ sơ năng lực'}</span>
                   <textarea
-                    aria-label="Giới thiệu & mục tiêu học tập"
+                    aria-label="Hồ sơ năng lực"
                     name="bio"
                     value={form.bio}
-                    onChange={change}
-                    maxLength={1000}
+                    readOnly
+                    onClick={() => setIsBioEditorOpen(true)}
                     rows={5}
-                    readOnly={!isStudent}
+                    className="profile-bio-preview"
                   />
                   {errors.bio && <small className="account-error">{errors.bio}</small>}
-                  <small>{form.bio.length}/1000 ký tự</small>
                 </label>
               </fieldset>
-              {isStudent && (
-                <div className="account-actions">
-                  <button className="account-primary" type="submit" disabled={busy}>
-                    <Check size={17} /> {busy ? 'Đang lưu...' : 'Lưu thay đổi'}
-                  </button>
-                </div>
-              )}
+              <div className="account-actions">
+                <button className="account-primary" type="submit" disabled={busy}>
+                  <Check size={17} /> {busy ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
+              </div>
             </form>
           )}
         </section>
       </div>
+      <Modal open={isBioEditorOpen} onClose={() => setIsBioEditorOpen(false)} title={isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Hồ sơ năng lực'} description="Soạn nội dung đầy đủ để học viên hiểu rõ hơn về bạn." size="xl" className="profile-bio-editor" footer={<button type="button" className="profile-bio-editor__done" onClick={() => setIsBioEditorOpen(false)}>Xong</button>}>
+        <textarea autoFocus name="bio" value={form.bio} onChange={change} rows="18" placeholder="Chia sẻ nội dung bạn muốn học viên biết..." aria-label="Hồ sơ năng lực" />
+      </Modal>
+      <Modal open={isAvatarAlbumOpen} onClose={() => setIsAvatarAlbumOpen(false)} title="Chọn ảnh đại diện từ album" description="Chọn một ảnh bạn đã đăng trên bảng tin hoặc trang cá nhân." size="lg" className="profile-avatar-album">
+        {avatarAlbumItems.length ? <div className="profile-avatar-album__grid">{avatarAlbumItems.map((image, index) => <button type="button" key={`${image.id || image.src}-${index}`} onClick={() => chooseAvatarFromAlbum(image)}><img src={image.src} alt={`Ảnh trong album ${index + 1}`} /></button>)}</div> : <p className="profile-avatar-album__empty">Bạn chưa có ảnh nào trong album. Hãy tải ảnh lên để làm ảnh đại diện.</p>}
+      </Modal>
     </main>
   );
 }
