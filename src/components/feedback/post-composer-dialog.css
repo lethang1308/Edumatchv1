@@ -1,0 +1,178 @@
+.post-composer-dialog {
+  max-width: 54rem !important;
+}
+.post-composer-trigger {
+  margin: 0 0 18px;
+  padding: 14px 16px 11px;
+  border: 1px solid var(--edu-line);
+  border-radius: 15px;
+  background: var(--edu-surface);
+  box-shadow: 0 8px 24px rgb(32 91 70 / 4%);
+}
+.post-composer-trigger__top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.post-composer-trigger__avatar {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--edu-tag);
+  color: var(--edu-green);
+  font-size: 17px;
+  font-weight: 800;
+}
+.post-composer-trigger__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.post-composer-trigger__prompt {
+  flex: 1;
+  min-width: 0;
+  min-height: 64px;
+  padding: 14px 15px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--edu-soft);
+  color: var(--edu-muted);
+  font: inherit;
+  font-size: var(--text-body);
+  text-align: left;
+  line-height: 1.55;
+  cursor: text;
+}
+.post-composer-trigger__prompt:hover,
+.post-composer-trigger__prompt:focus-visible {
+  border-color: var(--color-line-strong);
+  background: var(--edu-bg);
+  color: var(--edu-ink);
+  outline: none;
+}
+.post-composer-trigger__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid var(--edu-line);
+}
+.post-composer-trigger__media {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--edu-green);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.post-composer-trigger__media:hover,
+.post-composer-trigger__media:focus-visible {
+  background: var(--edu-tag);
+  outline: none;
+}
+.post-composer-dialog__form {
+  display: grid;
+  gap: 16px;
+}
+.post-composer-dialog__form textarea {
+  width: 100%;
+  min-height: 280px;
+  padding: 17px 18px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-surface);
+  color: var(--edu-ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.7;
+  outline: none;
+  resize: vertical;
+}
+.post-composer-dialog__form textarea:focus {
+  border-color: var(--edu-green);
+  box-shadow: 0 0 0 3px rgb(8 127 105 / 12%);
+}
+.post-composer-dialog__media {
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-soft);
+}
+.post-composer-dialog__media .image-attachment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.post-composer-dialog__media .image-attachment > label {
+  min-height: 32px;
+  padding-inline: 10px;
+}
+.post-composer-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.post-composer-dialog__actions > button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid var(--edu-line);
+  border-radius: var(--radius-control);
+  background: var(--edu-surface);
+  color: var(--edu-muted);
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 700;
+}
+.post-composer-dialog__actions > button:hover {
+  border-color: var(--color-line-strong);
+  color: var(--edu-ink);
+}
+.post-composer-dialog__actions > .post-composer-dialog__publish {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-color: var(--edu-green);
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+}
+.post-composer-dialog__actions > .post-composer-dialog__publish:hover {
+  background: var(--edu-green-hover);
+  color: var(--edu-on-primary);
+}
+.post-composer-dialog__actions > .post-composer-dialog__publish:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+@media (max-width: 640px) {
+  .post-composer-trigger {
+    padding: 12px;
+  }
+  .post-composer-trigger__avatar {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+  .post-composer-trigger__prompt {
+    min-height: 60px;
+    font-size: var(--text-control);
+  }
+  .post-composer-dialog__form textarea {
+    min-height: 220px;
+    font-size: var(--text-body);
+  }
+  .post-composer-dialog__actions > button {
+    flex: 1;
+  }
+}

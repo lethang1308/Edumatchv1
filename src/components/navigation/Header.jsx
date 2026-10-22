@@ -20,7 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
 import { accountNotificationService } from '@/services/accountNotificationService';
 import { subscribeUserNotifications } from '@/services/pusherService';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/features/learning/marketplace';
+import { getConversationsForUser, getNotifications, markAllNotificationsRead, markNotificationRead } from '@/features/learning/marketplace';
 import toast from 'react-hot-toast';
 
 const notificationIcon = (type) => {
@@ -46,6 +46,7 @@ export const Header = ({ theme, onToggleTheme }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const [notifications, setNotifications] = useState(() => user?.id ? getNotifications(user.id) : []);
   const [serverNotifications, setServerNotifications] = useState({ userId: null, items: [] });
+  const [, setConversationRevision] = useState(0);
   const receivedServerNotificationIds = useRef(new Set());
   const accountMenuRef = useRef(null);
   const allNotifications = [...(serverNotifications.userId === user?.id ? serverNotifications.items : []), ...notifications]
@@ -55,6 +56,13 @@ export const Header = ({ theme, onToggleTheme }) => {
   const teachingDestination = isEducationProvider ? ROUTES.CREATE_COURSE : ROUTES.REGISTER;
   const teachingLabel = isEducationProvider ? 'Thêm khóa học' : 'Đăng ký dạy';
   const unreadNotifications = allNotifications.filter((notification) => !notification.isRead).length;
+  const unreadMessageCount = isAuthenticated
+    ? new Set(
+      getConversationsForUser(user?.id)
+        .filter((message) => (message.unreadFor || []).includes(user?.id))
+        .map((message) => message.senderId || (message.teacherId === user?.id ? message.studentId : message.teacherId))
+    ).size
+    : 0;
   const notificationOpen = notificationPanel.open && notificationPanel.locationKey === locationKey;
   const userAvatarUrl = user?.avatar
     ? (user.avatarVersion && !user.avatar.startsWith('data:image/') && !user.avatar.startsWith('blob:')
@@ -71,6 +79,16 @@ export const Header = ({ theme, onToggleTheme }) => {
     window.addEventListener('edumatch:notifications-updated', refreshNotifications);
     return () => window.removeEventListener('edumatch:notifications-updated', refreshNotifications);
   }, [user?.id]);
+
+  useEffect(() => {
+    const refreshConversations = () => setConversationRevision((current) => current + 1);
+    window.addEventListener('edumatch:conversations-updated', refreshConversations);
+    window.addEventListener('storage', refreshConversations);
+    return () => {
+      window.removeEventListener('edumatch:conversations-updated', refreshConversations);
+      window.removeEventListener('storage', refreshConversations);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
@@ -200,7 +218,7 @@ export const Header = ({ theme, onToggleTheme }) => {
           )}
           {isAuthenticated && (
             <Link to={ROUTES.MESSAGES} className="teacher-action-link">
-              <MessageCircle size={15} /> Tin nhắn
+              <MessageCircle size={15} /> Tin nhắn {unreadMessageCount > 0 && <b className="message-count">{unreadMessageCount > 99 ? '99+' : unreadMessageCount}</b>}
             </Link>
           )}
           {isAuthenticated && <div className="notification-menu">

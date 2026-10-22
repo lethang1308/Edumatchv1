@@ -11,6 +11,7 @@ import { ContentMenu } from '@/components/feedback/ContentMenu';
 import { ExpandableImage } from '@/components/feedback/ExpandableImage';
 import { LikesModal } from '@/components/feedback/LikesModal';
 import { Modal } from '@/components/feedback/Modal';
+import { PostComposerDialog, PostComposerTrigger } from '@/components/feedback/PostComposerDialog';
 import { PostImageDialog } from '@/components/feedback/PostImageDialog';
 import { ReactionCount } from '@/components/feedback/ReactionCount';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
@@ -89,6 +90,7 @@ export function FeedPage({ postId = null }) {
   const [feedTab, setFeedTab] = useState(() => user?.role === 'student' ? 'students' : 'providers');
   const [postDraft, setPostDraft] = useState('');
   const [postMedia, setPostMedia] = useState([]);
+  const [isPostComposerOpen, setIsPostComposerOpen] = useState(false);
   const [visiblePostCount, setVisiblePostCount] = useState(POSTS_BATCH_SIZE);
   const loadMoreRef = useRef(null);
   const providers = useMemo(() => new Map(getCourses().map((course) => [course.teacher.id, course.teacher])), []);
@@ -124,9 +126,7 @@ export function FeedPage({ postId = null }) {
     (feedTab === 'providers' && isProviderAccount)
     || (feedTab === 'students' && user?.role === 'student')
   );
-  const composerPlaceholder = feedTab === 'providers'
-    ? 'Chia sẻ hoạt động, thông tin lớp học hoặc tài liệu...'
-    : 'Chia sẻ trải nghiệm học tập của bạn...';
+  const composerPlaceholder = 'Hãy chia sẻ để học viên hiểu hơn về bạn';
 
   useEffect(() => {
     if (postId || visiblePostCount >= visiblePosts.length) return undefined;
@@ -231,6 +231,7 @@ export function FeedPage({ postId = null }) {
     setPosts(getPosts().slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
     setPostDraft('');
     setPostMedia([]);
+    setIsPostComposerOpen(false);
     setVisiblePostCount(POSTS_BATCH_SIZE);
     toast.success('Bài viết đã được đăng lên Bảng Tin.');
   };
@@ -431,19 +432,7 @@ export function FeedPage({ postId = null }) {
           <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => { setFeedTab('providers'); setVisiblePostCount(POSTS_BATCH_SIZE); }}>Giáo viên & Trung tâm</button>
           <button type="button" role="tab" aria-selected={feedTab === 'students'} className={feedTab === 'students' ? 'is-active' : ''} onClick={() => { setFeedTab('students'); setVisiblePostCount(POSTS_BATCH_SIZE); }}>Chia sẻ từ học viên</button>
         </div>}
-        {canPublishInCurrentFeed && <form className="feed-composer" onSubmit={publishFeedPost}>
-          <textarea
-            value={postDraft}
-            onChange={(event) => setPostDraft(event.target.value)}
-            placeholder={composerPlaceholder}
-            rows="3"
-            aria-label="Nội dung bài viết"
-          />
-          <div className="feed-composer__actions">
-            <ImageAttachment id="feed-post-media" value={postMedia} onChange={setPostMedia} label="Ảnh / Video" multiple />
-            <button type="submit"><Send size={16} /> Đăng bài</button>
-          </div>
-        </form>}
+        {canPublishInCurrentFeed && <PostComposerTrigger avatar={user?.avatar} name={user?.name} placeholder={composerPlaceholder} onOpen={() => setIsPostComposerOpen(true)} />}
         <div className="feed-page__list">
           {visiblePosts.length ? renderedPosts.map((post) => {
             const author = getAuthor(post, providers);
@@ -528,7 +517,7 @@ export function FeedPage({ postId = null }) {
           </aside>
         </div>
       </div>
-    </section><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /><PostImageDialog key={imageViewer ? `${imageViewer.post.id}-${imageViewer.activeIndex}` : 'closed'} viewer={imageViewer && { ...imageViewer, post: viewerPost, author: viewerAuthor, publishedAt: shortTime(viewerPost?.createdAt) }} interactionTarget={viewerMedia || null} onActiveIndexChange={(activeIndex) => setImageViewer((current) => current ? { ...current, activeIndex } : current)} onClose={() => setImageViewer(null)} discussion={imageViewerDiscussion} onLike={() => toggleLike(viewerPost.id, viewerMedia?.id)} onShowLikes={() => setLikesTarget({ ids: viewerInteractionTarget?.likes || [], label: viewerMedia ? 'Những người đã thích ảnh/video này' : 'Những người đã thích bài viết này' })} onShare={() => openShareDialog(viewerPost, viewerMedia)} shareCount={viewerPost ? [...new Set(posts.filter((candidate) => candidate.sharedPost?.id === viewerPost.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))].length : 0} onShowShares={() => setLikesTarget({ ids: [...new Set(posts.filter((candidate) => candidate.sharedPost?.id === viewerPost?.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))], kind: 'share', title: 'Lượt chia sẻ', label: viewerMedia ? 'Những người đã chia sẻ ảnh/video này' : 'Những người đã chia sẻ bài viết này', emptyText: 'Chưa có lượt chia sẻ.' })} isLiked={(viewerInteractionTarget?.likes || []).includes(user?.id)} /><Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm"><form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form></Modal></>
+    </section><PostComposerDialog open={isPostComposerOpen} onClose={() => setIsPostComposerOpen(false)} draft={postDraft} onDraftChange={setPostDraft} media={postMedia} onMediaChange={setPostMedia} onPublish={publishFeedPost} placeholder={composerPlaceholder} attachmentId="feed-post-media" /><LikesModal target={likesTarget} onClose={() => setLikesTarget(null)} /><PostImageDialog key={imageViewer ? `${imageViewer.post.id}-${imageViewer.activeIndex}` : 'closed'} viewer={imageViewer && { ...imageViewer, post: viewerPost, author: viewerAuthor, publishedAt: shortTime(viewerPost?.createdAt) }} interactionTarget={viewerMedia || null} onActiveIndexChange={(activeIndex) => setImageViewer((current) => current ? { ...current, activeIndex } : current)} onClose={() => setImageViewer(null)} discussion={imageViewerDiscussion} onLike={() => toggleLike(viewerPost.id, viewerMedia?.id)} onShowLikes={() => setLikesTarget({ ids: viewerInteractionTarget?.likes || [], label: viewerMedia ? 'Những người đã thích ảnh/video này' : 'Những người đã thích bài viết này' })} onShare={() => openShareDialog(viewerPost, viewerMedia)} shareCount={viewerPost ? [...new Set(posts.filter((candidate) => candidate.sharedPost?.id === viewerPost.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))].length : 0} onShowShares={() => setLikesTarget({ ids: [...new Set(posts.filter((candidate) => candidate.sharedPost?.id === viewerPost?.id && (viewerMedia ? candidate.sharedPost?.mediaId === viewerMedia.id : !candidate.sharedPost?.mediaId)).map((candidate) => candidate.authorId || candidate.teacherId).filter(Boolean))], kind: 'share', title: 'Lượt chia sẻ', label: viewerMedia ? 'Những người đã chia sẻ ảnh/video này' : 'Những người đã chia sẻ bài viết này', emptyText: 'Chưa có lượt chia sẻ.' })} isLiked={(viewerInteractionTarget?.likes || []).includes(user?.id)} /><Modal open={Boolean(shareTarget)} onClose={() => setShareTarget(null)} title="Chia sẻ bài viết" description="Thêm suy nghĩ của bạn trước khi chia sẻ lên trang cá nhân." size="sm"><form className="share-post-form" onSubmit={sharePost}><textarea autoFocus value={shareText} onChange={(event) => setShareText(event.target.value)} placeholder="Viết nội dung bạn muốn chia sẻ..." rows="4" /><div><button type="button" onClick={() => setShareTarget(null)}>Hủy</button><button type="submit"><Share2 size={16} /> Chia sẻ</button></div></form></Modal></>
   );
 }
 

@@ -38,7 +38,7 @@ import './home.css';
 import '@/components/courses/course.css';
 
 const initialFilters = { subject: '', mode: '', province: '', ward: '', provider: '', description: '' };
-const initialCourseFilters = { subject: '', mode: '', description: '' };
+const initialCourseFilters = { subject: '', mode: '', province: '', ward: '', description: '' };
 const communityTeacherPositions = ['0% center', '50% center', '100% center'];
 const sampleCenterOrder = [
   'center-old-school',
@@ -85,7 +85,7 @@ function SectionHeading({ title, description, children }) {
     <div className="section-heading">
       <div>
         <h2>{title}</h2>
-        <p>{description}</p>
+        {description && <p>{description}</p>}
       </div>
       {children}
     </div>
@@ -187,7 +187,8 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 
 export const Home = () => {
   const catalog = useMasterData();
-  const subjects = catalog.subjects.map((subject) => ({ ...subject,
+  const catalogSubjects = catalog.subjects.length ? catalog.subjects : subjectStyles;
+  const subjects = catalogSubjects.map((subject) => ({ ...subject,
     icon: subjectStyles.find((item) => item.name === subject.name)?.icon || BookOpen,
     color: subjectStyles.find((item) => item.name === subject.name)?.color || 'green' }));
   const [params, setParams] = useSearchParams();
@@ -252,12 +253,17 @@ const profileCourses = profile
         course.description,
         course.teacher?.name,
         course.location,
+        course.province,
+        course.ward,
+        course.district,
         course.schedule,
       ].filter(Boolean).join(' '));
 
       return (
         (!activeCourseFilters.subject || courseSearchText.includes(normalize(activeCourseFilters.subject))) &&
         (!activeCourseFilters.mode || courseMode === activeCourseFilters.mode) &&
+        (!activeCourseFilters.province || normalize(`${course.province || ''} ${course.location || ''}`).includes(normalize(activeCourseFilters.province))) &&
+        (!activeCourseFilters.ward || normalize(`${course.ward || ''} ${course.district || ''} ${course.location || ''}`).includes(normalize(activeCourseFilters.ward))) &&
         matchesDescription(`${courseSearchText} ${courseMode === 'in-person' ? 'truc tiep' : courseMode === 'online' ? 'truc tuyen' : 'video quay san'}`, activeCourseFilters.description, inferredGender(course.teacher))
       );
     })
@@ -284,21 +290,6 @@ const profileCourses = profile
   const visibleSponsoredCourses = showAllSponsored
     ? sponsoredCourses.slice((sponsoredPage - 1) * sponsoredPageSize, sponsoredPage * sponsoredPageSize)
     : sponsoredCourses.slice(0, 3);
-  const otherCourseMatches = (() => {
-    const keyword = normalize(otherCourseQuery).trim();
-    if (!keyword) return [];
-
-    return rankedCourses
-      .filter((course) => normalize([
-        course.title,
-        course.description,
-        course.teacher?.name,
-        course.location,
-        course.schedule,
-      ].filter(Boolean).join(' ')).includes(keyword))
-      .slice(0, 6);
-  })();
-
   const searchableTutors = (() => {
     const providers = new Map();
 
@@ -415,6 +406,7 @@ const profileCourses = profile
     ? filteredTutors.slice((tutorPage - 1) * tutorPageSize, tutorPage * tutorPageSize)
     : filteredTutors.slice(0, 8);
   const { administrativeProvinces, wardOptions, error: areaError } = useAdministrativeOptions(filters.province);
+  const { administrativeProvinces: courseProvinces, wardOptions: courseWardOptions, error: courseAreaError } = useAdministrativeOptions(courseFilters.province);
   const registerForTutor = (tutor) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để đăng ký học.');
@@ -463,10 +455,21 @@ const profileCourses = profile
         return current;
       }, { replace: true });
     }
-    setCourseFilters((current) => ({ ...current, [name]: value }));
+    setCourseFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'mode' && value !== 'in-person' ? { province: '', ward: '' } : {}),
+    }));
   };
   const selectLocation = (name) => (value) => {
     setFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'province' ? { ward: '' } : {}),
+    }));
+  };
+  const selectCourseLocation = (name) => (value) => {
+    setCourseFilters((current) => ({
       ...current,
       [name]: value,
       ...(name === 'province' ? { ward: '' } : {}),
@@ -519,12 +522,19 @@ const profileCourses = profile
     );
   };
   const chooseSubject = (subject) => {
-    const next = { ...initialFilters, subject };
-    setFilters(next);
-    setAppliedFilters(next);
+    const tutorFilters = { ...initialFilters, subject };
+    const nextCourseFilters = { ...initialCourseFilters, subject };
+    setFilters(tutorFilters);
+    setAppliedFilters(tutorFilters);
+    setCourseFilters(nextCourseFilters);
+    setAppliedCourseFilters(nextCourseFilters);
     setSavedOnly(false);
     setShowAll(false);
     setTutorPage(1);
+    setShowAllCourses(false);
+    setCoursePage(1);
+    setShowOtherSubjectSearch(false);
+    setOtherCourseQuery('');
     setParams(
       (current) => {
         current.delete('q');
@@ -534,11 +544,16 @@ const profileCourses = profile
       },
       { replace: true }
     );
-    scrollTo(resultsRef.current);
+    scrollTo(courseRef.current);
   };
   const openOtherSubjectSearch = () => {
     setShowOtherSubjectSearch(true);
     requestAnimationFrame(() => otherSubjectInputRef.current?.focus());
+  };
+  const searchOtherSubject = (event) => {
+    event.preventDefault();
+    const keyword = otherCourseQuery.trim();
+    if (keyword) chooseSubject(keyword);
   };
 
   return (
@@ -643,7 +658,7 @@ const profileCourses = profile
         <section id="khoa-hoc" className="home-section course-section" ref={courseRef} aria-labelledby="courses-heading">
           <SectionHeading
             title={<span id="courses-heading">{isSearchResults ? <>Khóa học <span className="accent-text">phù hợp</span></> : <>Lựa chọn <span className="accent-text">khóa học phù hợp</span></>}</span>}
-            description={isSearchResults ? 'Các khóa học được lọc theo mô tả nhu cầu của bạn.' : 'Khám phá và phát triển bản thân qua các khóa học tại EduMatch.'}
+            description={isSearchResults ? 'Các khóa học được lọc theo mô tả nhu cầu của bạn.' : undefined}
           >
             <fieldset className="course-sort" aria-label="Sắp xếp khóa học">
               <legend className="sr-only">Sắp xếp khóa học</legend>
@@ -671,7 +686,7 @@ const profileCourses = profile
           </SectionHeading>
           <form
             id="tim-khoa-hoc"
-            className="course-search"
+            className={`course-search ${courseFilters.mode === 'in-person' ? 'course-search--location' : ''}`}
             aria-label="Tìm kiếm khóa học"
             onSubmit={(event) => {
               event.preventDefault();
@@ -694,6 +709,27 @@ const profileCourses = profile
               <option value="in-person">Học trực tiếp</option>
               <option value="recorded">Video quay sẵn</option>
             </FilterField>
+            {courseAreaError && <p className="account-error" role="alert">{courseAreaError}</p>}
+            {courseFilters.mode === 'in-person' && <>
+              <AdministrativePicker
+                id="course-province-filter"
+                label="Tỉnh / Thành phố"
+                value={courseFilters.province}
+                options={courseProvinces}
+                onSelect={selectCourseLocation('province')}
+                placeholder="Gõ để tìm tỉnh/thành, rồi chọn"
+              />
+              <AdministrativePicker
+                id="course-ward-filter"
+                label="Xã / Phường / Đặc khu"
+                value={courseFilters.ward}
+                options={courseWardOptions}
+                onSelect={selectCourseLocation('ward')}
+                placeholder={courseFilters.province ? 'Gõ để tìm xã/phường, rồi chọn' : 'Chọn tỉnh/thành trước'}
+                disabled={!courseFilters.province}
+                emptyText="Không tìm thấy xã/phường trong tỉnh/thành đã chọn."
+              />
+            </>}
             <Button type="submit" className="edu-button course-search__submit">
               <Search size={18} />
               Tìm kiếm khóa học
@@ -746,7 +782,7 @@ const profileCourses = profile
                 {isSearchResults ? <>Giáo viên, trung tâm <span className="accent-text">phù hợp</span></> : <>Gặp người thầy <span className="accent-text">truyền cảm hứng</span></>}
               </span>
             }
-            description={isSearchResults ? 'Những hồ sơ được lọc theo cùng mô tả nhu cầu của bạn.' : 'Chuyên môn vững vàng, tận tâm đồng hành trên từng bước tiến.'}
+            description={isSearchResults ? 'Những hồ sơ được lọc theo cùng mô tả nhu cầu của bạn.' : undefined}
           >
             <button
               type="button"
@@ -903,19 +939,19 @@ const profileCourses = profile
           <SectionHeading
             title={
               <span id="subjects-heading">
-                Mỗi đam mê, một <span className="accent-text">khởi đầu mới</span>
+                Khám phá <span className="accent-text">môn học</span>
               </span>
             }
-            description="Khám phá kiến thức mới, nâng cao giới hạn bản thân."
           >
             <button className="text-link" onClick={() => setShowAllSubjects((current) => !current)}>
               {showAllSubjects ? 'Thu gọn môn học' : 'Khám phá các môn học'}
               <ArrowRight size={16} />
             </button>
           </SectionHeading>
+          <p className="subject-discovery-label">Môn học nổi bật</p>
           <div className="subjects-grid">
             {subjects
-              .slice(0, showAllSubjects ? subjects.length : 9)
+              .slice(0, showAllSubjects ? subjects.length : 12)
               .map(({ name, icon: Icon, icon_url, color }) => (
                 <button
                   key={name}
@@ -941,33 +977,27 @@ const profileCourses = profile
           {showOtherSubjectSearch && (
             <div className="other-course-search" role="search" aria-label="Tìm khóa học khác">
               <div className="other-course-search__top">
-                <div>
-                  <strong>Tìm khóa học khác</strong>
-                  <span>Nhập môn học, chủ đề hoặc tên khóa học bạn muốn tìm.</span>
-                </div>
                 <button type="button" onClick={() => { setShowOtherSubjectSearch(false); setOtherCourseQuery(''); }} aria-label="Đóng tìm kiếm khóa học"><X size={17} /></button>
               </div>
-              <div className="other-course-search__input">
-                <Search size={18} aria-hidden="true" />
-                <input
-                  ref={otherSubjectInputRef}
-                  value={otherCourseQuery}
-                  onChange={(event) => setOtherCourseQuery(event.target.value)}
-                  placeholder="Ví dụ: IELTS, đàn guitar, luyện thi đại học..."
-                  aria-label="Từ khóa tìm khóa học"
-                />
-              </div>
-              {otherCourseQuery.trim() && (
-                <div className="other-course-search__results">
-                  <p>{otherCourseMatches.length ? `${otherCourseMatches.length} khóa học liên quan` : 'Chưa có khóa học phù hợp'}</p>
-                  {otherCourseMatches.map((course) => (
-                    <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} className="other-course-result">
-                      <span><strong>{course.title}</strong><small>{course.teacher?.name || 'Giáo viên EduMatch'} · {course.description}</small></span>
-                      <ArrowRight size={17} aria-hidden="true" />
-                    </Link>
-                  ))}
+              <form className="other-course-search__form" onSubmit={searchOtherSubject}>
+                <div className="other-course-search__input">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    ref={otherSubjectInputRef}
+                    value={otherCourseQuery}
+                    onChange={(event) => setOtherCourseQuery(event.target.value)}
+                    list="featured-subject-keywords"
+                    placeholder="Ví dụ: IELTS, đàn guitar, luyện thi đại học..."
+                    aria-label="Từ khóa tìm khóa học và giáo viên"
+                  />
+                  <datalist id="featured-subject-keywords">
+                    {subjects.map(({ name }) => <option key={name} value={name} />)}
+                  </datalist>
                 </div>
-              )}
+                <Button type="submit" className="edu-button other-course-search__submit" disabled={!otherCourseQuery.trim()}>
+                  Tìm kiếm <ArrowRight size={16} />
+                </Button>
+              </form>
             </div>
           )}
         </section>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck, BookOpen, Camera, ChevronDown, FileCheck2, FileText, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Send, Share2, Star, Video, X } from 'lucide-react';
+import { BadgeCheck, BookOpen, Camera, ChevronDown, FileCheck2, FileText, Heart, ImagePlus, MessageCircle, Phone, Plus, Save, Share2, Star, X } from 'lucide-react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/constants/routes';
@@ -11,6 +11,7 @@ import { profileService } from '@/services/profileService';
 import { createConversationId, createNotification, deletePost, getAge, getCourses, getPostMediaItems, getPosts, getProviderTrustCount, getProviderTrustUserIds, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost, updatePostMediaItem } from '@/features/learning/marketplace';
 import { Modal } from '@/components/feedback/Modal';
 import { ImageAttachment } from '@/components/forms/ImageAttachment';
+import { PostComposerDialog, PostComposerTrigger } from '@/components/feedback/PostComposerDialog';
 import { ContentMenu } from '@/components/feedback/ContentMenu';
 import { LikesModal } from '@/components/feedback/LikesModal';
 import { PostImageDialog } from '@/components/feedback/PostImageDialog';
@@ -103,6 +104,7 @@ export function TeacherProfilePage() {
   const [posts, setPosts] = useState(() => getPosts(teacherId).slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
   const [postText, setPostText] = useState('');
   const [media, setMedia] = useState([]);
+  const [isPostComposerOpen, setIsPostComposerOpen] = useState(false);
   const [commentText, setCommentText] = useState({});
   const [commentMedia, setCommentMedia] = useState({});
   const [replyTarget, setReplyTarget] = useState(null);
@@ -128,7 +130,6 @@ export function TeacherProfilePage() {
   const [visiblePostCount, setVisiblePostCount] = useState(PROFILE_POSTS_BATCH_SIZE);
   const [showAllProfileCourses, setShowAllProfileCourses] = useState(false);
   const [expandedProfileCourseIds, setExpandedProfileCourseIds] = useState({});
-  const mediaInputRef = useRef(null);
   const portfolioImagesInputRef = useRef(null);
   const loadMorePostsRef = useRef(null);
   const courses = getCourses().filter((course) => String(course.teacher?.id) === String(teacherId));
@@ -367,21 +368,6 @@ export function TeacherProfilePage() {
     setIsEditingDetailedProfile(false);
     toast.success('Hồ sơ năng lực đã được cập nhật.');
   };
-  const chooseMedia = (event) => {
-    const files = Array.from(event.target.files || []);
-    if (!files.length) return;
-    if (files.some((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'))) { toast.error('Chỉ hỗ trợ tệp ảnh hoặc video.'); return; }
-    Promise.all(files.map((file) => new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve({ src: String(reader.result), type: file.type.startsWith('video/') ? 'video' : 'image', name: file.name });
-      reader.readAsDataURL(file);
-    }))).then((nextItems) => setMedia((current) => [...current, ...nextItems]));
-    event.target.value = '';
-  };
-  const clearMedia = (index = null) => {
-    setMedia((current) => index === null ? [] : current.filter((_, itemIndex) => itemIndex !== index));
-    if (mediaInputRef.current) mediaInputRef.current.value = '';
-  };
   const refreshProfilePosts = () => {
     setPosts(getPosts(teacherId).slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
   };
@@ -395,7 +381,7 @@ export function TeacherProfilePage() {
     event.preventDefault();
     if (!postText.trim() && !media.length) { toast.error('Hãy viết nội dung hoặc chọn ảnh/video để đăng.'); return; }
     const post = { id: createPostId(), teacherId, authorId: user.id, authorName: profile.name, authorRole: user.role, authorAvatar: profile.avatar || '', authorLicenseVerificationStatus: user.licenseVerificationStatus || '', text: postText.trim(), ...(media.length ? { mediaItems: media } : {}), createdAt: new Date().toISOString(), likes: [], comments: [] };
-    savePost(post); refreshProfilePosts(); setPostText(''); clearMedia(); toast.success('Bài viết đã được đăng.');
+    savePost(post); refreshProfilePosts(); setPostText(''); setMedia([]); setIsPostComposerOpen(false); toast.success('Bài viết đã được đăng.');
   };
   const like = (postId, mediaId = null) => {
     if (!user) { toast.error('Vui lòng đăng nhập để tương tác.'); return; }
@@ -607,7 +593,7 @@ export function TeacherProfilePage() {
     </header>
     <div className="teacher-public-grid"><aside className="teacher-bio"><h2>{isEducationProviderProfile ? 'Thông tin' : 'Thông Tin Cá Nhân'}</h2><div className="teacher-bio__overview"><h3>Hồ sơ năng lực</h3>{ownsProfile && <button type="button" className="teacher-bio__edit-link" onClick={openProfileEditor}>Chỉnh sửa</button>}</div><p className="teacher-bio__summary">{shortProfileIntro}</p>{isCenterProfile && <><h3>Năm thành lập</h3><p className="teacher-bio__summary">{profile.foundedYear || 'Đang cập nhật'}</p></>}{isTeacherProfile && <><h3>Kinh nghiệm</h3><p className="teacher-bio__summary">{profileExperience || 'Đang cập nhật'}</p><h3>Bằng cấp, chứng chỉ</h3><p className="teacher-bio__summary">{profileQualifications || 'Đang cập nhật'}</p></>}<button type="button" className="teacher-bio__view-all" onClick={() => setIsViewingProfileSummary(true)}>Xem tất cả</button>{publicPhone && <><h3>Điện thoại liên hệ</h3><a className="teacher-bio__phone" href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={14} /> {profile.phone}</a></>}{ownsProfile && canCreateCourse && <div className="teacher-bio__actions"><Link className="teacher-bio__verify" to={ROUTES.VERIFICATION}><FileCheck2 size={15} /> Hồ sơ xác minh</Link><Link className="teacher-bio__add-course" to={ROUTES.CREATE_COURSE}><Plus size={16} /> Thêm khóa học</Link></div>}{isEducationProviderProfile && <section className="teacher-bio__courses" aria-labelledby="profile-open-courses"><div className="teacher-bio__courses-heading"><div><BookOpen size={16} aria-hidden="true" /><h3 id="profile-open-courses">Khóa học đang mở</h3></div>{courses.length > 0 && <span>{courses.length}</span>}</div>{courses.length > 0 ? <><div className="teacher-bio__course-list">{displayedProfileCourses.map((course) => { const isExpanded = Boolean(expandedProfileCourseIds[course.id]); return <div className={`teacher-bio__course-item ${isExpanded ? 'is-expanded' : ''}`} key={course.id}><Link className="teacher-bio__course-link" to={ROUTES.COURSE_DETAIL(course.id)}><span>{course.title}</span></Link><button type="button" className="teacher-bio__course-expand" aria-expanded={isExpanded} aria-label={`${isExpanded ? 'Thu gọn' : 'Xem đầy đủ'} tên khóa học`} onClick={() => setExpandedProfileCourseIds((current) => ({ ...current, [course.id]: !current[course.id] }))}><ChevronDown size={16} aria-hidden="true" /></button></div>; })}</div>{courses.length > 2 && <button type="button" className="teacher-bio__courses-toggle" onClick={() => setShowAllProfileCourses((current) => !current)}>{showAllProfileCourses ? 'Thu gọn' : `Xem tất cả ${courses.length} khóa học`}</button>}</> : <p className="teacher-bio__courses-empty">Chưa có khóa học đang mở.</p>}</section>}</aside>
     <main className="teacher-feed"><section className="feed-heading teacher-feed__heading"><div><h2>Hoạt động</h2></div>{!ownsProfile && <div className="teacher-cover__public-actions"><button type="button" className="teacher-cover__message" onClick={messageProfile}><MessageCircle size={16} /> Nhắn tin</button><button type="button" className={`teacher-cover__trust ${trustedByCurrentUser ? 'is-trusted' : ''}`} onClick={trustProfile}><Heart size={16} fill={trustedByCurrentUser ? 'currentColor' : 'none'} /> {trustedByCurrentUser ? 'Đã tin tưởng' : 'Tin tưởng'}</button></div>}</section>
-      {ownsProfile && <form className="post-composer" onSubmit={handlePublish}><textarea value={postText} onChange={(event) => setPostText(event.target.value)} rows="3" placeholder="Hãy chia sẻ để học viên hiểu hơn về bạn" />{media.length > 0 && <div className="post-composer__preview">{media.map((item, index) => <div key={`${item.name}-${index}`}>{item.type === 'video' ? <video src={item.src} controls /> : <img src={item.src} alt="Xem trước tệp đính kèm" />}<button type="button" onClick={() => clearMedia(index)} aria-label="Xóa tệp đính kèm"><X size={16} /></button><span>{item.name}</span></div>)}</div>}<div className="post-composer__actions"><input ref={mediaInputRef} id="post-media" type="file" accept="image/*,video/*" multiple onChange={chooseMedia} /><label htmlFor="post-media"><ImagePlus size={17} /> Ảnh <Video size={16} /> Video</label><button type="submit"><Send size={16} /> Đăng bài</button></div></form>}
+      {ownsProfile && <PostComposerTrigger avatar={profile.avatar} name={profile.name} placeholder="Hãy chia sẻ để học viên hiểu hơn về bạn" onOpen={() => setIsPostComposerOpen(true)} />}
       {posts.length ? renderedPosts.map((post) => {
         const likes = post.likes || [];
         const comments = post.comments || [];
@@ -785,6 +771,17 @@ export function TeacherProfilePage() {
     >
       {selectedPortfolioImage && <img className="profile-portfolio-lightbox__image" src={selectedPortfolioImage.src} alt={`Ảnh minh họa ${selectedPortfolioImage.index + 1} trong hồ sơ năng lực của ${profile.name}`} />}
     </Modal>
+    <PostComposerDialog
+      open={isPostComposerOpen}
+      onClose={() => setIsPostComposerOpen(false)}
+      draft={postText}
+      onDraftChange={setPostText}
+      media={media}
+      onMediaChange={setMedia}
+      onPublish={handlePublish}
+      placeholder="Hãy chia sẻ để học viên hiểu hơn về bạn"
+      attachmentId="profile-post-media"
+    />
 
   </div>;
 }

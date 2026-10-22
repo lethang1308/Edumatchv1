@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Forward, ListFilter, MailOpen, MessageCircle, MoreHorizontal, Plus, Reply, Search, Send, Tag, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
-import { createConversationId, deleteMessageTag, getCourse, getConversationsForUser, getMessageTags, markConversationRead, markConversationUnread, removeMessageTagFromUserConversations, saveConversation, saveMessageTag, setConversationTags } from '@/features/learning/marketplace';
+import { createConversationId, deleteMessageTag, getCourse, getConversationsForUser, getMessageTags, markConversationRead, removeMessageTagFromUserConversations, saveConversation, saveMessageTag, setConversationTags } from '@/features/learning/marketplace';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
 import { setChatWidget } from '@/features/learning/chatWidget';
 import { formatMessageDayDivider, formatMessageTime, formatMessageTimestamp, messageNeedsDayDivider } from '@/utils/messageTime';
@@ -126,8 +126,9 @@ export function MessagesPage() {
       replyTo: replyingTo ? { id: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderId === user.id ? 'Bạn' : selectedThread.contactName } : null,
       createdAt: new Date().toISOString(),
     };
+    const readMessages = markConversationRead(selectedThread, user.id);
     saveConversation(next);
-    setMessages((current) => [next, ...current]);
+    setMessages([next, ...readMessages.filter((message) => message.studentId === user.id || message.teacherId === user.id)]);
     setDraft('');
     setReplyingTo(null);
   };
@@ -168,9 +169,9 @@ export function MessagesPage() {
     replyHighlightTimer.current = window.setTimeout(() => setHighlightedMessageId(null), 1400);
   };
 
-  const markSelectedUnread = () => {
+  const markSelectedRead = () => {
     if (!selectedThread || !user?.id) return;
-    const next = markConversationUnread(selectedThread, user.id);
+    const next = markConversationRead(selectedThread, user.id);
     setMessages(next.filter((message) => message.studentId === user.id || message.teacherId === user.id));
   };
 
@@ -253,7 +254,7 @@ export function MessagesPage() {
                 {getThreadTags(selectedThread).length > 0 && <div className="chat-window__profile-tags">{getThreadTags(selectedThread).map((tag) => <span key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</span>)}</div>}
               </div>
               <span className={`chat-window__status ${isOnline(selectedThread.contactId) ? 'is-online' : ''}`}>{isOnline(selectedThread.contactId) ? 'Đang hoạt động' : 'Ngoại tuyến'}</span>
-              <button type="button" className="chat-window__unread" onClick={markSelectedUnread}><MailOpen size={15} /> Đánh dấu chưa đọc</button>
+              <button type="button" className="chat-window__unread" onClick={markSelectedRead} disabled={!isThreadUnread(selectedThread)}><MailOpen size={15} /> Đánh dấu đã đọc</button>
             </header>
             <div className="message-history" ref={messageHistoryRef}>{selectedThread.messages.map((message, index) => <div className="message-history__group" key={message.id}>{messageNeedsDayDivider(message.createdAt, selectedThread.messages[index - 1]?.createdAt) && <div className="message-day-divider"><span>{formatMessageDayDivider(message.createdAt)}</span></div>}<article className={`chat-bubble ${message.senderId === user?.id || (!message.senderId && message.studentId === user?.id) ? 'is-own' : ''} ${highlightedMessageId === message.id ? 'is-highlighted' : ''}`} ref={(node) => { if (node) messageRefs.current.set(message.id, node); else messageRefs.current.delete(message.id); }} onMouseLeave={() => setOpenMessageMenu((current) => current === message.id ? null : current)} onTouchStart={() => startLongPress(message.id)} onTouchEnd={clearLongPress} onTouchCancel={clearLongPress} onTouchMove={clearLongPress}>{message.forwarded && <small className="chat-bubble__forwarded">Đã chuyển tiếp</small>}{message.replyTo && <button type="button" className="chat-bubble__quote" onClick={() => scrollToOriginalMessage(message.replyTo.id)} aria-label="Xem tin nhắn gốc"><strong>{message.replyTo.senderName}</strong><span>{message.replyTo.text}</span></button>}<p>{message.text}</p><div className="chat-bubble__meta"><time>{formatMessageTime(message.createdAt)}</time><div className="chat-bubble__menu-wrap"><button type="button" className="chat-bubble__more" onClick={() => setOpenMessageMenu((current) => current === message.id ? null : message.id)} aria-label="Thao tác tin nhắn"><MoreHorizontal size={17} /></button>{openMessageMenu === message.id && <div className="chat-bubble__menu"><button type="button" onClick={() => { setReplyingTo(message); setOpenMessageMenu(null); }}><Reply size={14} /> Trả lời</button><button type="button" onClick={() => { setForwarding(message); setOpenMessageMenu(null); }}><Forward size={14} /> Chuyển tiếp</button></div>}</div></div><span className="chat-bubble__timestamp">{formatMessageTimestamp(message.createdAt)}</span></article></div>)}</div>
             {showTagCreator && <section className="chat-tag-creator"><form onSubmit={addTag}><label>Tạo thẻ mới<span className="tag-name-input"><input value={tagDraft} onChange={(event) => setTagDraft(event.target.value.slice(0, 25))} placeholder="Ví dụ: Cần tư vấn" maxLength="25" aria-describedby="tag-character-count" autoFocus /><small id="tag-character-count" className={tagDraft.length >= 25 ? 'is-limit' : ''}>{tagDraft.length}/25</small></span></label><fieldset><span className="tag-color-picker">{TAG_COLORS.map((color) => <button type="button" key={color.id} className={tagColor === color.value ? 'is-active' : ''} style={{ '--tag-color': color.value }} onClick={() => setTagColor(color.value)} aria-label={`Chọn màu ${color.label}`} />)}</span></fieldset><button type="submit" disabled={!tagDraft.trim()}>Tạo và gắn thẻ</button></form>{tagNotice && <p className="chat-tag-creator__notice">{tagNotice}</p>}{allTags.length > 0 && <div className="chat-tag-creator__library"><span>Thẻ đã tạo</span><div>{allTags.map((tag) => <span key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}<button type="button" onClick={() => deleteTag(tag.id)} aria-label={`Xóa thẻ ${tag.name}`} title={`Xóa thẻ ${tag.name}`}><X size={12} /></button></span>)}</div></div>}</section>}

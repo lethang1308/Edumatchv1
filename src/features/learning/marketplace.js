@@ -697,6 +697,7 @@ export const saveConversation = (conversation) => {
     unreadFor: conversation.unreadFor || (recipientId ? [recipientId] : []),
     tags: conversation.tags || [],
   }, ...saved]);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:conversations-updated'));
 };
 
 export const createConversationId = (prefix = 'message') =>
@@ -717,6 +718,7 @@ export const updateConversationThread = (thread, updater) => {
     sameThread(message) ? updater(message) : message
   );
   write(STORAGE_KEYS.CONVERSATIONS, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:conversations-updated'));
   return next;
 };
 

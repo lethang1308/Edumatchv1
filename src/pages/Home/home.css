@@ -227,8 +227,22 @@
   background: var(--edu-soft);
 }
 .desktop-nav .teacher-action-link {
+  position: relative;
   color: var(--edu-green);
   font-size: var(--text-caption-xs);
+}
+.teacher-action-link .message-count {
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d35656;
+  color: var(--edu-on-primary);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
 }
 .notification-menu {
   position: relative;
@@ -828,6 +842,12 @@
   min-height: var(--control-height);
   white-space: nowrap;
 }
+.course-search--location {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.course-search--location > .filter-field:first-child {
+  grid-column: span 2;
+}
 .course-search__empty {
   margin-top: 18px;
 }
@@ -1198,6 +1218,9 @@
     grid-column: 1 / -1;
     width: 100%;
   }
+  .course-search--location > .filter-field:first-child {
+    grid-column: auto;
+  }
 }
 .tutors-grid {
   display: grid;
@@ -1466,6 +1489,12 @@
   grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 12px;
 }
+.subject-discovery-label {
+  margin: 0 0 12px;
+  color: var(--edu-muted);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
 .subject-tile {
   --subject-color: #087563;
   --subject-bg: #f0f8f4;
@@ -1595,6 +1624,21 @@
 }
 .other-course-search__input input::placeholder {
   color: var(--edu-faint);
+}
+.other-course-search__form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.other-course-search__form .other-course-search__input {
+  flex: 1 1 auto;
+  margin-top: 0;
+}
+.other-course-search__submit {
+  flex: 0 0 auto;
+  min-height: var(--control-height);
+  white-space: nowrap;
 }
 .other-course-search__results {
   display: grid;
@@ -2943,6 +2987,16 @@
   }
   .subject-tile > span:last-child {
     font-size: var(--text-caption-xs);
+  }
+  .other-course-search {
+    padding: 15px;
+  }
+  .other-course-search__form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .other-course-search__submit {
+    width: 100%;
   }
   .how-section {
     padding: 24px 19px;
