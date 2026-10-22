@@ -79,6 +79,7 @@ export function FeedPage({ postId = null }) {
   const [posts, setPosts] = useState(() => getPosts().slice().sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)));
   const [commentDrafts, setCommentDrafts] = useState({});
   const [commentMedia, setCommentMedia] = useState({});
+  const [editingDiscussion, setEditingDiscussion] = useState(null);
   const [replyTarget, setReplyTarget] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replyMedia, setReplyMedia] = useState(null);
@@ -279,15 +280,33 @@ export function FeedPage({ postId = null }) {
     if (mediaId) saveMediaInteraction(postId, mediaId, transform);
     else saveInteraction(postId, transform);
   };
+  const discussionKey = (postId, mediaId = null) => `${postId}:${mediaId || 'post'}`;
+  const isEditingDiscussion = (postId, mediaId = null) => Boolean(
+    editingDiscussion
+    && String(editingDiscussion.postId) === String(postId)
+    && String(editingDiscussion.mediaId || '') === String(mediaId || ''),
+  );
+  const cancelDiscussionEdit = (postId, mediaId = null) => {
+    if (!isEditingDiscussion(postId, mediaId)) return;
+    const draftKey = discussionKey(postId, mediaId);
+    setEditingDiscussion(null);
+    setCommentDrafts((current) => ({ ...current, [draftKey]: '' }));
+    setCommentMedia((current) => ({ ...current, [draftKey]: null }));
+  };
   const editDiscussion = (postId, commentId, replyId = null, mediaId = null) => {
     const post = posts.find((item) => item.id === postId);
     const interactionTarget = getInteractionTarget(post, mediaId);
     const comment = interactionTarget?.comments?.find((item) => item.id === commentId);
     const target = replyId ? comment?.replies?.find((item) => item.id === replyId) : comment;
     if (!target || !owns(target.authorId)) return;
-    const text = window.prompt('Chỉnh sửa bình luận', target.text || '');
-    if (text === null) return;
-    saveTargetInteraction(postId, mediaId, (current) => modifyDiscussion(current, commentId, replyId, (item) => ({ ...item, text: text.trim() })));
+    const draftKey = discussionKey(postId, mediaId);
+    setEditingDiscussion({ postId, commentId, replyId, mediaId });
+    setCommentDrafts((current) => ({ ...current, [draftKey]: target.text || '' }));
+    setCommentMedia((current) => ({ ...current, [draftKey]: null }));
+    requestAnimationFrame(() => {
+      const dialogInput = document.querySelector('.post-image-dialog .feed-comment-form textarea');
+      (dialogInput || document.getElementById(`comment-${postId}`))?.focus();
+    });
   };
   const removeDiscussion = (postId, commentId, replyId = null, mediaId = null) => {
     const post = posts.find((item) => item.id === postId);
@@ -323,6 +342,23 @@ export function FeedPage({ postId = null }) {
     const draftKey = `${postId}:${mediaId || 'post'}`;
     const text = commentDrafts[draftKey]?.trim();
     const media = commentMedia[draftKey] || null;
+    if (isEditingDiscussion(postId, mediaId)) {
+      if (!text) {
+        toast.error('Bình luận không được để trống.');
+        return;
+      }
+      saveTargetInteraction(postId, mediaId, (current) => modifyDiscussion(
+        current,
+        editingDiscussion.commentId,
+        editingDiscussion.replyId,
+        (item) => ({ ...item, text }),
+      ));
+      setEditingDiscussion(null);
+      setCommentDrafts((current) => ({ ...current, [draftKey]: '' }));
+      setCommentMedia((current) => ({ ...current, [draftKey]: null }));
+      toast.success('Đã cập nhật bình luận.');
+      return;
+    }
     if (!text && !media) return;
     const comment = { id: `comment-${Date.now()}`, authorId: user.id, authorName: user.name || 'Thành viên EduMatch', authorRole: user.role || 'student', authorAvatar: user.avatar || '', text, media, createdAt: new Date().toISOString(), replies: [], likes: [] };
     const post = getPosts().find((item) => item.id === postId);
@@ -375,6 +411,7 @@ export function FeedPage({ postId = null }) {
   const viewerMedia = viewerMediaItems.length > 1 ? viewerMediaItems[imageViewer?.activeIndex || 0] : null;
   const viewerInteractionTarget = viewerMedia || viewerPost;
   const viewerDiscussionKey = viewerMedia ? `${viewerPost.id}:${viewerMedia.id}` : `${viewerPost?.id}:post`;
+  const isEditingViewerDiscussion = isEditingDiscussion(viewerPost?.id, viewerMedia?.id);
   const imageViewerDiscussion = viewerInteractionTarget ? <><div className="post-image-dialog__comments">{(viewerInteractionTarget.comments || []).map((comment) => {
       const commentAuthor = getAuthor(comment, providers);
       const isReplying = replyTarget?.postId === viewerPost.id && replyTarget?.commentId === comment.id && replyTarget?.mediaId === viewerMedia?.id;
@@ -391,7 +428,7 @@ export function FeedPage({ postId = null }) {
         })}
         {isReplying && <form className="feed-reply-form post-image-dialog__reply-form" onSubmit={submitReply}><textarea autoFocus value={replyText} onChange={(event) => setReplyText(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder={`Trả lời ${commentAuthor.name}...`} rows="2" /><ImageAttachment id={`viewer-reply-image-${comment.id}`} value={replyMedia} onChange={setReplyMedia} label="Tệp" /><button type="submit">Gửi</button></form>}
       </div>;
-    })}</div><form className="feed-comment-form" onSubmit={(event) => submitComment(event, viewerPost.id, viewerMedia?.id)}><textarea autoFocus={!replyTarget || replyTarget.postId !== viewerPost.id} value={commentDrafts[viewerDiscussionKey] || ''} onChange={(event) => setCommentDrafts((current) => ({ ...current, [viewerDiscussionKey]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" /><ImageAttachment id={`viewer-comment-image-${viewerDiscussionKey}`} value={commentMedia[viewerDiscussionKey] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [viewerDiscussionKey]: media }))} label="Tệp" /><button type="submit" aria-label="Gửi bình luận"><Send size={17} /></button></form></> : null;
+    })}</div><form className="feed-comment-form" onSubmit={(event) => submitComment(event, viewerPost.id, viewerMedia?.id)}><textarea autoFocus={isEditingViewerDiscussion || !replyTarget || replyTarget.postId !== viewerPost.id} value={commentDrafts[viewerDiscussionKey] || ''} onChange={(event) => setCommentDrafts((current) => ({ ...current, [viewerDiscussionKey]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder={isEditingViewerDiscussion ? 'Chỉnh sửa bình luận...' : 'Viết bình luận...'} rows="1" />{!isEditingViewerDiscussion && <ImageAttachment id={`viewer-comment-image-${viewerDiscussionKey}`} value={commentMedia[viewerDiscussionKey] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [viewerDiscussionKey]: media }))} label="Tệp" />}{isEditingViewerDiscussion && <button type="button" onClick={() => cancelDiscussionEdit(viewerPost.id, viewerMedia?.id)}>Hủy</button>}<button type="submit" aria-label={isEditingViewerDiscussion ? 'Lưu bình luận' : 'Gửi bình luận'}>{isEditingViewerDiscussion ? 'Lưu' : <Send size={17} />}</button></form></> : null;
 
   return (
     <><section className="feed-page">
@@ -426,7 +463,7 @@ export function FeedPage({ postId = null }) {
         <header className="feed-page__heading">
           <span><Newspaper size={17} /> BẢNG TIN EDUMATCH</span>
           <h1>{postId ? 'Bài viết' : 'Những chia sẻ mới nhất từ cộng đồng'}</h1>
-          <p>{postId ? 'Xem đầy đủ nội dung, lượt thích và bình luận của bài viết này.' : 'Khám phá bài viết, tài liệu và những câu chuyện học tập từ cộng đồng EduMatch.'}</p>
+          {postId && <p>Xem đầy đủ nội dung, lượt thích và bình luận của bài viết này.</p>}
         </header>
         {!postId && <div className="feed-tabs" role="tablist" aria-label="Loại nội dung Bảng Tin">
           <button type="button" role="tab" aria-selected={feedTab === 'providers'} className={feedTab === 'providers' ? 'is-active' : ''} onClick={() => { setFeedTab('providers'); setVisiblePostCount(POSTS_BATCH_SIZE); }}>Giáo viên & Trung tâm</button>
@@ -439,6 +476,7 @@ export function FeedPage({ postId = null }) {
             const likes = post.likes || [];
             const comments = post.comments || [];
             const isLiked = likes.includes(user?.id);
+            const isEditingPostDiscussion = isEditingDiscussion(post.id);
             const postMediaItems = getMediaItems(post);
             const originalSharedPost = post.sharedPost ? getOriginalSharedPost(post, posts, (item) => getAuthor(item, providers)) : null;
             const sourceMediaItems = getMediaItems(originalSharedPost);
@@ -488,9 +526,10 @@ export function FeedPage({ postId = null }) {
                 })}
               </div>}
               <form className="feed-comment-form" onSubmit={(event) => submitComment(event, post.id)}>
-                <textarea id={`comment-${post.id}`} value={commentDrafts[`${post.id}:post`] || ''} onChange={(event) => setCommentDrafts((current) => ({ ...current, [`${post.id}:post`]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder="Viết bình luận..." rows="1" />
-                <ImageAttachment id={`comment-image-${post.id}`} value={commentMedia[`${post.id}:post`] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [`${post.id}:post`]: media }))} label="Tệp" />
-                <button type="submit" aria-label="Gửi bình luận"><Send size={17} /></button>
+                <textarea id={`comment-${post.id}`} value={commentDrafts[`${post.id}:post`] || ''} onChange={(event) => setCommentDrafts((current) => ({ ...current, [`${post.id}:post`]: event.target.value }))} onKeyDown={submitOnPlainEnter} placeholder={isEditingPostDiscussion ? 'Chỉnh sửa bình luận...' : 'Viết bình luận...'} rows="1" />
+                {!isEditingPostDiscussion && <ImageAttachment id={`comment-image-${post.id}`} value={commentMedia[`${post.id}:post`] || null} onChange={(media) => setCommentMedia((current) => ({ ...current, [`${post.id}:post`]: media }))} label="Tệp" />}
+                {isEditingPostDiscussion && <button type="button" onClick={() => cancelDiscussionEdit(post.id)}>Hủy</button>}
+                <button type="submit" aria-label={isEditingPostDiscussion ? 'Lưu bình luận' : 'Gửi bình luận'}>{isEditingPostDiscussion ? 'Lưu' : <Send size={17} />}</button>
               </form>
             </article>;
           }) : <div className="feed-page__empty"><ImageIcon size={28} /><h2>Chưa có bài đăng nào</h2><p>Các chia sẻ từ cộng đồng EduMatch sẽ xuất hiện tại đây.</p></div>}

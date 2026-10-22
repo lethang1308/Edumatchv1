@@ -67,6 +67,7 @@ export function normalizeAuthUser(user) {
     isPhonePublic: profile.show_phone ?? user.show_phone ?? user.isPhonePublic ?? false,
     phoneVisibilityProvided,
     foundedYear: user.center?.founded_year ? String(user.center.founded_year) : user.foundedYear || '',
+    teachingField: profile.teaching_field || profile.teachingField || user.teaching_field || user.teachingField || '',
     verificationStatus: profile.verification_status || 'unverified',
     verifiedAt: profile.verified_at || null,
     licenseVerificationStatus: user.center?.verification_status || '',

@@ -158,6 +158,13 @@ export const centerAccountFields = [
 
 export const teacherFields = [
   {
+    name: "teachingField",
+    label: "Lĩnh vực giảng dạy",
+    placeholder: "Lĩnh Vực Giảng Dạy ...",
+    icon: BookOpen,
+    maxLength: 40,
+  },
+  {
     name: "qualification",
     label: "Bằng cấp, chứng chỉ",
     placeholder: "Bằng cấp/chứng chỉ",
@@ -185,6 +192,13 @@ export const teacherFields = [
 ];
 
 export const centerFields = [
+  {
+    name: "teachingField",
+    label: "Lĩnh vực giảng dạy",
+    placeholder: "Lĩnh Vực Giảng Dạy ...",
+    icon: BookOpen,
+    maxLength: 40,
+  },
   {
     name: "foundedYear",
     label: "Năm thành lập",
@@ -214,6 +228,7 @@ export const initialForm = {
   centerName: "",
   centerDescription: "",
   foundedYear: "",
+  teachingField: "",
   isPhonePublic: true,
 };
 
@@ -277,10 +292,13 @@ export function validateRegistration(form, role, today = new Date()) {
         errors[name] = `Vui lòng nhập ${label.toLowerCase()}.`;
     });
     if (form.qualification.length > 200) errors.qualification = "Bằng cấp/tiêu đề nghề nghiệp tối đa 200 ký tự.";
+    if (form.teachingField.trim().length > 40) errors.teachingField = "Lĩnh vực giảng dạy tối đa 40 ký tự.";
     const years = Number.parseInt(form.experience, 10);
     if (!Number.isInteger(years) || years < 0 || years > 60) errors.experience = "Nhập số năm kinh nghiệm từ 0 đến 60 (ví dụ: 5 năm).";
-  } else if (role === "center" && !form.centerDescription.trim()) {
-    errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
+  } else if (role === "center") {
+    if (!form.centerDescription.trim()) errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
+    if (!form.teachingField.trim()) errors.teachingField = "Vui lòng nhập lĩnh vực giảng dạy.";
+    else if (form.teachingField.trim().length > 40) errors.teachingField = "Lĩnh vực giảng dạy tối đa 40 ký tự.";
   }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";
@@ -308,9 +326,13 @@ export function buildRegistrationPayload(form, role) {
       bio: profileText(form.centerDescription),
       foundedYear: form.foundedYear,
       founded_year: Number(form.foundedYear),
+      teachingField: profileText(form.teachingField),
+      teaching_field: profileText(form.teachingField),
       centerProfile: {
         description: profileText(form.centerDescription),
         foundedYear: form.foundedYear,
+        teachingField: profileText(form.teachingField),
+        teaching_field: profileText(form.teachingField),
       },
     };
   }
@@ -326,6 +348,8 @@ export function buildRegistrationPayload(form, role) {
       show_phone: Boolean(form.isPhonePublic),
       experience: profileText(form.experience),
       bio: profileText(form.biography),
+      teachingField: profileText(form.teachingField),
+      teaching_field: profileText(form.teachingField),
       teacherProfile: Object.fromEntries(
         teacherFields.map(({ name }) => [name, profileText(form[name])]),
       ),
@@ -338,7 +362,7 @@ export function mapRegistrationErrors(serverErrors = {}, role = 'student') {
     full_name: 'name', fullName: 'name',
     date_of_birth: 'dateOfBirth', dob: 'dateOfBirth',
     password_confirmation: 'confirmPassword',
-    headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear',
+    headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear', teaching_field: 'teachingField',
     ...(role === 'center' ? { name: 'centerName', bio: 'centerDescription' } : role === 'teacher' ? { bio: 'biography', show_phone: 'isPhonePublic' } : {}),
   };
   return Object.fromEntries(Object.entries(serverErrors).map(([field, messages]) => [

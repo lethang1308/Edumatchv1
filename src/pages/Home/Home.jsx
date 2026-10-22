@@ -151,7 +151,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           {tutor.reviews ? (
             <div className="tutor-rating"><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></div>
           ) : null}
-          <span className="subject-tag">{tutor.subject}</span>
+          <span className="subject-tag">{tutor.teachingField || tutor.subject}</span>
         </div>
         <button
           className={`save-button ${saved ? 'is-saved' : ''}`}
@@ -222,6 +222,8 @@ export const Home = () => {
   const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
 const [profile, setProfile] = useState(null);
+const isCenterProfile = profile?.providerType === 'center';
+const profileTrustCount = profile ? getProviderTrustCount(profile.id, profile.heartCount) : 0;
 const profileCourses = profile
   ? getCourses().filter(
       (course) =>
@@ -307,6 +309,7 @@ const profileCourses = profile
         reviews: 0,
         heartCount: Number(provider.heartCount || 0),
         subjects: [],
+        courseTitles: [],
         modes: new Set(),
         locations: [],
         province: '',
@@ -317,12 +320,15 @@ const profileCourses = profile
         licenseVerificationStatus: provider.licenseVerificationStatus || '',
         courseId: course.id,
         experience: provider.experience || 'Đang cập nhật',
+        foundedYear: provider.foundedYear || '',
+        teachingField: provider.teachingField || provider.teaching_field || '',
         price: course.price,
         description: provider.bio || course.description,
         bio: provider.bio || '',
         methods: ['Lộ trình học theo khóa', 'Chủ động trao đổi lịch học'],
       };
-      current.subjects.push(course.title);
+      current.subjects.push(course.subject || '');
+      current.courseTitles.push(course.title || '');
       current.modes.add(mode);
       current.locations.push(course.location || '');
       current.province ||= course.province || '';
@@ -335,7 +341,8 @@ const profileCourses = profile
 
     const courseProviders = [...providers.values()].map((provider) => ({
       ...provider,
-      subject: [...new Set(provider.subjects)].join(' · '),
+      subject: [...new Set(provider.subjects.filter(Boolean))].join(' · ') || 'Đang cập nhật',
+      searchableCourses: [...new Set(provider.courseTitles.filter(Boolean))].join(' · '),
       mode: provider.modes.size === 1 ? [...provider.modes][0] : 'both',
       location: provider.locations.filter(Boolean).join(' · '),
       rating: provider.reviews ? provider.ratingSum / provider.reviews : 0,
@@ -356,13 +363,13 @@ const profileCourses = profile
     return searchableTutors.filter((tutor) => {
         const matchesQuery =
           !query ||
-          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description}`).includes(
+          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.description}`).includes(
             normalize(query)
           );
         return (
           matchesQuery &&
           (!activeTutorFilters.subject ||
-            normalize(`${tutor.subject} ${tutor.title} ${tutor.description}`).includes(
+            normalize(`${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.title} ${tutor.description}`).includes(
               normalize(activeTutorFilters.subject)
             )) &&
           (!activeTutorFilters.mode ||
@@ -375,7 +382,7 @@ const profileCourses = profile
           (!activeTutorFilters.ward || normalize(`${tutor.ward || ''} ${tutor.location || ''}`).includes(normalize(activeTutorFilters.ward))) &&
           (!activeTutorFilters.rating || tutor.rating >= Number(activeTutorFilters.rating)) &&
           (!activeTutorFilters.provider || tutor.providerType === activeTutorFilters.provider) &&
-          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
+          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
           (!savedOnly || (isAuthenticated ? hasProviderTrust(user.id, tutor.id) : savedIds.includes(tutor.id)))
         );
     }).sort((first, second) => {
@@ -1073,7 +1080,7 @@ const profileCourses = profile
         open={Boolean(profile)}
         onClose={() => setProfile(null)}
         title="Khám phá người đồng hành"
-        size="md"
+        size="lg"
         className="edu-modal"
       >
         {profile && (
@@ -1085,19 +1092,26 @@ const profileCourses = profile
                 <h3><Link to={ROUTES.TEACHER_PROFILE(profile.id)} onClick={() => setProfile(null)}>{profile.title} {profile.name}</Link></h3>
                 {profile.reviews ? (
                   <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p>
-                ) : getProviderTrustCount(profile.id, profile.heartCount) >= 3 ? (
-                  <p className="profile-detail__trust"><Heart size={15} fill="currentColor" /> {getProviderTrustCount(profile.id, profile.heartCount)} lượt tin tưởng</p>
-                ) : <p>Hồ sơ giáo viên mới</p>}
+                ) : null}
+                <p className={`profile-detail__trust ${profileTrustCount < 3 ? 'is-new' : ''}`}>
+                  {profileTrustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={15} fill="currentColor" /> {profileTrustCount} lượt tin tưởng</>}
+                </p>
                 <VerifiedBadge userId={profile.id} />
               </div>
             </div>
             <dl className="profile-detail__info">
-              <div><dt>Lĩnh vực giảng dạy</dt><dd>{profile.subject || 'Đang cập nhật'}</dd></div>
-              <div><dt>Kinh nghiệm</dt><dd>{typeof profile.experience === 'number' ? `${profile.experience} năm` : profile.experience || 'Đang cập nhật'}</dd></div>
-              <div><dt>Hình thức giảng dạy</dt><dd>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : profile.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến và trực tiếp'}</dd></div>
+              <div><dt>Lĩnh vực giảng dạy</dt><dd>{profile.teachingField || profile.subject || 'Đang cập nhật'}</dd></div>
+              {isCenterProfile ? (
+                <div><dt>Năm thành lập</dt><dd>{profile.foundedYear || 'Đang cập nhật'}</dd></div>
+              ) : (
+                <>
+                  <div><dt>Kinh nghiệm</dt><dd>{typeof profile.experience === 'number' ? `${profile.experience} năm` : profile.experience || 'Đang cập nhật'}</dd></div>
+                  <div><dt>Hình thức giảng dạy</dt><dd>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : profile.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến và trực tiếp'}</dd></div>
+                </>
+              )}
               {profile.isPhonePublic && profile.phone && <div><dt>Số điện thoại liên hệ</dt><dd><a href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={15} /> {profile.phone}</a></dd></div>}
             </dl>
-            <div className="profile-detail__bio"><h4>Thông tin giáo viên</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
+            <div className="profile-detail__bio"><h4>{isCenterProfile ? 'Thông tin trung tâm' : 'Thông tin giáo viên'}</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
             {profileCourses.length > 0 && <section className="profile-detail__courses"><h4>Khóa học đang mở trên EduMatch</h4><div>{profileCourses.map((course) => <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} onClick={() => setProfile(null)}><span><strong>{course.title}</strong><small>{course.description}</small></span><ArrowRight size={17} /></Link>)}</div></section>}
             <div className="profile-detail__actions">
               <Button className="edu-button" onClick={() => registerForTutor(profile)}><MessageCircle size={17} /> Đăng Ký Học</Button>

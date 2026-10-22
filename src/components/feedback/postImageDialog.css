@@ -35,7 +35,7 @@
 .post-image-dialog__comment-reply { margin: 8px 0 0 13px; padding-left: 9px; border-left: 2px solid var(--edu-line); }
 .post-image-dialog__comment-reply strong { color: var(--edu-ink); font-size: var(--text-caption-xs); }
 .post-image-dialog__comment-reply p { font-size: var(--text-caption-xs); }
-.post-image-dialog__comment-actions { display: flex; margin-top: 7px; }
+.post-image-dialog__comment-actions { display: flex; align-items: center; gap: 13px; margin-top: 7px; }
 .post-image-dialog__comment-actions button { display: inline-flex; align-items: center; gap: 3px; padding: 0; border: 0; background: transparent; color: var(--edu-green); font: inherit; font-size: var(--text-caption-xs); font-weight: 750; cursor: pointer; }
 .post-image-dialog__comment-actions button.is-liked { color: var(--color-trust); }
 .post-image-dialog__comment-actions button:hover { text-decoration: underline; }

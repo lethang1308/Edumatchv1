@@ -35,7 +35,6 @@ export function PostComposerDialog({
           />
         </div>
         <div className="post-composer-dialog__actions">
-          <button type="button" onClick={onClose}>Để sau</button>
           <button type="submit" className="post-composer-dialog__publish" disabled={!draft.trim() && !media.length}>
             <Send size={17} /> Đăng bài
           </button>

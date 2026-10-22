@@ -240,7 +240,7 @@ export function MessagesPage() {
             {filteredThreads.length ? filteredThreads.map((thread) => {
               const latest = thread.messages.at(-1);
               const isUnread = isThreadUnread(thread);
-              return <button className={`conversation-item ${selectedThread?.key === thread.key ? 'is-selected' : ''} ${isUnread ? 'is-unread' : ''}`} key={thread.key} onClick={() => selectThread(thread)}><span className={`conversation-item__avatar ${isOnline(thread.contactId) ? 'is-online' : ''}`}>{thread.contactName.slice(0, 1)}</span><span className="conversation-item__copy"><strong>{thread.contactName}</strong><small>{thread.course?.title || 'Trao đổi lịch học'}</small><em>{latest?.text}</em>{getThreadTags(thread).length > 0 && <span className="conversation-item__tags">{getThreadTags(thread).map((tag) => <i key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</i>)}</span>}</span>{isUnread && <b className="conversation-item__unread" aria-label="Có tin nhắn chưa đọc" />}</button>;
+              return <button className={`conversation-item ${selectedThread?.key === thread.key ? 'is-selected' : ''} ${isUnread ? 'is-unread' : ''}`} key={thread.key} onClick={() => selectThread(thread)}><span className={`conversation-item__avatar ${isOnline(thread.contactId) ? 'is-online' : ''}`}>{thread.contactName.slice(0, 1)}</span><span className="conversation-item__copy"><strong>{thread.contactName}</strong>{thread.course?.title && <small>{thread.course.title}</small>}<em>{latest?.text}</em>{getThreadTags(thread).length > 0 && <span className="conversation-item__tags">{getThreadTags(thread).map((tag) => <i key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</i>)}</span>}</span>{isUnread && <b className="conversation-item__unread" aria-label="Có tin nhắn chưa đọc" />}</button>;
             }) : <div className="conversation-empty"><MessageCircle size={24} /><p>Chưa có cuộc trò chuyện nào.</p></div>}
           </div>
         </aside>
@@ -250,7 +250,7 @@ export function MessagesPage() {
               <span className={`chat-window__avatar ${isOnline(selectedThread.contactId) ? 'is-online' : ''}`}>{selectedThread.contactName.slice(0, 1)}</span>
               <div className="chat-window__contact">
                 <h2>{selectedThread.contactName}</h2>
-                <p>{selectedThread.course?.title || 'Trao đổi lịch học'}</p>
+                {selectedThread.course?.title && <p>{selectedThread.course.title}</p>}
                 {getThreadTags(selectedThread).length > 0 && <div className="chat-window__profile-tags">{getThreadTags(selectedThread).map((tag) => <span key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</span>)}</div>}
               </div>
               <span className={`chat-window__status ${isOnline(selectedThread.contactId) ? 'is-online' : ''}`}>{isOnline(selectedThread.contactId) ? 'Đang hoạt động' : 'Ngoại tuyến'}</span>

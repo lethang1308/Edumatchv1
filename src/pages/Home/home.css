@@ -843,10 +843,11 @@
   white-space: nowrap;
 }
 .course-search--location {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr) minmax(0, 0.92fr) minmax(0, 0.92fr) minmax(188px, auto);
+  gap: 12px;
 }
 .course-search--location > .filter-field:first-child {
-  grid-column: span 2;
+  grid-column: auto;
 }
 .course-search__empty {
   margin-top: 18px;
@@ -1322,6 +1323,7 @@
 }
 .subject-tag {
   display: inline-flex;
+  max-width: 100%;
   padding: 3px 9px;
   font-size: 8px;
   font-weight: 600;
@@ -1329,6 +1331,9 @@
   background: var(--edu-tag);
   border-radius: 5px;
   margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tutor-trust {
   display: inline-flex;
@@ -2148,6 +2153,8 @@
   color: var(--edu-muted);
   font-size: var(--text-caption);
   line-height: 1.8;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .profile-detail__courses h4 {
   margin: 20px 0 8px;
