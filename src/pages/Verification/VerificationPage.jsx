@@ -381,21 +381,28 @@ export function VerificationPage() {
                     {renderError(index, 'issued_year')}
                   </label>
                 </div>}
-                <label className="account-field">
-                  <span>{isCenter ? 'Ảnh hoặc tệp giấy chứng nhận thành lập doanh nghiệp' : 'Tệp tài liệu'}</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,application/pdf"
-                    onChange={(e) => change(index, 'file', e.target.files?.[0] || null)}
-                    required
-                  />
+                <div className="account-field">
+                  <span>{isCenter ? 'Ảnh hoặc File PDF giấy chứng nhận thành lập doanh nghiệp' : 'Tệp tài liệu'}</span>
+                  <div className="verification-file-picker">
+                    <input
+                      id={`verification-file-${index}`}
+                      className="verification-file-picker__input"
+                      type="file"
+                      accept="image/jpeg,image/png,application/pdf"
+                      onChange={(e) => change(index, 'file', e.target.files?.[0] || null)}
+                      required
+                    />
+                    <label className="verification-file-picker__trigger" htmlFor={`verification-file-${index}`}>
+                      <FilePlus2 size={16} /> Chọn tệp
+                    </label>
+                  </div>
                   {doc.file && (
                     <small>
                       {doc.file.name} · {(doc.file.size / 1024).toFixed(0)} KB
                     </small>
                   )}
                   {renderError(index, 'file')}
-                </label>
+                </div>
               </section>
             ))}
           </fieldset>

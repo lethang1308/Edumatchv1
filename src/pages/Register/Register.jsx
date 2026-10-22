@@ -477,7 +477,7 @@ export function Register() {
         open={Boolean(activeRegistrationTextField)}
         onClose={() => setActiveRegistrationTextField(null)}
         title={activeRegistrationTextField?.label}
-        description={activeRegistrationTextField?.maxLength ? `Soạn nội dung chi tiết. Tối đa ${activeRegistrationTextField.maxLength} ký tự.` : 'Soạn nội dung đầy đủ để học viên hiểu rõ hơn về bạn.'}
+        description={activeRegistrationTextField?.maxLength ? `Soạn nội dung chi tiết. Tối đa ${activeRegistrationTextField.maxLength} ký tự.` : undefined}
         size="xl"
         className="register-text-editor-modal"
         footer={<button type="button" className="register-text-editor-modal__done" onClick={() => setActiveRegistrationTextField(null)}>Xong</button>}

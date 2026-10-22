@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { masterDataService } from '@/services/masterDataService';
 import { profileService } from '@/services/profileService';
+import { requestError } from '@/utils/formErrors';
 import { createConversationId, createNotification, deletePost, getAge, getCourses, getPostMediaItems, getPosts, getProviderTrustCount, getProviderTrustUserIds, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost, updatePostMediaItem } from '@/features/learning/marketplace';
 import { Modal } from '@/components/feedback/Modal';
 import { ImageAttachment } from '@/components/forms/ImageAttachment';
@@ -294,7 +295,7 @@ export function TeacherProfilePage() {
     setProfileDraft((current) => ({ ...current, [name]: type === 'checkbox' ? checked : nextValue }));
     if (profileErrors[name]) setProfileErrors((current) => ({ ...current, [name]: '' }));
   };
-  const saveProfile = (event) => {
+  const saveProfile = async (event) => {
     event.preventDefault();
     const nextErrors = {};
     const requiredFields = user?.role === 'center' ? ['name', 'teachingField', 'bio', 'foundedYear'] : user?.role === 'teacher' ? ['name', 'teachingField', 'dob', 'qualifications', 'experience', 'bio'] : ['bio'];
@@ -328,11 +329,33 @@ export function TeacherProfilePage() {
     } : {
       bio: cleanUnlimitedProfileText(profileDraft.bio).trim(),
     };
-    updateUser(updates);
-    if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, updates);
-    setActiveProfileTextField(null);
-    setIsEditingProfile(false);
-    toast.success('Thông tin hồ sơ đã được cập nhật.');
+    try {
+      const response = await profileService.update({
+        name: updates.name,
+        bio: updates.bio,
+        ...(user?.role === 'teacher' ? {
+          date_of_birth: updates.dob || null,
+          headline: updates.qualifications,
+          experience_years: Number.parseInt(updates.experience, 10) || 0,
+        } : {}),
+        ...(user?.role === 'center' ? { founded_year: updates.foundedYear || null } : {}),
+        ...(user?.role !== 'student' ? { teaching_field: updates.teachingField } : {}),
+      });
+      const savedUser = response?.user || {};
+      const syncedUpdates = {
+        ...updates,
+        ...savedUser,
+        detailedProfile: savedUser.detailedProfile ?? updates.detailedProfile,
+        teachingField: savedUser.teachingField ?? updates.teachingField,
+      };
+      updateUser(syncedUpdates);
+      if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, syncedUpdates);
+      setActiveProfileTextField(null);
+      setIsEditingProfile(false);
+      toast.success('Thông tin hồ sơ đã được cập nhật.');
+    } catch (error) {
+      toast.error(requestError(error));
+    }
   };
   const openDetailedProfileEditor = () => {
     setDetailedProfileDraft(user?.detailedProfile || '');
@@ -753,7 +776,7 @@ export function TeacherProfilePage() {
       open={Boolean(activeProfileTextField)}
       onClose={() => setActiveProfileTextField(null)}
       title={activeProfileText?.label}
-      description={activeProfileTextField === 'bio' ? 'Soạn nội dung đầy đủ để học viên hiểu rõ hơn về bạn.' : `Soạn nội dung chi tiết. Tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`}
+      description={activeProfileTextField === 'bio' ? undefined : `Soạn nội dung chi tiết. Tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`}
       size="xl"
       className="profile-text-editor-modal"
       footer={<button type="button" className="profile-text-editor-modal__done" onClick={() => setActiveProfileTextField(null)}>Xong</button>}

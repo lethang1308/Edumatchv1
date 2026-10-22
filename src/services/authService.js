@@ -59,7 +59,7 @@ export function normalizeAuthUser(user) {
     ...user,
     name: user.center?.name || user.name,
     dob: profile.date_of_birth?.slice(0, 10) || user.dob || '',
-    bio: profile.bio ?? user.bio ?? '',
+    bio: profile.bio ?? profile.description ?? user.bio ?? '',
     avatar: resolveAssetUrl(rawAvatar),
     avatarVersion: user.avatarVersion || user.avatar_version || undefined,
     qualifications: user.teacher_profile?.headline || user.qualifications || '',

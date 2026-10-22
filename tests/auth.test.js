@@ -151,9 +151,30 @@ test('teacher and center forms send professional and legal fields in backend for
   assert.equal(center.name, 'Trung tâm Ánh Dương');
   assert.equal(center.email, 'center@gmail.com');
   assert.equal(center.founded_year, 2018);
-  assert.equal(center.bio, 'Trung tâm đào tạo');
+  assert.equal(center.bio, undefined);
+  assert.equal(center.center_description, 'Trung tâm đào tạo');
+  assert.equal(center.centerProfile.description, 'Trung tâm đào tạo');
   assert.equal(center.password_confirmation, 'Password@123');
   assert.equal(center.isPhonePublic, undefined);
+});
+
+test('center capability profiles are not limited by the generic 5,000-character bio field', () => {
+  const centerDescription = 'Nội dung hồ sơ năng lực '.repeat(300);
+  const form = {
+    ...registration.initialForm,
+    centerName: 'Trung tâm Ánh Dương',
+    email: 'center@gmail.com',
+    phone: '0981234568',
+    password: 'Password@123',
+    confirmPassword: 'Password@123',
+    foundedYear: '2018',
+    teachingField: 'Ngoại ngữ',
+    centerDescription,
+  };
+  assert.equal(registration.validateRegistration(form, 'center').centerDescription, undefined);
+  const payload = registration.buildRegistrationPayload(form, 'center');
+  assert.equal(payload.bio, undefined);
+  assert.equal(payload.centerProfile.description, centerDescription.trim());
 });
 
 test('all registration roles require a valid email, including centers', () => {
@@ -192,7 +213,7 @@ test('registration submits the OTP and failed verification cannot store a sessio
 });
 
 test('professional registration maps field errors and validates years', () => {
-  assert.deepEqual(registration.mapRegistrationErrors({ founded_year: ['Năm sai'], name: ['Tên sai'], bio: ['Mô tả sai'] }, 'center'), {
+  assert.deepEqual(registration.mapRegistrationErrors({ founded_year: ['Năm sai'], name: ['Tên sai'], center_description: ['Mô tả sai'] }, 'center'), {
     foundedYear: 'Năm sai', centerName: 'Tên sai', centerDescription: 'Mô tả sai',
   });
   assert.deepEqual(registration.mapRegistrationErrors({ headline: ['Quá dài'], experience_years: ['Năm sai'], bio: ['Mô tả sai'] }, 'teacher'), {

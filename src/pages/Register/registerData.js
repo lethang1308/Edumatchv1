@@ -323,7 +323,12 @@ export function buildRegistrationPayload(form, role) {
   if (role === "center") {
     return {
       ...data,
-      bio: profileText(form.centerDescription),
+      // `bio` belongs to the generic account profile, where the API limits text
+      // to 5,000 characters. A center's capability profile is intentionally
+      // unrestricted, so only send it through the center-specific description.
+      centerDescription: profileText(form.centerDescription),
+      center_description: profileText(form.centerDescription),
+      description: profileText(form.centerDescription),
       foundedYear: form.foundedYear,
       founded_year: Number(form.foundedYear),
       teachingField: profileText(form.teachingField),
@@ -363,7 +368,19 @@ export function mapRegistrationErrors(serverErrors = {}, role = 'student') {
     date_of_birth: 'dateOfBirth', dob: 'dateOfBirth',
     password_confirmation: 'confirmPassword',
     headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear', teaching_field: 'teachingField',
-    ...(role === 'center' ? { name: 'centerName', bio: 'centerDescription' } : role === 'teacher' ? { bio: 'biography', show_phone: 'isPhonePublic' } : {}),
+    ...(role === 'center'
+      ? {
+          name: 'centerName',
+          bio: 'centerDescription',
+          description: 'centerDescription',
+          centerDescription: 'centerDescription',
+          center_description: 'centerDescription',
+          'centerProfile.description': 'centerDescription',
+          'center_profile.description': 'centerDescription',
+        }
+      : role === 'teacher'
+        ? { bio: 'biography', show_phone: 'isPhonePublic' }
+        : {}),
   };
   return Object.fromEntries(Object.entries(serverErrors).map(([field, messages]) => [
     aliases[field] || field,

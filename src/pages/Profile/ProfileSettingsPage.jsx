@@ -46,6 +46,7 @@ const profileForm = (user) => ({
   name: user.name || '',
   date_of_birth: user.dob || '',
   bio: user.detailedProfile || user.bio || '',
+  teaching_field: user.teachingField || '',
   province_id: user.student_profile?.province_id || '',
   district_id: user.student_profile?.district_id || '',
   ward_id: user.student_profile?.ward_id || '',
@@ -182,9 +183,12 @@ export function ProfileSettingsPage() {
     event.preventDefault();
     if (busy) return;
     const next = {};
-    if (form.name.trim().length < 2) next.name = 'Họ và tên cần có ít nhất 2 ký tự.';
+    if (form.name.trim().length < 2) next.name = user.role === 'center' ? 'Tên trung tâm cần có ít nhất 2 ký tự.' : 'Họ và tên cần có ít nhất 2 ký tự.';
+    if (form.name.trim().length > (user.role === 'center' ? 200 : 150)) next.name = user.role === 'center' ? 'Tên trung tâm tối đa 200 ký tự.' : 'Họ và tên tối đa 150 ký tự.';
     if (form.date_of_birth && form.date_of_birth > getTodayDate())
       next.date_of_birth = 'Ngày sinh không được nằm trong tương lai.';
+    if (!isStudent && form.teaching_field.length > 40)
+      next.teaching_field = 'Lĩnh vực giảng dạy tối đa 40 ký tự.';
     setErrors(next);
     if (Object.keys(next).length) return;
     setBusy(true);
@@ -206,6 +210,7 @@ export function ProfileSettingsPage() {
         name: otherUserData.name || payload.name,
         bio: otherUserData.bio || payload.bio,
         detailedProfile: otherUserData.detailedProfile || payload.bio,
+        teachingField: 'teachingField' in otherUserData ? otherUserData.teachingField : payload.teaching_field,
         ...(payload.date_of_birth ? { dob: otherUserData.dob || payload.date_of_birth } : {}),
         ...(currentAvatar ? { avatar: currentAvatar, avatarVersion: currentAvatarVersion } : (responseAvatar ? { avatar: responseAvatar } : {})),
       };
@@ -417,7 +422,7 @@ export function ProfileSettingsPage() {
                     name="name"
                     value={form.name}
                     onChange={change}
-                    maxLength={150}
+                    maxLength={user.role === 'center' ? 200 : 150}
                     required
                     aria-invalid={Boolean(errors.name)}
                   />
@@ -469,6 +474,11 @@ export function ProfileSettingsPage() {
                     {areaSelect('ward_id', 'Phường / Xã', wards, !form.province_id)}
                   </>
                 )}
+                {!isStudent && <label className="account-field">
+                  <span>Lĩnh vực giảng dạy</span>
+                  <input name="teaching_field" value={form.teaching_field} onChange={change} maxLength={40} placeholder="Lĩnh Vực Giảng Dạy ..." aria-invalid={Boolean(errors.teaching_field)} />
+                  {errors.teaching_field && <small className="account-error">{errors.teaching_field}</small>}
+                </label>}
                 <label className="account-field">
                   <span>{isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Hồ sơ năng lực'}</span>
                   <textarea
@@ -492,7 +502,7 @@ export function ProfileSettingsPage() {
           )}
         </section>
       </div>
-      <Modal open={isBioEditorOpen} onClose={() => setIsBioEditorOpen(false)} title={isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Hồ sơ năng lực'} description="Soạn nội dung đầy đủ để học viên hiểu rõ hơn về bạn." size="xl" className="profile-bio-editor" footer={<button type="button" className="profile-bio-editor__done" onClick={() => setIsBioEditorOpen(false)}>Xong</button>}>
+      <Modal open={isBioEditorOpen} onClose={() => setIsBioEditorOpen(false)} title={isStudent ? 'Giới thiệu & mục tiêu học tập' : 'Hồ sơ năng lực'} size="xl" className="profile-bio-editor" footer={<button type="button" className="profile-bio-editor__done" onClick={() => setIsBioEditorOpen(false)}>Xong</button>}>
         <textarea autoFocus name="bio" value={form.bio} onChange={change} rows="18" placeholder="Chia sẻ nội dung bạn muốn học viên biết..." aria-label="Hồ sơ năng lực" />
       </Modal>
       <Modal open={isAvatarAlbumOpen} onClose={() => setIsAvatarAlbumOpen(false)} title="Chọn ảnh đại diện từ album" description="Chọn một ảnh bạn đã đăng trên bảng tin hoặc trang cá nhân." size="lg" className="profile-avatar-album">

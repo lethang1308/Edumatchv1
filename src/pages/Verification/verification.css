@@ -19,6 +19,12 @@
 .verification-form h2, .verification-history h2 { font-size: 22px; margin: 0 0 12px; }
 .verification-document { padding: 22px; border: 1px solid var(--color-line, #d8e4e0); border-radius: 12px; display: grid; gap: 18px; }
 .verification-business-details { background: #f8fcfa; }
+.verification-file-picker { position: relative; display: flex; align-items: center; }
+.verification-file-picker__input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.verification-file-picker__trigger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid #a9d9ce; border-radius: 10px; background: #fff; color: #087b6a; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+.verification-file-picker__trigger:hover { border-color: #087b6a; background: #eef8f4; }
+.verification-file-picker__trigger:active { transform: translateY(1px); }
+.verification-file-picker__input:focus-visible + .verification-file-picker__trigger { outline: 3px solid rgba(8, 123, 106, .24); outline-offset: 2px; }
 .verification-contact-note { margin: 0; padding: 14px 16px; border-left: 3px solid #087b6a; border-radius: 0 10px 10px 0; background: #eef7f4; color: var(--color-muted, #667c76); font-size: 14px; line-height: 1.65; }
 .verification-document-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .verification-document-heading h3 { font-size: 16px; margin: 0; }
