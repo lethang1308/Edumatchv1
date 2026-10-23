@@ -21,7 +21,7 @@ const readImageAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
-const createPersistentProfileImage = async (file, maxDimension = 512) => {
+const createPersistentProfileImage = async (file, maxDimension = 384) => {
   const source = await readImageAsDataUrl(file);
   const image = await new Promise((resolve, reject) => {
     const preview = new Image();
@@ -39,7 +39,7 @@ const createPersistentProfileImage = async (file, maxDimension = 512) => {
   context.fillStyle = '#ffffff';
   context.fillRect(0, 0, width, height);
   context.drawImage(image, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', 0.86);
+  return canvas.toDataURL('image/jpeg', 0.8);
 };
 
 const profileForm = (user) => ({
@@ -68,6 +68,7 @@ export function ProfileSettingsPage() {
   const [retry, setRetry] = useState(0);
   const [avatarFile, setAvatarFile] = useState(null);
   const [preview, setPreview] = useState('');
+  const [failedAvatarSource, setFailedAvatarSource] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [isAvatarSourceOpen, setIsAvatarSourceOpen] = useState(false);
@@ -80,6 +81,7 @@ export function ProfileSettingsPage() {
     .filter((post) => String(post.authorId || post.teacherId) === String(user.id))
     .flatMap((post) => getPostMediaItems(post))
     .filter((item) => item.type === 'image' && item.src);
+  const avatarSource = preview || user.avatar || '';
 
   const selectTab = (nextTab) => {
     setSearchParams(nextTab === 'security' ? { tab: 'security' } : {});
@@ -243,7 +245,7 @@ export function ProfileSettingsPage() {
       setAvatarFile(file);
 
     try {
-      const localImage = await createPersistentProfileImage(file, 512);
+      const localImage = await createPersistentProfileImage(file);
       setPreview(localImage);
       const avatarVersion = `${file.name}-${file.size}-${file.lastModified}`;
       updateUser({ avatar: localImage, avatarVersion });
@@ -252,8 +254,12 @@ export function ProfileSettingsPage() {
       }
       await uploadAvatar(file, localImage);
     } catch {
-      const fallbackPreview = URL.createObjectURL(file);
+      const fallbackPreview = await readImageAsDataUrl(file);
       setPreview(fallbackPreview);
+      updateUser({ avatar: fallbackPreview, avatarVersion: `${file.name}-${file.size}-${file.lastModified}` });
+      if (['teacher', 'center'].includes(user?.role)) {
+        syncTeacherCourseProfile(user.id, { avatar: fallbackPreview });
+      }
       await uploadAvatar(file, fallbackPreview);
     }
   };
@@ -266,7 +272,7 @@ export function ProfileSettingsPage() {
       let localImage = imageOverride;
       if (!localImage || !localImage.startsWith('data:image/')) {
         try {
-          localImage = await createPersistentProfileImage(fileToUpload, 512);
+          localImage = await createPersistentProfileImage(fileToUpload);
         } catch {
           // ignore
         }
@@ -307,6 +313,7 @@ export function ProfileSettingsPage() {
   const chooseAvatarFromAlbum = (image) => {
     const avatarVersion = image.id || image.src;
     setPreview(image.src);
+    setFailedAvatarSource('');
     updateUser({ avatar: image.src, avatarVersion });
     if (['teacher', 'center'].includes(user?.role)) {
       syncTeacherCourseProfile(user.id, { avatar: image.src });
@@ -349,8 +356,8 @@ export function ProfileSettingsPage() {
       <div className="profile-settings-layout">
         <aside className="profile-settings-sidebar">
           <div className="profile-settings-avatar">
-            {preview || user.avatar ? (
-              <img src={preview || user.avatar} alt={`Ảnh đại diện của ${user.name}`} />
+            {avatarSource && failedAvatarSource !== avatarSource ? (
+              <img src={avatarSource} alt={`Ảnh đại diện của ${user.name}`} onError={() => setFailedAvatarSource(avatarSource)} />
             ) : (
               <UserRound size={42} />
             )}
