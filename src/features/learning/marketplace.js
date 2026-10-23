@@ -760,6 +760,31 @@ export const deleteMessageTag = (userId, tagId) => {
   return next.filter((tag) => tag.userId === userId);
 };
 
+export const getMessageTemplates = (userId) =>
+  read(STORAGE_KEYS.MESSAGE_TEMPLATES, []).filter((template) => template.userId === userId);
+
+export const saveMessageTemplate = (userId, template) => {
+  if (!userId || !template?.id || !template?.title || !template?.text) return getMessageTemplates(userId);
+  const saved = read(STORAGE_KEYS.MESSAGE_TEMPLATES, []);
+  const nextTemplate = { ...template, userId, updatedAt: new Date().toISOString() };
+  const exists = saved.some((item) => item.userId === userId && item.id === template.id);
+  const next = exists
+    ? saved.map((item) => item.userId === userId && item.id === template.id ? { ...item, ...nextTemplate } : item)
+    : [{ ...nextTemplate, createdAt: nextTemplate.createdAt || nextTemplate.updatedAt }, ...saved];
+  write(STORAGE_KEYS.MESSAGE_TEMPLATES, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:message-templates-updated'));
+  return next.filter((item) => item.userId === userId);
+};
+
+export const deleteMessageTemplate = (userId, templateId) => {
+  const next = read(STORAGE_KEYS.MESSAGE_TEMPLATES, []).filter(
+    (template) => template.userId !== userId || template.id !== templateId
+  );
+  write(STORAGE_KEYS.MESSAGE_TEMPLATES, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:message-templates-updated'));
+  return next.filter((template) => template.userId === userId);
+};
+
 export const removeMessageTagFromUserConversations = (userId, tagId) => {
   const next = read(STORAGE_KEYS.CONVERSATIONS, []).map((message) => {
     if (message.studentId !== userId && message.teacherId !== userId) return message;
