@@ -66,7 +66,12 @@ const matchesDescription = (candidate, description, gender = '') => {
   const tokens = needTokens(description);
   if (!tokens.length) return true;
   const matchingTerms = tokens.filter((token) => searchableCandidate.includes(token)).length;
-  return matchingTerms >= Math.max(1, Math.ceil(tokens.length * 0.35));
+  // Với cụm từ ngắn, yêu cầu khớp toàn bộ các từ khóa có nghĩa để tránh việc
+  // một từ rất phổ biến (ví dụ “cách”) kéo theo các hồ sơ không liên quan.
+  const requiredMatches = tokens.length <= 2
+    ? tokens.length
+    : Math.max(1, Math.ceil(tokens.length * 0.35));
+  return matchingTerms >= requiredMatches;
 };
 const inferredGender = (provider) => {
   const match = tutors.find((tutor) => normalize(`${tutor.name} ${tutor.title}`).includes(normalize(provider?.name || '')));
@@ -349,6 +354,35 @@ const profileCourses = profile
       price: Number.isFinite(provider.price) ? provider.price : 0,
     }));
 
+    const currentProvider = ['teacher', 'center'].includes(user?.role)
+      ? {
+          id: user.id,
+          name: user.name || 'Hồ sơ EduMatch',
+          title: user.role === 'center' ? '' : 'GV.',
+          providerType: user.role,
+          rating: 0,
+          reviews: 0,
+          heartCount: Number(user.heartCount || 0),
+          subject: user.teachingField || 'Đang cập nhật',
+          teachingField: user.teachingField || '',
+          searchableCourses: '',
+          mode: user.learningMode || 'both',
+          location: user.location || user.address || '',
+          province: user.province || '',
+          ward: user.ward || '',
+          image: user.avatar || '',
+          phone: user.phone || '',
+          isPhonePublic: Boolean(user.isPhonePublic),
+          licenseVerificationStatus: user.licenseVerificationStatus || '',
+          experience: user.experience || 'Đang cập nhật',
+          foundedYear: user.foundedYear || '',
+          price: 0,
+          description: user.detailedProfile || user.bio || '',
+          bio: user.detailedProfile || user.bio || '',
+          methods: [],
+        }
+      : null;
+
     return [
       ...tutors.map((tutor) => ({
         ...tutor,
@@ -356,6 +390,9 @@ const profileCourses = profile
         heartCount: Number(tutor.heartCount || 0),
       })),
       ...courseProviders,
+      ...(currentProvider && !courseProviders.some((provider) => String(provider.id) === String(currentProvider.id))
+        ? [currentProvider]
+        : []),
     ];
   })();
 
@@ -363,13 +400,13 @@ const profileCourses = profile
     return searchableTutors.filter((tutor) => {
         const matchesQuery =
           !query ||
-          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.description}`).includes(
+          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.description}`).includes(
             normalize(query)
           );
         return (
           matchesQuery &&
           (!activeTutorFilters.subject ||
-            normalize(`${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.title} ${tutor.description}`).includes(
+            normalize(`${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.title} ${tutor.description}`).includes(
               normalize(activeTutorFilters.subject)
             )) &&
           (!activeTutorFilters.mode ||
@@ -382,7 +419,7 @@ const profileCourses = profile
           (!activeTutorFilters.ward || normalize(`${tutor.ward || ''} ${tutor.location || ''}`).includes(normalize(activeTutorFilters.ward))) &&
           (!activeTutorFilters.rating || tutor.rating >= Number(activeTutorFilters.rating)) &&
           (!activeTutorFilters.provider || tutor.providerType === activeTutorFilters.provider) &&
-          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.searchableCourses || ''} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
+          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
           (!savedOnly || (isAuthenticated ? hasProviderTrust(user.id, tutor.id) : savedIds.includes(tutor.id)))
         );
     }).sort((first, second) => {

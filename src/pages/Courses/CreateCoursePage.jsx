@@ -123,7 +123,6 @@ export function CreateCoursePage() {
           open={isDescriptionEditorOpen}
           onClose={() => setIsDescriptionEditorOpen(false)}
           title="Mô tả khóa học"
-          description="Soạn nội dung đầy đủ để học viên hiểu rõ khóa học của bạn."
           size="xl"
           className="course-description-editor"
           footer={<button type="button" className="course-description-editor__done" onClick={() => setIsDescriptionEditorOpen(false)}>Xong</button>}

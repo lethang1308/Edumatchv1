@@ -189,8 +189,8 @@ export function ProfileSettingsPage() {
     if (form.name.trim().length > (user.role === 'center' ? 200 : 150)) next.name = user.role === 'center' ? 'Tên trung tâm tối đa 200 ký tự.' : 'Họ và tên tối đa 150 ký tự.';
     if (form.date_of_birth && form.date_of_birth > getTodayDate())
       next.date_of_birth = 'Ngày sinh không được nằm trong tương lai.';
-    if (!isStudent && form.teaching_field.length > 40)
-      next.teaching_field = 'Lĩnh vực giảng dạy tối đa 40 ký tự.';
+    if (!isStudent && form.teaching_field.length > 45)
+      next.teaching_field = 'Lĩnh vực giảng dạy tối đa 45 ký tự.';
     setErrors(next);
     if (Object.keys(next).length) return;
     setBusy(true);
@@ -233,11 +233,8 @@ export function ProfileSettingsPage() {
   const chooseAvatar = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (
-      !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
-      file.size > 2 * 1024 * 1024
-    ) {
-      setAvatarError('Chọn ảnh JPG, PNG hoặc WebP, tối đa 2 MB.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('Chọn ảnh JPG, PNG hoặc WebP.');
       event.target.value = '';
       return;
     }
@@ -483,7 +480,8 @@ export function ProfileSettingsPage() {
                 )}
                 {!isStudent && <label className="account-field">
                   <span>Lĩnh vực giảng dạy</span>
-                  <input name="teaching_field" value={form.teaching_field} onChange={change} maxLength={40} placeholder="Lĩnh Vực Giảng Dạy ..." aria-invalid={Boolean(errors.teaching_field)} />
+                  <input name="teaching_field" value={form.teaching_field} onChange={change} maxLength={45} placeholder="Lĩnh Vực Giảng Dạy ..." aria-invalid={Boolean(errors.teaching_field)} />
+                  <small className={`profile-field-count ${form.teaching_field.length >= 45 ? 'is-limit' : ''}`}>{form.teaching_field.length}/45 ký tự</small>
                   {errors.teaching_field && <small className="account-error">{errors.teaching_field}</small>}
                 </label>}
                 <label className="account-field">

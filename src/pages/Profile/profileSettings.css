@@ -179,6 +179,16 @@
   cursor: text;
   resize: none;
 }
+.profile-field-count {
+  align-self: end;
+  color: var(--color-muted, #657e75);
+  font-size: 12px;
+  font-weight: 500;
+}
+.profile-field-count.is-limit {
+  color: var(--color-danger, #b33737);
+  font-weight: 700;
+}
 .profile-bio-editor { max-width: min(1040px, calc(100vw - 48px)); }
 .profile-bio-editor textarea {
   width: 100%;

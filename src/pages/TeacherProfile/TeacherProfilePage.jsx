@@ -9,6 +9,7 @@ import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { masterDataService } from '@/services/masterDataService';
 import { profileService } from '@/services/profileService';
 import { requestError } from '@/utils/formErrors';
+import { formatRelativeTime } from '@/utils/formatDate';
 import { createConversationId, createNotification, deletePost, getAge, getCourses, getPostMediaItems, getPosts, getProviderTrustCount, getProviderTrustUserIds, hasProviderTrust, saveConversation, savePost, syncTeacherCourseProfile, toggleProviderTrust, trackProviderAffinity, updatePost, updatePostMediaItem } from '@/features/learning/marketplace';
 import { Modal } from '@/components/feedback/Modal';
 import { ImageAttachment } from '@/components/forms/ImageAttachment';
@@ -23,8 +24,8 @@ import '@/components/courses/course.css';
 import '../Courses/courses.css';
 import { tutors } from '../Home/homeData';
 
-const MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024;
 const SHORT_BIO_MAX_LENGTH = 500;
+const TEACHING_FIELD_MAX_LENGTH = 45;
 const MAX_PORTFOLIO_IMAGES = 4;
 const PROFILE_POSTS_BATCH_SIZE = 8;
 const createPostId = (prefix = 'post') => `${prefix}-${Date.now()}`;
@@ -40,12 +41,7 @@ const cleanUnlimitedProfileText = (value) => String(value || '')
   .replace(/\*\*/g, '')
   .replace(/__/g, '')
   .replace(/^\s{0,3}#{1,6}\s+/gm, '');
-const formatPublishedAt = (dateValue) => {
-  if (!dateValue) return 'Vừa xong';
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return 'Vừa xong';
-  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
-};
+const formatPublishedAt = formatRelativeTime;
 const readImageAsDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onload = () => resolve(String(reader.result));
@@ -249,20 +245,32 @@ export function TeacherProfilePage() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast.error('Vui lòng chọn một tệp ảnh.'); return; }
-    if (file.size > MAX_PROFILE_IMAGE_SIZE) { toast.error('Ảnh đại diện và ảnh bìa tối đa 2 MB.'); return; }
 
     try {
-      const image = await createPersistentProfileImage(file, field === 'avatar' ? 512 : 1600);
+      let image;
+      try {
+        image = await createPersistentProfileImage(file, field === 'avatar' ? 512 : 1600);
+      } catch {
+        // Keep a direct local preview for images that cannot be converted by canvas.
+        image = await readImageAsDataUrl(file);
+      }
       if (field === 'avatar') {
-        const avatarVersion = Date.now();
+        const avatarVersion = `${file.name}-${file.size}-${file.lastModified}`;
         updateUser({ avatar: image, avatarVersion });
         if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, { avatar: image });
         void profileService.uploadAvatar(file).then((res) => {
-          if (res?.user?.avatar) {
-            updateUser({ ...res.user, avatarVersion });
-            if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, { avatar: res.user.avatar });
+          if (res?.user) {
+            // A storage URL can be returned before it is publicly reachable. Do
+            // not replace the image the user has just selected with that URL.
+            const { avatar: _serverAvatar, ...serverProfile } = res.user;
+            updateUser({ ...serverProfile, avatar: image, avatarVersion });
+            if (['teacher', 'center'].includes(user?.role)) syncTeacherCourseProfile(user.id, { avatar: image });
           }
-        }).catch(() => {});
+        }).catch((error) => {
+          // The local image is already persisted, so upload failure must not
+          // make the avatar disappear from the interface.
+          console.warn('API avatar upload failed, keeping local avatar:', error);
+        });
       } else {
         updateUser({ coverImage: image });
       }
@@ -291,6 +299,8 @@ export function TeacherProfilePage() {
     const { name, value, type, checked } = event.target;
     const nextValue = ['qualifications', 'experience'].includes(name)
       ? cleanProfileText(value)
+      : name === 'teachingField'
+        ? value.slice(0, TEACHING_FIELD_MAX_LENGTH)
       : value;
     setProfileDraft((current) => ({ ...current, [name]: type === 'checkbox' ? checked : nextValue }));
     if (profileErrors[name]) setProfileErrors((current) => ({ ...current, [name]: '' }));
@@ -307,7 +317,7 @@ export function TeacherProfilePage() {
         nextErrors[field] = `Tối đa ${SHORT_BIO_MAX_LENGTH} ký tự`;
       }
     });
-    if (String(profileDraft.teachingField || '').length > 40) nextErrors.teachingField = 'Tối đa 40 ký tự';
+    if (String(profileDraft.teachingField || '').length > TEACHING_FIELD_MAX_LENGTH) nextErrors.teachingField = `Tối đa ${TEACHING_FIELD_MAX_LENGTH} ký tự`;
     setProfileErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     const updates = user?.role === 'center' ? {
@@ -373,10 +383,6 @@ export function TeacherProfilePage() {
     const validFiles = files.slice(0, availableSlots).filter((file) => {
       if (!file.type.startsWith('image/')) {
         toast.error('Chỉ hỗ trợ tệp ảnh.');
-        return false;
-      }
-      if (file.size > MAX_PROFILE_IMAGE_SIZE) {
-        toast.error('Mỗi ảnh tối đa 2 MB.');
         return false;
       }
       return true;
@@ -730,7 +736,8 @@ export function TeacherProfilePage() {
         </label>}
         {['teacher', 'center'].includes(user?.role) && <label>
           <span>Lĩnh vực giảng dạy</span>
-          <input name="teachingField" value={profileDraft.teachingField || ''} onChange={updateProfileDraft} maxLength="40" placeholder="Ví dụ: Tiếng Anh giao tiếp, IELTS" />
+          <input name="teachingField" value={profileDraft.teachingField || ''} onChange={updateProfileDraft} maxLength={TEACHING_FIELD_MAX_LENGTH} placeholder="Ví dụ: Tiếng Anh giao tiếp, IELTS" aria-invalid={Boolean(profileErrors.teachingField)} />
+          <small className={`teacher-profile-editor__counter ${String(profileDraft.teachingField || '').length >= TEACHING_FIELD_MAX_LENGTH ? 'is-limit' : ''}`} aria-live="polite">{String(profileDraft.teachingField || '').length}/{TEACHING_FIELD_MAX_LENGTH} ký tự</small>
           {profileErrors.teachingField && <small>{profileErrors.teachingField}</small>}
         </label>}
         {user?.role === 'center' && <label>
@@ -811,7 +818,7 @@ export function TeacherProfilePage() {
           <textarea autoFocus value={detailedProfileDraft} onChange={(event) => setDetailedProfileDraft(event.target.value)} rows="12" placeholder={isCenterProfile ? 'Giới thiệu đầy đủ về trung tâm, đội ngũ, phương pháp đào tạo, không gian học tập và những giá trị bạn theo đuổi...' : 'Giới thiệu đầy đủ về chuyên môn, phương pháp giảng dạy, kinh nghiệm và các dấu ấn của bạn...'} />
         </label>
         <div className="profile-portfolio-editor teacher-profile-editor__full">
-          <div><strong>Hình ảnh minh họa</strong><small>Tối đa {MAX_PORTFOLIO_IMAGES} ảnh, mỗi ảnh không quá 2 MB.</small></div>
+          <div><strong>Hình ảnh minh họa</strong><small>Tối đa {MAX_PORTFOLIO_IMAGES} ảnh.</small></div>
           {portfolioImagesDraft.length > 0 && <div className="profile-portfolio-editor__gallery">{portfolioImagesDraft.map((image, index) => <figure key={`${image.slice(0, 24)}-${index}`}><img src={image} alt={`Ảnh minh họa hồ sơ năng lực ${index + 1}`} /><button type="button" onClick={() => setPortfolioImagesDraft((current) => current.filter((_, imageIndex) => imageIndex !== index))} aria-label={`Xóa ảnh ${index + 1}`}><X size={15} /></button></figure>)}</div>}
           {portfolioImagesDraft.length < MAX_PORTFOLIO_IMAGES && <label className="profile-portfolio-editor__upload"><ImagePlus size={17} /> Thêm ảnh<input ref={portfolioImagesInputRef} type="file" accept="image/*" multiple onChange={addPortfolioImages} /></label>}
         </div>

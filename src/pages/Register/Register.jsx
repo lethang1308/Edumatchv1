@@ -34,7 +34,7 @@ function FieldError({ name, errors }) {
 }
 
 function ProfileField({ field, form, errors, onChange, onExpand }) {
-  const { name, label, placeholder, icon: Icon, multiline, maxLength } = field;
+  const { name, label, placeholder, icon: Icon, multiline, maxLength, showCharacterCount } = field;
   const sharedProps = {
     id: `register-${name}`,
     name,
@@ -68,6 +68,11 @@ function ProfileField({ field, form, errors, onChange, onExpand }) {
           <input {...sharedProps} type="text" />
         )}
       </div>
+      {showCharacterCount && maxLength && (
+        <p className={`register-field__count ${String(form[name] || '').length >= maxLength ? 'is-limit' : ''}`}>
+          {String(form[name] || '').length}/{maxLength} ký tự
+        </p>
+      )}
       <FieldError name={name} errors={errors} />
     </div>
   );

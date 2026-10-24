@@ -97,7 +97,34 @@
   color: var(--edu-danger, #c45463);
 }
 .course-description-editor__done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 104px;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--edu-green);
+  border-radius: var(--radius-control);
+  background: var(--edu-green);
+  color: var(--edu-on-primary);
+  font: inherit;
+  font-size: var(--text-control);
+  font-weight: 800;
+  line-height: var(--text-control--line-height);
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgb(8 127 107 / 18%);
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+.course-description-editor__done:hover {
+  background: var(--edu-green-dark, #066957);
+  box-shadow: 0 5px 12px rgb(8 127 107 / 24%);
+}
+.course-description-editor__done:active {
+  transform: translateY(1px);
+}
+.course-description-editor__done:focus-visible {
+  outline: 3px solid rgb(8 127 107 / 28%);
+  outline-offset: 2px;
 }
 .course-editor .publish-course {
   margin-top: 2px;
@@ -579,7 +606,16 @@
   justify-content: space-between;
   gap: 8px;
 }
+.review-item__time,
+.review-reply__time {
+  display: block;
+  margin-top: 5px;
+  color: var(--edu-muted);
+  font-size: var(--text-micro);
+  line-height: var(--text-micro--line-height);
+}
 .review-item__head > span {
+  margin-left: auto;
   display: flex;
   color: var(--edu-gold);
 }
@@ -633,7 +669,8 @@
   gap: 8px;
 }
 .review-reply__identity {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 7px;
   min-width: 0;
@@ -1478,7 +1515,7 @@
   color: var(--color-trust);
 }
 .post-comment__reaction { display: flex; align-items: center; gap: 9px; min-height: 22px; }
-.post-comment__time { color: var(--edu-muted); font-size: var(--text-caption-xs); line-height: var(--text-caption-xs--line-height); white-space: nowrap; }
+.post-comment__time { color: var(--edu-muted); font-size: var(--text-micro); line-height: var(--text-micro--line-height); white-space: nowrap; }
 .post-comment__reaction .post-comment__like,
 .post-comment__reaction .social-likes-count { margin-top: 0; line-height: var(--text-caption-xs--line-height); }
 .post-comment__reply-button {
@@ -1718,6 +1755,34 @@
   overflow: hidden;
   background-position: center;
   background-size: cover;
+}
+.teacher-cover.has-custom-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgb(8 48 40 / 72%), rgb(8 48 40 / 44%) 55%, rgb(8 48 40 / 20%));
+  pointer-events: none;
+}
+.teacher-cover.has-custom-cover > * {
+  position: relative;
+  z-index: 1;
+}
+.teacher-cover.has-custom-cover > div:nth-child(2) > span,
+.teacher-cover.has-custom-cover p {
+  color: rgb(255 255 255 / 88%);
+}
+.teacher-cover.has-custom-cover h1 {
+  color: #fff;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 28%);
+}
+.teacher-cover.has-custom-cover .teacher-cover__trust-count.is-new {
+  padding: 4px 8px;
+  border: 1px solid rgb(255 239 176 / 42%);
+  border-radius: 999px;
+  background: rgb(8 48 40 / 58%);
+  color: #ffefb0 !important;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 34%);
 }
 .teacher-cover__avatar {
   position: relative;
@@ -2848,6 +2913,40 @@ button.teacher-cover__trust-count:hover { text-decoration: underline; text-under
 }
 .teacher-cover__status-list .teacher-cover__trust-count,
 .teacher-cover__status-list .center-verification-badge { margin-top: 0; }
+.teacher-cover.has-custom-cover .teacher-cover__status-list {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  margin-top: 10px;
+}
+.teacher-cover.has-custom-cover .teacher-cover__status-list .teacher-cover__trust-count,
+.teacher-cover.has-custom-cover .teacher-cover__status-list .center-verification-badge {
+  min-height: 28px;
+  margin: 0;
+  padding: 0 9px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 999px;
+  background: rgb(8 40 34 / 58%);
+  font-size: var(--text-caption-xs) !important;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+}
+.teacher-cover.has-custom-cover .teacher-cover__status-list .teacher-cover__trust-count {
+  border-color: rgb(255 164 179 / 52%);
+  color: #ffa8b8 !important;
+}
+.teacher-cover.has-custom-cover .teacher-cover__status-list .center-verification-badge {
+  border-color: rgb(167 243 221 / 48%);
+  color: #b8f7e3 !important;
+}
+.teacher-cover.has-custom-cover .teacher-cover__status-list .center-verification-badge svg {
+  color: currentColor;
+}
+.teacher-cover.has-custom-cover button.teacher-cover__trust-count:hover {
+  border-color: #ffa8b8;
+  background: rgb(8 40 34 / 76%);
+  text-decoration: none;
+}
 .teacher-feed__heading {
   display: flex;
   align-items: center;

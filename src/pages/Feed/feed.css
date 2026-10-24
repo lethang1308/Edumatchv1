@@ -634,6 +634,10 @@
   font-size: var(--text-caption-xs);
   line-height: var(--text-caption-xs--line-height);
 }
+.feed-comment__meta > span:first-child {
+  font-size: var(--text-micro);
+  line-height: var(--text-micro--line-height);
+}
 .feed-comment__meta button {
   display: inline-flex;
   align-items: center;

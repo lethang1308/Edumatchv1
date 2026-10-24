@@ -3,6 +3,8 @@ import { storage } from '@/utils/storage';
 import tutoringHero from '@/assets/tutoring-hero.webp';
 import studyTogether from '@/assets/register-student.webp';
 import teacherCommunity from '@/assets/vietnamese-teachers-avatar-strip.png';
+import fullCenterAvatar from '@/assets/full-center-avatar.svg';
+import fullCenterCover from '@/assets/backgroup.webp';
 
 const centerProfiles = {
   oldSchool: {
@@ -58,6 +60,8 @@ const centerProfiles = {
     id: 'center-trung-tam-day-du',
     name: 'Trung Tâm Đầy Đủ',
     role: 'center',
+    avatar: fullCenterAvatar,
+    coverImage: fullCenterCover,
     foundedYear: '2014',
     licenseVerificationStatus: 'verified',
     heartCount: 1286,

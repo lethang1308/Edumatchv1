@@ -19,8 +19,17 @@ export const profileService = {
     data.append('avatar', file);
     return withUser(
       await api.post('/profile/avatar', data, {
-        // Let the browser supply the multipart boundary instead of sending JSON.
-        headers: { 'Content-Type': undefined },
+        // Remove the API's default JSON header. The browser then supplies the
+        // multipart boundary required by the uploaded image.
+        transformRequest: [(payload, headers) => {
+          if (typeof headers?.setContentType === 'function') {
+            headers.setContentType(undefined);
+          } else if (headers) {
+            delete headers['Content-Type'];
+            delete headers['content-type'];
+          }
+          return payload;
+        }],
       })
     );
   },
