@@ -96,7 +96,7 @@ export function RegistrationOtpModal({ session, onClose, onConfirm, onResend }) 
             Môi trường local/test — mã kiểm thử: <strong>{debugOtp}</strong>
           </p>
         )}
-        <label className="account-field">
+        <label className="account-field registration-otp-field">
           <span>Mã OTP 6 số</span>
           <input
             ref={inputRef}

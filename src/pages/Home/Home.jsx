@@ -38,7 +38,7 @@ import './home.css';
 import '@/components/courses/course.css';
 
 const initialFilters = { subject: '', mode: '', province: '', ward: '', provider: '', description: '' };
-const initialCourseFilters = { subject: '', mode: '', description: '' };
+const initialCourseFilters = { subject: '', mode: '', province: '', ward: '', description: '' };
 const communityTeacherPositions = ['0% center', '50% center', '100% center'];
 const sampleCenterOrder = [
   'center-old-school',
@@ -66,7 +66,12 @@ const matchesDescription = (candidate, description, gender = '') => {
   const tokens = needTokens(description);
   if (!tokens.length) return true;
   const matchingTerms = tokens.filter((token) => searchableCandidate.includes(token)).length;
-  return matchingTerms >= Math.max(1, Math.ceil(tokens.length * 0.35));
+  // Với cụm từ ngắn, yêu cầu khớp toàn bộ các từ khóa có nghĩa để tránh việc
+  // một từ rất phổ biến (ví dụ “cách”) kéo theo các hồ sơ không liên quan.
+  const requiredMatches = tokens.length <= 2
+    ? tokens.length
+    : Math.max(1, Math.ceil(tokens.length * 0.35));
+  return matchingTerms >= requiredMatches;
 };
 const inferredGender = (provider) => {
   const match = tutors.find((tutor) => normalize(`${tutor.name} ${tutor.title}`).includes(normalize(provider?.name || '')));
@@ -85,7 +90,7 @@ function SectionHeading({ title, description, children }) {
     <div className="section-heading">
       <div>
         <h2>{title}</h2>
-        <p>{description}</p>
+        {description && <p>{description}</p>}
       </div>
       {children}
     </div>
@@ -151,7 +156,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           {tutor.reviews ? (
             <div className="tutor-rating"><Star size={13} fill="currentColor" /><strong>{tutor.rating.toFixed(1)}</strong><span>({tutor.reviews} đánh giá)</span></div>
           ) : null}
-          <span className="subject-tag">{tutor.subject}</span>
+          <span className="subject-tag">{tutor.teachingField || tutor.subject}</span>
         </div>
         <button
           className={`save-button ${saved ? 'is-saved' : ''}`}
@@ -175,8 +180,7 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
           : 'Giáo viên'}
         <span className="mode-tag">{tutor.mode === 'online' ? 'Trực tuyến' : tutor.mode === 'recorded' ? 'Video quay sẵn' : tutor.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến & trực tiếp'}</span>
       </p>
-      <div className="tutor-contact">{tutor.isPhonePublic && tutor.phone && <a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a>}</div>
-      <div className="tutor-description"><p>{tutor.description}</p></div>
+      {tutor.isPhonePublic && tutor.phone && <div className="tutor-contact"><a className="tutor-phone" href={`tel:${tutor.phone.replace(/\s/g, '')}`}><Phone size={13} /> {tutor.phone}</a></div>}
       <div className="tutor-bottom">
         <Button className="edu-button profile-button" size="sm" onClick={onOpen}>
           Xem chi tiết <ArrowRight size={14} />
@@ -188,7 +192,8 @@ function TutorCard({ tutor, saved, onSave, onOpen }) {
 
 export const Home = () => {
   const catalog = useMasterData();
-  const subjects = catalog.subjects.map((subject) => ({ ...subject,
+  const catalogSubjects = catalog.subjects.length ? catalog.subjects : subjectStyles;
+  const subjects = catalogSubjects.map((subject) => ({ ...subject,
     icon: subjectStyles.find((item) => item.name === subject.name)?.icon || BookOpen,
     color: subjectStyles.find((item) => item.name === subject.name)?.color || 'green' }));
   const [params, setParams] = useSearchParams();
@@ -222,11 +227,12 @@ export const Home = () => {
   const [showOtherSubjectSearch, setShowOtherSubjectSearch] = useState(false);
   const [otherCourseQuery, setOtherCourseQuery] = useState('');
 const [profile, setProfile] = useState(null);
+const isCenterProfile = profile?.providerType === 'center';
+const profileTrustCount = profile ? getProviderTrustCount(profile.id, profile.heartCount) : 0;
 const profileCourses = profile
   ? getCourses().filter(
       (course) =>
-        (course.teacher?.id === profile.id || course.teacher?.id === `teacher-${profile.id}`) &&
-        course.enrollmentStatus !== 'closed'
+        (course.teacher?.id === profile.id || course.teacher?.id === `teacher-${profile.id}`)
     )
   : [];
   const [consultationComplete, setConsultationComplete] = useState(false);
@@ -254,12 +260,17 @@ const profileCourses = profile
         course.description,
         course.teacher?.name,
         course.location,
+        course.province,
+        course.ward,
+        course.district,
         course.schedule,
       ].filter(Boolean).join(' '));
 
       return (
         (!activeCourseFilters.subject || courseSearchText.includes(normalize(activeCourseFilters.subject))) &&
         (!activeCourseFilters.mode || courseMode === activeCourseFilters.mode) &&
+        (!activeCourseFilters.province || normalize(`${course.province || ''} ${course.location || ''}`).includes(normalize(activeCourseFilters.province))) &&
+        (!activeCourseFilters.ward || normalize(`${course.ward || ''} ${course.district || ''} ${course.location || ''}`).includes(normalize(activeCourseFilters.ward))) &&
         matchesDescription(`${courseSearchText} ${courseMode === 'in-person' ? 'truc tiep' : courseMode === 'online' ? 'truc tuyen' : 'video quay san'}`, activeCourseFilters.description, inferredGender(course.teacher))
       );
     })
@@ -277,7 +288,6 @@ const profileCourses = profile
     ? rankedCourses.slice((coursePage - 1) * coursePageSize, coursePage * coursePageSize)
     : rankedCourses.slice(0, 6);
   const sponsoredCourses = getCourses()
-    .filter((course) => course.enrollmentStatus !== 'closed')
     .map((course) => ({ ...course, ranking: getCourseRating(course.id) }))
     .sort((first, second) => second.ranking.total - first.ranking.total
       || second.ranking.average - first.ranking.average
@@ -287,21 +297,6 @@ const profileCourses = profile
   const visibleSponsoredCourses = showAllSponsored
     ? sponsoredCourses.slice((sponsoredPage - 1) * sponsoredPageSize, sponsoredPage * sponsoredPageSize)
     : sponsoredCourses.slice(0, 3);
-  const otherCourseMatches = (() => {
-    const keyword = normalize(otherCourseQuery).trim();
-    if (!keyword) return [];
-
-    return rankedCourses
-      .filter((course) => normalize([
-        course.title,
-        course.description,
-        course.teacher?.name,
-        course.location,
-        course.schedule,
-      ].filter(Boolean).join(' ')).includes(keyword))
-      .slice(0, 6);
-  })();
-
   const searchableTutors = (() => {
     const providers = new Map();
 
@@ -319,6 +314,7 @@ const profileCourses = profile
         reviews: 0,
         heartCount: Number(provider.heartCount || 0),
         subjects: [],
+        courseTitles: [],
         modes: new Set(),
         locations: [],
         province: '',
@@ -329,12 +325,15 @@ const profileCourses = profile
         licenseVerificationStatus: provider.licenseVerificationStatus || '',
         courseId: course.id,
         experience: provider.experience || 'Đang cập nhật',
+        foundedYear: provider.foundedYear || '',
+        teachingField: provider.teachingField || provider.teaching_field || '',
         price: course.price,
         description: provider.bio || course.description,
         bio: provider.bio || '',
         methods: ['Lộ trình học theo khóa', 'Chủ động trao đổi lịch học'],
       };
-      current.subjects.push(course.title);
+      current.subjects.push(course.subject || '');
+      current.courseTitles.push(course.title || '');
       current.modes.add(mode);
       current.locations.push(course.location || '');
       current.province ||= course.province || '';
@@ -347,12 +346,42 @@ const profileCourses = profile
 
     const courseProviders = [...providers.values()].map((provider) => ({
       ...provider,
-      subject: [...new Set(provider.subjects)].join(' · '),
+      subject: [...new Set(provider.subjects.filter(Boolean))].join(' · ') || 'Đang cập nhật',
+      searchableCourses: [...new Set(provider.courseTitles.filter(Boolean))].join(' · '),
       mode: provider.modes.size === 1 ? [...provider.modes][0] : 'both',
       location: provider.locations.filter(Boolean).join(' · '),
       rating: provider.reviews ? provider.ratingSum / provider.reviews : 0,
       price: Number.isFinite(provider.price) ? provider.price : 0,
     }));
+
+    const currentProvider = ['teacher', 'center'].includes(user?.role)
+      ? {
+          id: user.id,
+          name: user.name || 'Hồ sơ EduMatch',
+          title: user.role === 'center' ? '' : 'GV.',
+          providerType: user.role,
+          rating: 0,
+          reviews: 0,
+          heartCount: Number(user.heartCount || 0),
+          subject: user.teachingField || 'Đang cập nhật',
+          teachingField: user.teachingField || '',
+          searchableCourses: '',
+          mode: user.learningMode || 'both',
+          location: user.location || user.address || '',
+          province: user.province || '',
+          ward: user.ward || '',
+          image: user.avatar || '',
+          phone: user.phone || '',
+          isPhonePublic: Boolean(user.isPhonePublic),
+          licenseVerificationStatus: user.licenseVerificationStatus || '',
+          experience: user.experience || 'Đang cập nhật',
+          foundedYear: user.foundedYear || '',
+          price: 0,
+          description: user.detailedProfile || user.bio || '',
+          bio: user.detailedProfile || user.bio || '',
+          methods: [],
+        }
+      : null;
 
     return [
       ...tutors.map((tutor) => ({
@@ -361,6 +390,9 @@ const profileCourses = profile
         heartCount: Number(tutor.heartCount || 0),
       })),
       ...courseProviders,
+      ...(currentProvider && !courseProviders.some((provider) => String(provider.id) === String(currentProvider.id))
+        ? [currentProvider]
+        : []),
     ];
   })();
 
@@ -368,13 +400,13 @@ const profileCourses = profile
     return searchableTutors.filter((tutor) => {
         const matchesQuery =
           !query ||
-          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description}`).includes(
+          normalize(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.description}`).includes(
             normalize(query)
           );
         return (
           matchesQuery &&
           (!activeTutorFilters.subject ||
-            normalize(`${tutor.subject} ${tutor.title} ${tutor.description}`).includes(
+            normalize(`${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.title} ${tutor.description}`).includes(
               normalize(activeTutorFilters.subject)
             )) &&
           (!activeTutorFilters.mode ||
@@ -387,7 +419,7 @@ const profileCourses = profile
           (!activeTutorFilters.ward || normalize(`${tutor.ward || ''} ${tutor.location || ''}`).includes(normalize(activeTutorFilters.ward))) &&
           (!activeTutorFilters.rating || tutor.rating >= Number(activeTutorFilters.rating)) &&
           (!activeTutorFilters.provider || tutor.providerType === activeTutorFilters.provider) &&
-          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
+          matchesDescription(`${tutor.title} ${tutor.name} ${tutor.subject} ${tutor.teachingField || ''} ${tutor.searchableCourses || ''} ${tutor.description} ${tutor.location} ${tutor.mode === 'offline' ? 'truc tiep' : tutor.mode === 'online' ? 'truc tuyen' : ''}`, activeTutorFilters.description, tutor.title === 'Cô' ? 'female' : tutor.title === 'Thầy' ? 'male' : '') &&
           (!savedOnly || (isAuthenticated ? hasProviderTrust(user.id, tutor.id) : savedIds.includes(tutor.id)))
         );
     }).sort((first, second) => {
@@ -418,6 +450,7 @@ const profileCourses = profile
     ? filteredTutors.slice((tutorPage - 1) * tutorPageSize, tutorPage * tutorPageSize)
     : filteredTutors.slice(0, 8);
   const { administrativeProvinces, wardOptions, error: areaError } = useAdministrativeOptions(filters.province);
+  const { administrativeProvinces: courseProvinces, wardOptions: courseWardOptions, error: courseAreaError } = useAdministrativeOptions(courseFilters.province);
   const registerForTutor = (tutor) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để đăng ký học.');
@@ -430,8 +463,10 @@ const profileCourses = profile
       courseId: tutor.courseId,
       teacherId: tutor.id,
       teacherName: [tutor.title, tutor.name].filter(Boolean).join(' '),
+      teacherAvatar: tutor.image || '',
       studentId: user.id,
       studentName: user.name || 'Học viên EduMatch',
+      studentAvatar: user.avatar || '',
       senderId: user.id,
       text: 'Chào thầy/cô, em muốn trao đổi thêm để đăng ký học và sắp xếp lịch phù hợp ạ.',
       createdAt: 'Vừa xong',
@@ -464,10 +499,21 @@ const profileCourses = profile
         return current;
       }, { replace: true });
     }
-    setCourseFilters((current) => ({ ...current, [name]: value }));
+    setCourseFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'mode' && value !== 'in-person' ? { province: '', ward: '' } : {}),
+    }));
   };
   const selectLocation = (name) => (value) => {
     setFilters((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === 'province' ? { ward: '' } : {}),
+    }));
+  };
+  const selectCourseLocation = (name) => (value) => {
+    setCourseFilters((current) => ({
       ...current,
       [name]: value,
       ...(name === 'province' ? { ward: '' } : {}),
@@ -520,12 +566,19 @@ const profileCourses = profile
     );
   };
   const chooseSubject = (subject) => {
-    const next = { ...initialFilters, subject };
-    setFilters(next);
-    setAppliedFilters(next);
+    const tutorFilters = { ...initialFilters, subject };
+    const nextCourseFilters = { ...initialCourseFilters, subject };
+    setFilters(tutorFilters);
+    setAppliedFilters(tutorFilters);
+    setCourseFilters(nextCourseFilters);
+    setAppliedCourseFilters(nextCourseFilters);
     setSavedOnly(false);
     setShowAll(false);
     setTutorPage(1);
+    setShowAllCourses(false);
+    setCoursePage(1);
+    setShowOtherSubjectSearch(false);
+    setOtherCourseQuery('');
     setParams(
       (current) => {
         current.delete('q');
@@ -535,11 +588,16 @@ const profileCourses = profile
       },
       { replace: true }
     );
-    scrollTo(resultsRef.current);
+    scrollTo(courseRef.current);
   };
   const openOtherSubjectSearch = () => {
     setShowOtherSubjectSearch(true);
     requestAnimationFrame(() => otherSubjectInputRef.current?.focus());
+  };
+  const searchOtherSubject = (event) => {
+    event.preventDefault();
+    const keyword = otherCourseQuery.trim();
+    if (keyword) chooseSubject(keyword);
   };
 
   return (
@@ -644,7 +702,7 @@ const profileCourses = profile
         <section id="khoa-hoc" className="home-section course-section" ref={courseRef} aria-labelledby="courses-heading">
           <SectionHeading
             title={<span id="courses-heading">{isSearchResults ? <>Khóa học <span className="accent-text">phù hợp</span></> : <>Lựa chọn <span className="accent-text">khóa học phù hợp</span></>}</span>}
-            description={isSearchResults ? 'Các khóa học được lọc theo mô tả nhu cầu của bạn.' : 'Khám phá và phát triển bản thân qua các khóa học tại EduMatch.'}
+            description={isSearchResults ? 'Các khóa học được lọc theo mô tả nhu cầu của bạn.' : undefined}
           >
             <fieldset className="course-sort" aria-label="Sắp xếp khóa học">
               <legend className="sr-only">Sắp xếp khóa học</legend>
@@ -672,7 +730,7 @@ const profileCourses = profile
           </SectionHeading>
           <form
             id="tim-khoa-hoc"
-            className="course-search"
+            className={`course-search ${courseFilters.mode === 'in-person' ? 'course-search--location' : ''}`}
             aria-label="Tìm kiếm khóa học"
             onSubmit={(event) => {
               event.preventDefault();
@@ -695,6 +753,27 @@ const profileCourses = profile
               <option value="in-person">Học trực tiếp</option>
               <option value="recorded">Video quay sẵn</option>
             </FilterField>
+            {courseAreaError && <p className="account-error" role="alert">{courseAreaError}</p>}
+            {courseFilters.mode === 'in-person' && <>
+              <AdministrativePicker
+                id="course-province-filter"
+                label="Tỉnh / Thành phố"
+                value={courseFilters.province}
+                options={courseProvinces}
+                onSelect={selectCourseLocation('province')}
+                placeholder="Gõ để tìm tỉnh/thành, rồi chọn"
+              />
+              <AdministrativePicker
+                id="course-ward-filter"
+                label="Xã / Phường / Đặc khu"
+                value={courseFilters.ward}
+                options={courseWardOptions}
+                onSelect={selectCourseLocation('ward')}
+                placeholder={courseFilters.province ? 'Gõ để tìm xã/phường, rồi chọn' : 'Chọn tỉnh/thành trước'}
+                disabled={!courseFilters.province}
+                emptyText="Không tìm thấy xã/phường trong tỉnh/thành đã chọn."
+              />
+            </>}
             <Button type="submit" className="edu-button course-search__submit">
               <Search size={18} />
               Tìm kiếm khóa học
@@ -747,7 +826,7 @@ const profileCourses = profile
                 {isSearchResults ? <>Giáo viên, trung tâm <span className="accent-text">phù hợp</span></> : <>Gặp người thầy <span className="accent-text">truyền cảm hứng</span></>}
               </span>
             }
-            description={isSearchResults ? 'Những hồ sơ được lọc theo cùng mô tả nhu cầu của bạn.' : 'Chuyên môn vững vàng, tận tâm đồng hành trên từng bước tiến.'}
+            description={isSearchResults ? 'Những hồ sơ được lọc theo cùng mô tả nhu cầu của bạn.' : undefined}
           >
             <button
               type="button"
@@ -904,19 +983,19 @@ const profileCourses = profile
           <SectionHeading
             title={
               <span id="subjects-heading">
-                Mỗi đam mê, một <span className="accent-text">khởi đầu mới</span>
+                Khám phá <span className="accent-text">môn học</span>
               </span>
             }
-            description="Khám phá kiến thức mới, nâng cao giới hạn bản thân."
           >
             <button className="text-link" onClick={() => setShowAllSubjects((current) => !current)}>
               {showAllSubjects ? 'Thu gọn môn học' : 'Khám phá các môn học'}
               <ArrowRight size={16} />
             </button>
           </SectionHeading>
+          <p className="subject-discovery-label">Môn học nổi bật</p>
           <div className="subjects-grid">
             {subjects
-              .slice(0, showAllSubjects ? subjects.length : 9)
+              .slice(0, showAllSubjects ? subjects.length : 12)
               .map(({ name, icon: Icon, icon_url, color }) => (
                 <button
                   key={name}
@@ -942,33 +1021,27 @@ const profileCourses = profile
           {showOtherSubjectSearch && (
             <div className="other-course-search" role="search" aria-label="Tìm khóa học khác">
               <div className="other-course-search__top">
-                <div>
-                  <strong>Tìm khóa học khác</strong>
-                  <span>Nhập môn học, chủ đề hoặc tên khóa học bạn muốn tìm.</span>
-                </div>
                 <button type="button" onClick={() => { setShowOtherSubjectSearch(false); setOtherCourseQuery(''); }} aria-label="Đóng tìm kiếm khóa học"><X size={17} /></button>
               </div>
-              <div className="other-course-search__input">
-                <Search size={18} aria-hidden="true" />
-                <input
-                  ref={otherSubjectInputRef}
-                  value={otherCourseQuery}
-                  onChange={(event) => setOtherCourseQuery(event.target.value)}
-                  placeholder="Ví dụ: IELTS, đàn guitar, luyện thi đại học..."
-                  aria-label="Từ khóa tìm khóa học"
-                />
-              </div>
-              {otherCourseQuery.trim() && (
-                <div className="other-course-search__results">
-                  <p>{otherCourseMatches.length ? `${otherCourseMatches.length} khóa học liên quan` : 'Chưa có khóa học phù hợp'}</p>
-                  {otherCourseMatches.map((course) => (
-                    <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} className="other-course-result">
-                      <span><strong>{course.title}</strong><small>{course.teacher?.name || 'Giáo viên EduMatch'} · {course.description}</small></span>
-                      <ArrowRight size={17} aria-hidden="true" />
-                    </Link>
-                  ))}
+              <form className="other-course-search__form" onSubmit={searchOtherSubject}>
+                <div className="other-course-search__input">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    ref={otherSubjectInputRef}
+                    value={otherCourseQuery}
+                    onChange={(event) => setOtherCourseQuery(event.target.value)}
+                    list="featured-subject-keywords"
+                    placeholder="Ví dụ: IELTS, đàn guitar, luyện thi đại học..."
+                    aria-label="Từ khóa tìm khóa học và giáo viên"
+                  />
+                  <datalist id="featured-subject-keywords">
+                    {subjects.map(({ name }) => <option key={name} value={name} />)}
+                  </datalist>
                 </div>
-              )}
+                <Button type="submit" className="edu-button other-course-search__submit" disabled={!otherCourseQuery.trim()}>
+                  Tìm kiếm <ArrowRight size={16} />
+                </Button>
+              </form>
             </div>
           )}
         </section>
@@ -1044,7 +1117,7 @@ const profileCourses = profile
         open={Boolean(profile)}
         onClose={() => setProfile(null)}
         title="Khám phá người đồng hành"
-        size="md"
+        size="lg"
         className="edu-modal"
       >
         {profile && (
@@ -1056,19 +1129,26 @@ const profileCourses = profile
                 <h3><Link to={ROUTES.TEACHER_PROFILE(profile.id)} onClick={() => setProfile(null)}>{profile.title} {profile.name}</Link></h3>
                 {profile.reviews ? (
                   <p><Star size={15} fill="currentColor" /> {profile.rating.toFixed(1)} <span>({profile.reviews} đánh giá)</span></p>
-                ) : getProviderTrustCount(profile.id, profile.heartCount) >= 3 ? (
-                  <p className="profile-detail__trust"><Heart size={15} fill="currentColor" /> {getProviderTrustCount(profile.id, profile.heartCount)} lượt tin tưởng</p>
-                ) : <p>Hồ sơ giáo viên mới</p>}
+                ) : null}
+                <p className={`profile-detail__trust ${profileTrustCount < 3 ? 'is-new' : ''}`}>
+                  {profileTrustCount < 3 ? 'Mới trên EduMatch' : <><Heart size={15} fill="currentColor" /> {profileTrustCount} lượt tin tưởng</>}
+                </p>
                 <VerifiedBadge userId={profile.id} />
               </div>
             </div>
             <dl className="profile-detail__info">
-              <div><dt>Lĩnh vực giảng dạy</dt><dd>{profile.subject || 'Đang cập nhật'}</dd></div>
-              <div><dt>Kinh nghiệm</dt><dd>{typeof profile.experience === 'number' ? `${profile.experience} năm` : profile.experience || 'Đang cập nhật'}</dd></div>
-              <div><dt>Hình thức giảng dạy</dt><dd>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : profile.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến và trực tiếp'}</dd></div>
+              <div><dt>Lĩnh vực giảng dạy</dt><dd>{profile.teachingField || profile.subject || 'Đang cập nhật'}</dd></div>
+              {isCenterProfile ? (
+                <div><dt>Năm thành lập</dt><dd>{profile.foundedYear || 'Đang cập nhật'}</dd></div>
+              ) : (
+                <>
+                  <div><dt>Kinh nghiệm</dt><dd>{typeof profile.experience === 'number' ? `${profile.experience} năm` : profile.experience || 'Đang cập nhật'}</dd></div>
+                  <div><dt>Hình thức giảng dạy</dt><dd>{profile.mode === 'online' ? 'Trực tuyến' : profile.mode === 'recorded' ? 'Video quay sẵn' : profile.mode === 'offline' ? 'Trực tiếp' : 'Trực tuyến và trực tiếp'}</dd></div>
+                </>
+              )}
               {profile.isPhonePublic && profile.phone && <div><dt>Số điện thoại liên hệ</dt><dd><a href={`tel:${profile.phone.replace(/\s/g, '')}`}><Phone size={15} /> {profile.phone}</a></dd></div>}
             </dl>
-            <div className="profile-detail__bio"><h4>Thông tin giáo viên</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
+            <div className="profile-detail__bio"><h4>{isCenterProfile ? 'Thông tin trung tâm' : 'Thông tin giáo viên'}</h4><p>{[profile.description, profile.bio].filter(Boolean).join(' ') || 'Đang cập nhật thông tin giới thiệu.'}</p></div>
             {profileCourses.length > 0 && <section className="profile-detail__courses"><h4>Khóa học đang mở trên EduMatch</h4><div>{profileCourses.map((course) => <Link key={course.id} to={ROUTES.COURSE_DETAIL(course.id)} onClick={() => setProfile(null)}><span><strong>{course.title}</strong><small>{course.description}</small></span><ArrowRight size={17} /></Link>)}</div></section>}
             <div className="profile-detail__actions">
               <Button className="edu-button" onClick={() => registerForTutor(profile)}><MessageCircle size={17} /> Đăng Ký Học</Button>

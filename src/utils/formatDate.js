@@ -33,4 +33,30 @@ export const formatDateTime = (date, locale = 'vi-VN') => {
   }).format(d);
 };
 
+/**
+ * Formats a date using a compact Vietnamese relative time label.
+ * @param {string|Date} value
+ * @param {Date} now
+ * @returns {string}
+ */
+export const formatRelativeTime = (value, now = new Date()) => {
+  if (!value || value === 'Vừa xong') return 'Vừa xong';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Vừa xong';
+
+  const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
+  if (elapsedSeconds < 60) return 'Vừa xong';
+
+  const units = [
+    ['năm', 365 * 24 * 60 * 60],
+    ['tháng', 30 * 24 * 60 * 60],
+    ['tuần', 7 * 24 * 60 * 60],
+    ['ngày', 24 * 60 * 60],
+    ['giờ', 60 * 60],
+    ['phút', 60],
+  ];
+  const [label, seconds] = units.find(([, amount]) => elapsedSeconds >= amount) || units.at(-1);
+  return `${Math.floor(elapsedSeconds / seconds)} ${label} trước`;
+};
+
 export default formatDate;

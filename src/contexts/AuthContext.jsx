@@ -6,6 +6,42 @@ import { disconnectPusher } from '@/services/pusherService';
 
 export const AuthContext = createContext(null);
 
+const withImageVersion = (source, version) => {
+  if (!source || !version || String(source).startsWith('data:image/')) return source;
+  return `${source}${String(source).includes('?') ? '&' : '?'}edumatch_image=${encodeURIComponent(version)}`;
+};
+
+// Ảnh bìa hiện được lưu ở phía giao diện, trong khi API hồ sơ có thể chưa trả
+// về trường này. Giữ lại ảnh cục bộ của đúng tài khoản khi làm mới phiên, thay
+// vì để phản hồi /auth/me vô tình xóa ảnh bìa người dùng vừa chọn.
+const mergePersistedProfileVisuals = (remoteUser) => {
+  const cachedUser = storage.get(STORAGE_KEYS.USER_INFO);
+  if (!cachedUser || String(cachedUser.id) !== String(remoteUser?.id)) return remoteUser;
+
+  const preferredAvatar =
+    (cachedUser.avatar && (!remoteUser?.avatar || cachedUser.avatar.startsWith('data:image/') || cachedUser.avatarVersion))
+      ? (cachedUser.avatarVersion && !cachedUser.avatar.startsWith('data:image/') && !cachedUser.avatar.startsWith('blob:')
+          ? withImageVersion(cachedUser.avatar, cachedUser.avatarVersion)
+          : cachedUser.avatar)
+      : (remoteUser?.avatar
+          ? (cachedUser.avatarVersion && !remoteUser.avatar.startsWith('data:image/') && !remoteUser.avatar.startsWith('blob:')
+              ? withImageVersion(remoteUser.avatar, cachedUser.avatarVersion)
+              : remoteUser.avatar)
+          : (cachedUser.avatar || ''));
+
+  const preferredCoverImage = cachedUser.coverImage || remoteUser?.coverImage || '';
+
+  return {
+    ...remoteUser,
+    avatar: preferredAvatar,
+    coverImage: preferredCoverImage,
+    avatarVersion: cachedUser.avatarVersion || remoteUser?.avatarVersion || undefined,
+    ...(!remoteUser?.phoneVisibilityProvided && typeof cachedUser.isPhonePublic === 'boolean'
+      ? { isPhonePublic: cachedUser.isPhonePublic }
+      : {}),
+  };
+};
+
 const authFailure = (error, fallback) => ({
   success: false,
   message: error.response?.data?.message || (error.request ? 'Không thể kết nối đến máy chủ. Vui lòng thử lại.' : error.message) || fallback,
@@ -45,8 +81,9 @@ export const AuthProvider = ({ children }) => {
         // Ignore a late response if another action has replaced the session.
         if (active && storage.get(STORAGE_KEYS.ACCESS_TOKEN) === savedToken) {
           setToken(savedToken);
-          setUser(response.user);
-          storage.set(STORAGE_KEYS.USER_INFO, response.user);
+          const hydratedUser = mergePersistedProfileVisuals(response.user);
+          setUser(hydratedUser);
+          storage.set(STORAGE_KEYS.USER_INFO, hydratedUser);
         }
       } catch {
         if (active && storage.get(STORAGE_KEYS.ACCESS_TOKEN) === savedToken) clearSession();
@@ -56,9 +93,43 @@ export const AuthProvider = ({ children }) => {
     };
     window.addEventListener('auth:expired', clearSession);
     initAuth();
+
+    const handleUserUpdate = (event) => {
+      const updatedUser = event.detail;
+      if (updatedUser?.id) {
+        setUser((current) => {
+          if (!current || String(current.id) === String(updatedUser.id)) {
+            return { ...current, ...updatedUser };
+          }
+          return current;
+        });
+      }
+    };
+    const handleStorage = (event) => {
+      if (event.key === STORAGE_KEYS.USER_INFO && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (parsed?.id) {
+            setUser((current) => {
+              if (!current || String(current.id) === String(parsed.id)) {
+                return { ...current, ...parsed };
+              }
+              return current;
+            });
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+    };
+    window.addEventListener('edumatch:user-updated', handleUserUpdate);
+    window.addEventListener('storage', handleStorage);
+
     return () => {
       active = false;
       window.removeEventListener('auth:expired', clearSession);
+      window.removeEventListener('edumatch:user-updated', handleUserUpdate);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -92,8 +163,38 @@ export const AuthProvider = ({ children }) => {
   const updateUser = useCallback((updates) => {
     setUser((current) => {
       if (!current) return null;
-      const nextUser = { ...current, ...updates };
+
+      let nextAvatar = current.avatar;
+      let nextAvatarVersion = current.avatarVersion;
+
+      if (typeof updates.avatar === 'string' && updates.avatar.trim()) {
+        // If current avatar is a data:image (fresh local image selected by user),
+        // and updates is an older remote URL without an avatarVersion, keep local image
+        if (current.avatar?.startsWith('data:image/') && !updates.avatar.startsWith('data:image/') && !updates.avatarVersion) {
+          nextAvatar = current.avatar;
+        } else {
+          nextAvatar = updates.avatar;
+        }
+      } else if (updates.avatar === '' || updates.avatar === null) {
+        if (!updates.removeAvatar && current.avatar) {
+          nextAvatar = current.avatar;
+        } else {
+          nextAvatar = '';
+        }
+      }
+
+      if (updates.avatarVersion) {
+        nextAvatarVersion = updates.avatarVersion;
+      }
+
+      const nextUser = {
+        ...current,
+        ...updates,
+        avatar: nextAvatar || '',
+        ...(nextAvatarVersion ? { avatarVersion: nextAvatarVersion } : {}),
+      };
       storage.set(STORAGE_KEYS.USER_INFO, nextUser);
+      window.dispatchEvent(new CustomEvent('edumatch:user-updated', { detail: nextUser }));
       return nextUser;
     });
   }, []);

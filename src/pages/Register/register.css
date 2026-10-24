@@ -267,6 +267,17 @@
   line-height: 1.5;
   color: var(--color-danger);
 }
+.register-field__count {
+  margin: 0;
+  color: var(--register-muted);
+  font-size: var(--text-caption-xs);
+  line-height: 1.35;
+  text-align: right;
+}
+.register-field__count.is-limit {
+  color: var(--color-danger);
+  font-weight: 700;
+}
 .register-hint {
   margin: -3px 0 0;
   color: var(--register-muted);

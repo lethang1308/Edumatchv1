@@ -2,7 +2,10 @@ import api from './api';
 import { sharedGet } from './sharedGet';
 import { normalizeAuthUser } from './authService';
 
-const withUser = (response) => ({ ...response, user: normalizeAuthUser(response.user) });
+const withUser = (response) => {
+  const userPayload = response?.user || response?.data?.user || (response?.data?.id ? response.data : null);
+  return { ...response, user: userPayload ? normalizeAuthUser(userPayload) : response?.user };
+};
 
 export const profileService = {
   async get() {
@@ -16,8 +19,17 @@ export const profileService = {
     data.append('avatar', file);
     return withUser(
       await api.post('/profile/avatar', data, {
-        // Let the browser supply the multipart boundary instead of sending JSON.
-        headers: { 'Content-Type': undefined },
+        // Remove the API's default JSON header. The browser then supplies the
+        // multipart boundary required by the uploaded image.
+        transformRequest: [(payload, headers) => {
+          if (typeof headers?.setContentType === 'function') {
+            headers.setContentType(undefined);
+          } else if (headers) {
+            delete headers['Content-Type'];
+            delete headers['content-type'];
+          }
+          return payload;
+        }],
       })
     );
   },

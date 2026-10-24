@@ -17,7 +17,6 @@ import {
   Users,
 } from "lucide-react";
 
-export const SHORT_BIO_MAX_LENGTH = 5000;
 
 export const registrationRoles = [
   {
@@ -159,6 +158,14 @@ export const centerAccountFields = [
 
 export const teacherFields = [
   {
+    name: "teachingField",
+    label: "Lĩnh vực giảng dạy",
+    placeholder: "Lĩnh Vực Giảng Dạy ...",
+    icon: BookOpen,
+    maxLength: 45,
+    showCharacterCount: true,
+  },
+  {
     name: "qualification",
     label: "Bằng cấp, chứng chỉ",
     placeholder: "Bằng cấp/chứng chỉ",
@@ -178,15 +185,22 @@ export const teacherFields = [
   },
   {
     name: "biography",
-    label: "Thông tin tổng quan",
+    label: "Hồ sơ năng lực",
     placeholder: "Chia sẻ về bản thân để học viên hiểu hơn về bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
 export const centerFields = [
+  {
+    name: "teachingField",
+    label: "Lĩnh vực giảng dạy",
+    placeholder: "Lĩnh Vực Giảng Dạy ...",
+    icon: BookOpen,
+    maxLength: 45,
+    showCharacterCount: true,
+  },
   {
     name: "foundedYear",
     label: "Năm thành lập",
@@ -196,11 +210,10 @@ export const centerFields = [
   },
   {
     name: "centerDescription",
-    label: "Thông tin tổng quan",
+    label: "Hồ sơ năng lực",
     placeholder: "Chia sẻ thêm để học viên hiểu hơn về trung tâm của bạn.",
     icon: FileText,
     multiline: true,
-    maxLength: SHORT_BIO_MAX_LENGTH,
   },
 ];
 
@@ -217,6 +230,7 @@ export const initialForm = {
   centerName: "",
   centerDescription: "",
   foundedYear: "",
+  teachingField: "",
   isPhonePublic: true,
 };
 
@@ -280,17 +294,13 @@ export function validateRegistration(form, role, today = new Date()) {
         errors[name] = `Vui lòng nhập ${label.toLowerCase()}.`;
     });
     if (form.qualification.length > 200) errors.qualification = "Bằng cấp/tiêu đề nghề nghiệp tối đa 200 ký tự.";
+    if (form.teachingField.trim().length > 45) errors.teachingField = "Lĩnh vực giảng dạy tối đa 45 ký tự.";
     const years = Number.parseInt(form.experience, 10);
     if (!Number.isInteger(years) || years < 0 || years > 60) errors.experience = "Nhập số năm kinh nghiệm từ 0 đến 60 (ví dụ: 5 năm).";
-  } else if (role === "center" && !form.centerDescription.trim()) {
-    errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
-  }
-  if (
-    (role === "teacher" && form.biography.length > SHORT_BIO_MAX_LENGTH) ||
-    (role === "center" && form.centerDescription.length > SHORT_BIO_MAX_LENGTH)
-  ) {
-    errors[role === "teacher" ? "biography" : "centerDescription"] =
-      `Thông tin tổng quan tối đa ${SHORT_BIO_MAX_LENGTH} ký tự.`;
+  } else if (role === "center") {
+    if (!form.centerDescription.trim()) errors.centerDescription = "Vui lòng nhập thông tin mô tả về trung tâm.";
+    if (!form.teachingField.trim()) errors.teachingField = "Vui lòng nhập lĩnh vực giảng dạy.";
+    else if (form.teachingField.trim().length > 45) errors.teachingField = "Lĩnh vực giảng dạy tối đa 45 ký tự.";
   }
   if (role === "center" && !/^\d{4}$/.test(form.foundedYear))
     errors.foundedYear = "Vui lòng nhập năm thành lập gồm 4 chữ số.";
@@ -301,8 +311,7 @@ export function validateRegistration(form, role, today = new Date()) {
 
 // Only include the active role's fields; hidden profile values never reach the API.
 export function buildRegistrationPayload(form, role) {
-  const limitProfileText = (value) =>
-    String(value || "").slice(0, SHORT_BIO_MAX_LENGTH).trim();
+  const profileText = (value) => String(value || "").trim();
   const data = {
     name: (role === "center" ? form.centerName : form.name).trim(),
     email: form.email.trim().toLowerCase(),
@@ -311,17 +320,26 @@ export function buildRegistrationPayload(form, role) {
     password_confirmation: form.confirmPassword,
     role,
     fullName: (role === "center" ? form.centerName : form.name).trim(),
-    ...(role === "teacher" && { isPhonePublic: form.isPhonePublic }),
+    ...(role === "teacher" && { isPhonePublic: form.isPhonePublic, show_phone: Boolean(form.isPhonePublic) }),
   };
   if (role === "center") {
     return {
       ...data,
-      bio: limitProfileText(form.centerDescription),
+      // `bio` belongs to the generic account profile, where the API limits text
+      // to 5,000 characters. A center's capability profile is intentionally
+      // unrestricted, so only send it through the center-specific description.
+      centerDescription: profileText(form.centerDescription),
+      center_description: profileText(form.centerDescription),
+      description: profileText(form.centerDescription),
       foundedYear: form.foundedYear,
       founded_year: Number(form.foundedYear),
+      teachingField: profileText(form.teachingField),
+      teaching_field: profileText(form.teachingField),
       centerProfile: {
-        description: limitProfileText(form.centerDescription),
+        description: profileText(form.centerDescription),
         foundedYear: form.foundedYear,
+        teachingField: profileText(form.teachingField),
+        teaching_field: profileText(form.teachingField),
       },
     };
   }
@@ -331,14 +349,16 @@ export function buildRegistrationPayload(form, role) {
     dateOfBirth: form.dateOfBirth,
     dob: form.dateOfBirth,
     ...(role === "teacher" && {
-      qualifications: limitProfileText(form.qualification),
+      qualifications: profileText(form.qualification),
       headline: form.qualification.trim(),
       experience_years: Number.parseInt(form.experience, 10) || 0,
       show_phone: Boolean(form.isPhonePublic),
-      experience: limitProfileText(form.experience),
-      bio: limitProfileText(form.biography),
+      experience: profileText(form.experience),
+      bio: profileText(form.biography),
+      teachingField: profileText(form.teachingField),
+      teaching_field: profileText(form.teachingField),
       teacherProfile: Object.fromEntries(
-        teacherFields.map(({ name }) => [name, limitProfileText(form[name])]),
+        teacherFields.map(({ name }) => [name, profileText(form[name])]),
       ),
     }),
   };
@@ -349,8 +369,20 @@ export function mapRegistrationErrors(serverErrors = {}, role = 'student') {
     full_name: 'name', fullName: 'name',
     date_of_birth: 'dateOfBirth', dob: 'dateOfBirth',
     password_confirmation: 'confirmPassword',
-    headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear',
-    ...(role === 'center' ? { name: 'centerName', bio: 'centerDescription' } : role === 'teacher' ? { bio: 'biography', show_phone: 'isPhonePublic' } : {}),
+    headline: 'qualification', experience_years: 'experience', founded_year: 'foundedYear', teaching_field: 'teachingField',
+    ...(role === 'center'
+      ? {
+          name: 'centerName',
+          bio: 'centerDescription',
+          description: 'centerDescription',
+          centerDescription: 'centerDescription',
+          center_description: 'centerDescription',
+          'centerProfile.description': 'centerDescription',
+          'center_profile.description': 'centerDescription',
+        }
+      : role === 'teacher'
+        ? { bio: 'biography', show_phone: 'isPhonePublic' }
+        : {}),
   };
   return Object.fromEntries(Object.entries(serverErrors).map(([field, messages]) => [
     aliases[field] || field,

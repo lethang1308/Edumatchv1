@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title">
+  <title>Biểu trưng Trung Tâm Đầy Đủ</title>
+  <defs>
+    <linearGradient id="background" x1="20" y1="14" x2="142" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a8f76"/>
+      <stop offset="1" stop-color="#075e50"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="76" fill="url(#background)"/>
+  <circle cx="80" cy="80" r="67" fill="none" stroke="#d9f3eb" stroke-opacity=".55" stroke-width="2"/>
+  <path d="M42 57c14-6 27-4 38 6v49c-11-10-24-12-38-6V57Zm76 0c-14-6-27-4-38 6v49c11-10 24-12 38-6V57Z" fill="#fff" fill-opacity=".97"/>
+  <path d="M80 63v49" stroke="#0a7e69" stroke-width="3" stroke-linecap="round"/>
+  <path d="M51 71c9-3 17-1 23 4m35-4c-9-3-17-1-23 4M51 85c9-3 17-1 23 4m35-4c-9-3-17-1-23 4" stroke="#0a7e69" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="116" cy="43" r="14" fill="#f6c85f"/>
+  <path d="m110 43 4 4 8-9" fill="none" stroke="#075e50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -79,9 +79,6 @@ export function SecurityForm() {
           error={errors.password_confirmation}
         />
       </fieldset>
-      <p className="profile-helper">
-        Sử dụng từ 8 đến 128 ký tự và tránh dùng lại mật khẩu hiện tại.
-      </p>
       <div className="account-actions">
         <button className="account-primary" type="submit" disabled={busy}>
           {busy ? 'Đang cập nhật...' : 'Đổi mật khẩu'}

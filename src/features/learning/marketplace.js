@@ -3,6 +3,8 @@ import { storage } from '@/utils/storage';
 import tutoringHero from '@/assets/tutoring-hero.webp';
 import studyTogether from '@/assets/register-student.webp';
 import teacherCommunity from '@/assets/vietnamese-teachers-avatar-strip.png';
+import fullCenterAvatar from '@/assets/full-center-avatar.svg';
+import fullCenterCover from '@/assets/backgroup.webp';
 
 const centerProfiles = {
   oldSchool: {
@@ -58,6 +60,8 @@ const centerProfiles = {
     id: 'center-trung-tam-day-du',
     name: 'Trung Tâm Đầy Đủ',
     role: 'center',
+    avatar: fullCenterAvatar,
+    coverImage: fullCenterCover,
     foundedYear: '2014',
     licenseVerificationStatus: 'verified',
     heartCount: 1286,
@@ -394,12 +398,43 @@ const fullCenterPosts = Array.from({ length: 50 }, (_, index) => {
 
 const read = (key, fallback) => storage.get(key, fallback);
 const write = (key, value) => storage.set(key, value);
+const notifyPostsChange = () => {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:posts-updated'));
+};
+
+const normalizePostMediaItem = (postId, item, index) => ({
+  ...item,
+  id: item?.id || `${postId}-media-${index + 1}`,
+  likes: Array.isArray(item?.likes) ? item.likes : [],
+  comments: Array.isArray(item?.comments) ? item.comments : [],
+});
+
+export const getPostMediaItems = (post) => {
+  const rawItems = Array.isArray(post?.mediaItems) && post.mediaItems.length
+    ? post.mediaItems
+    : post?.media
+      ? [post.media]
+      : [];
+
+  return rawItems.map((item, index) => normalizePostMediaItem(post?.id || 'post', item, index));
+};
+
+const normalizePostMedia = (post) => {
+  const mediaItems = getPostMediaItems(post);
+  if (!mediaItems.length) return post;
+
+  return {
+    ...post,
+    mediaItems,
+    media: post.media || mediaItems[0],
+  };
+};
 
 export const getCourses = () => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const currentUser = read(STORAGE_KEYS.USER_INFO, null);
   const hydratedSavedCourses = saved.map((course) =>
-    course.teacher?.id === currentUser?.id
+    currentUser?.id != null && course.teacher?.id != null && String(course.teacher.id) === String(currentUser.id)
       ? {
           ...course,
           teacher: {
@@ -440,7 +475,7 @@ export const updateCourse = (courseId, updates) => {
 export const syncTeacherCourseProfile = (teacherId, profileUpdates) => {
   const saved = read(STORAGE_KEYS.COURSES, []);
   const next = saved.map((course) =>
-    course.teacher?.id === teacherId
+    course.teacher?.id != null && String(course.teacher.id) === String(teacherId)
       ? { ...course, teacher: { ...course.teacher, ...profileUpdates } }
       : course
   );
@@ -521,13 +556,17 @@ export const getPosts = (authorId) => {
   const posts = [
     ...saved.filter((post) => !sampleIds.has(post.id)),
     ...fullCenterPosts.map((post) => savedById.get(post.id) || post),
-  ];
-  return authorId ? posts.filter((post) => post.teacherId === authorId || post.authorId === authorId) : posts;
+  ].map(normalizePostMedia);
+  if (authorId === undefined || authorId === null) return posts;
+
+  const normalizedAuthorId = String(authorId);
+  return posts.filter((post) => String(post.teacherId ?? '') === normalizedAuthorId || String(post.authorId ?? '') === normalizedAuthorId);
 };
 
 export const savePost = (post) => {
   const saved = read(STORAGE_KEYS.TEACHER_POSTS, []);
-  write(STORAGE_KEYS.TEACHER_POSTS, [post, ...saved]);
+  write(STORAGE_KEYS.TEACHER_POSTS, [normalizePostMedia(post), ...saved]);
+  notifyPostsChange();
 };
 
 export const updatePost = (postId, updater) => {
@@ -537,17 +576,29 @@ export const updatePost = (postId, updater) => {
     ? saved[existingIndex]
     : fullCenterPosts.find((post) => post.id === postId);
   if (!source) return getPosts();
-  const updated = updater(source);
+  const updated = normalizePostMedia(updater(normalizePostMedia(source)));
   const next = existingIndex >= 0
     ? saved.map((post, index) => index === existingIndex ? updated : post)
     : [updated, ...saved];
   write(STORAGE_KEYS.TEACHER_POSTS, next);
+  notifyPostsChange();
   return getPosts();
 };
+
+export const updatePostMediaItem = (postId, mediaId, updater) => updatePost(postId, (post) => {
+  const mediaItems = getPostMediaItems(post);
+  const updatedItems = mediaItems.map((item) => item.id === mediaId ? updater(item) : item);
+  return {
+    ...post,
+    mediaItems: updatedItems,
+    media: post.media ? updatedItems[0] : undefined,
+  };
+});
 
 export const deletePost = (postId) => {
   const next = read(STORAGE_KEYS.TEACHER_POSTS, []).filter((post) => post.id !== postId);
   write(STORAGE_KEYS.TEACHER_POSTS, next);
+  notifyPostsChange();
   return next;
 };
 
@@ -650,6 +701,7 @@ export const saveConversation = (conversation) => {
     unreadFor: conversation.unreadFor || (recipientId ? [recipientId] : []),
     tags: conversation.tags || [],
   }, ...saved]);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:conversations-updated'));
 };
 
 export const createConversationId = (prefix = 'message') =>
@@ -670,6 +722,7 @@ export const updateConversationThread = (thread, updater) => {
     sameThread(message) ? updater(message) : message
   );
   write(STORAGE_KEYS.CONVERSATIONS, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:conversations-updated'));
   return next;
 };
 
@@ -709,6 +762,31 @@ export const deleteMessageTag = (userId, tagId) => {
   );
   write(STORAGE_KEYS.MESSAGE_TAGS, next);
   return next.filter((tag) => tag.userId === userId);
+};
+
+export const getMessageTemplates = (userId) =>
+  read(STORAGE_KEYS.MESSAGE_TEMPLATES, []).filter((template) => template.userId === userId);
+
+export const saveMessageTemplate = (userId, template) => {
+  if (!userId || !template?.id || !template?.title || !template?.text) return getMessageTemplates(userId);
+  const saved = read(STORAGE_KEYS.MESSAGE_TEMPLATES, []);
+  const nextTemplate = { ...template, userId, updatedAt: new Date().toISOString() };
+  const exists = saved.some((item) => item.userId === userId && item.id === template.id);
+  const next = exists
+    ? saved.map((item) => item.userId === userId && item.id === template.id ? { ...item, ...nextTemplate } : item)
+    : [{ ...nextTemplate, createdAt: nextTemplate.createdAt || nextTemplate.updatedAt }, ...saved];
+  write(STORAGE_KEYS.MESSAGE_TEMPLATES, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:message-templates-updated'));
+  return next.filter((item) => item.userId === userId);
+};
+
+export const deleteMessageTemplate = (userId, templateId) => {
+  const next = read(STORAGE_KEYS.MESSAGE_TEMPLATES, []).filter(
+    (template) => template.userId !== userId || template.id !== templateId
+  );
+  write(STORAGE_KEYS.MESSAGE_TEMPLATES, next);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('edumatch:message-templates-updated'));
+  return next.filter((template) => template.userId === userId);
 };
 
 export const removeMessageTagFromUserConversations = (userId, tagId) => {

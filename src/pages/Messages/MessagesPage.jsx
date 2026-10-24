@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Forward, ListFilter, MailOpen, MessageCircle, MoreHorizontal, Plus, Reply, Search, Send, Tag, X } from 'lucide-react';
+import { BookmarkPlus, FileText, Forward, ListFilter, MailOpen, MessageCircle, MoreHorizontal, Pencil, Plus, Reply, Search, Send, Tag, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
-import { createConversationId, deleteMessageTag, getCourse, getConversationsForUser, getMessageTags, markConversationRead, markConversationUnread, removeMessageTagFromUserConversations, saveConversation, saveMessageTag, setConversationTags } from '@/features/learning/marketplace';
+import { createConversationId, deleteMessageTag, deleteMessageTemplate, getCourse, getConversationsForUser, getMessageTags, getMessageTemplates, markConversationRead, removeMessageTagFromUserConversations, saveConversation, saveMessageTag, saveMessageTemplate, setConversationTags } from '@/features/learning/marketplace';
 import { submitOnPlainEnter } from '@/utils/submitOnPlainEnter';
 import { setChatWidget } from '@/features/learning/chatWidget';
+import { formatMessageDayDivider, formatMessageTime, formatMessageTimestamp, messageNeedsDayDivider } from '@/utils/messageTime';
 import './messages.css';
 
 const threadKey = (message) => `${message.courseId}:${message.studentId}:${message.teacherId}`;
 
-const displayTime = (value) => value || 'Vừa xong';
 const TAG_COLORS = [
   { id: 'emerald', label: 'Xanh lá', value: '#087f69' },
   { id: 'teal', label: 'Xanh ngọc', value: '#0f766e' },
@@ -54,6 +54,14 @@ export function MessagesPage() {
   const [tagColor, setTagColor] = useState(TAG_COLORS[0].value);
   const [tagLibrary, setTagLibrary] = useState(() => getMessageTags(user?.id));
   const [tagNotice, setTagNotice] = useState('');
+  const [messageTemplates, setMessageTemplates] = useState(() => getMessageTemplates(user?.id));
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+  const [templateTitle, setTemplateTitle] = useState('');
+  const [templateText, setTemplateText] = useState('');
+  const [templateNotice, setTemplateNotice] = useState('');
+  const [templateQuery, setTemplateQuery] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [forwarding, setForwarding] = useState(null);
   const messageHistoryRef = useRef(null);
@@ -96,6 +104,11 @@ export function MessagesPage() {
     && (!selectedTagIds.length || getThreadTags(thread).some((tag) => selectedTagIds.includes(tag.id)))
   );
   const selectedThread = threads.find((thread) => thread.key === selectedKey) || filteredThreads[0];
+  const filteredMessageTemplates = useMemo(() => {
+    const normalizedQuery = templateQuery.trim().toLocaleLowerCase('vi');
+    if (!normalizedQuery) return messageTemplates;
+    return messageTemplates.filter((template) => `${template.title} ${template.text}`.toLocaleLowerCase('vi').includes(normalizedQuery));
+  }, [messageTemplates, templateQuery]);
 
   useEffect(() => {
     if (user?.id && selectedThread?.key) setChatWidget(user.id, selectedThread.key);
@@ -108,8 +121,19 @@ export function MessagesPage() {
 
   useEffect(() => () => window.clearTimeout(replyHighlightTimer.current), []);
 
+  useEffect(() => {
+    const refreshTemplates = () => setMessageTemplates(getMessageTemplates(user?.id));
+    window.addEventListener('edumatch:message-templates-updated', refreshTemplates);
+    window.addEventListener('storage', refreshTemplates);
+    return () => {
+      window.removeEventListener('edumatch:message-templates-updated', refreshTemplates);
+      window.removeEventListener('storage', refreshTemplates);
+    };
+  }, [user?.id]);
+
   const send = (event) => {
     event.preventDefault();
+    if (isTemplateEditorOpen) return;
     if (!draft.trim() || !selectedThread) return;
     const seed = selectedThread.messages[0];
     const next = {
@@ -117,15 +141,18 @@ export function MessagesPage() {
       courseId: seed.courseId,
       teacherId: seed.teacherId,
       teacherName: seed.teacherName || selectedThread.course?.teacher?.name || 'Giáo viên EduMatch',
+      teacherAvatar: seed.teacherAvatar || selectedThread.course?.teacher?.avatar || '',
       studentId: seed.studentId,
       studentName: seed.studentName || 'Học viên EduMatch',
+      studentAvatar: seed.studentAvatar || '',
       senderId: user.id,
       text: draft.trim(),
       replyTo: replyingTo ? { id: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderId === user.id ? 'Bạn' : selectedThread.contactName } : null,
-      createdAt: 'Vừa xong',
+      createdAt: new Date().toISOString(),
     };
+    const readMessages = markConversationRead(selectedThread, user.id);
     saveConversation(next);
-    setMessages((current) => [next, ...current]);
+    setMessages([next, ...readMessages.filter((message) => message.studentId === user.id || message.teacherId === user.id)]);
     setDraft('');
     setReplyingTo(null);
   };
@@ -137,12 +164,14 @@ export function MessagesPage() {
       courseId: target.messages[0].courseId,
       teacherId: target.messages[0].teacherId,
       teacherName: target.messages[0].teacherName || target.course?.teacher?.name || 'Giáo viên EduMatch',
+      teacherAvatar: target.messages[0].teacherAvatar || target.course?.teacher?.avatar || '',
       studentId: target.messages[0].studentId,
       studentName: target.messages[0].studentName || 'Học viên EduMatch',
+      studentAvatar: target.messages[0].studentAvatar || '',
       senderId: user.id,
       text: forwarding.text,
       forwarded: true,
-      createdAt: 'Vừa xong',
+      createdAt: new Date().toISOString(),
     };
     saveConversation(next);
     setMessages((current) => [next, ...current]);
@@ -164,9 +193,9 @@ export function MessagesPage() {
     replyHighlightTimer.current = window.setTimeout(() => setHighlightedMessageId(null), 1400);
   };
 
-  const markSelectedUnread = () => {
+  const markSelectedRead = () => {
     if (!selectedThread || !user?.id) return;
-    const next = markConversationUnread(selectedThread, user.id);
+    const next = markConversationRead(selectedThread, user.id);
     setMessages(next.filter((message) => message.studentId === user.id || message.teacherId === user.id));
   };
 
@@ -211,6 +240,48 @@ export function MessagesPage() {
     setSelectedTagIds((current) => current.filter((id) => id !== tagId));
   };
 
+  const resetTemplateEditor = () => {
+    setIsTemplateEditorOpen(false);
+    setEditingTemplateId(null);
+    setTemplateTitle('');
+    setTemplateText('');
+    setTemplateNotice('');
+  };
+  const openTemplateEditor = (template = null) => {
+    setShowTemplatePanel(true);
+    setIsTemplateEditorOpen(true);
+    setEditingTemplateId(template?.id || null);
+    setTemplateTitle(template?.title || '');
+    setTemplateText(template?.text || '');
+    setTemplateNotice('');
+  };
+  const saveTemplate = (event) => {
+    event.preventDefault();
+    const title = templateTitle.trim();
+    const text = templateText.trim();
+    if (!title || !text) {
+      setTemplateNotice('Hãy nhập tên và nội dung tin nhắn mẫu.');
+      return;
+    }
+    const template = {
+      id: editingTemplateId || `message-template-${Date.now()}`,
+      title,
+      text,
+      ...(editingTemplateId ? {} : { createdAt: new Date().toISOString() }),
+    };
+    setMessageTemplates(saveMessageTemplate(user?.id, template));
+    resetTemplateEditor();
+  };
+  const insertTemplate = (template) => {
+    setDraft((current) => current.trim() ? `${current}${current.endsWith('\n') ? '' : '\n'}${template.text}` : template.text);
+    setShowTemplatePanel(false);
+    setTemplateNotice('');
+  };
+  const removeTemplate = (templateId) => {
+    setMessageTemplates(deleteMessageTemplate(user?.id, templateId));
+    if (editingTemplateId === templateId) resetTemplateEditor();
+  };
+
   const toggleTagFilter = (tagId) => setSelectedTagIds((current) =>
     current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId]
   );
@@ -235,7 +306,7 @@ export function MessagesPage() {
             {filteredThreads.length ? filteredThreads.map((thread) => {
               const latest = thread.messages.at(-1);
               const isUnread = isThreadUnread(thread);
-              return <button className={`conversation-item ${selectedThread?.key === thread.key ? 'is-selected' : ''} ${isUnread ? 'is-unread' : ''}`} key={thread.key} onClick={() => selectThread(thread)}><span className={`conversation-item__avatar ${isOnline(thread.contactId) ? 'is-online' : ''}`}>{thread.contactName.slice(0, 1)}</span><span className="conversation-item__copy"><strong>{thread.contactName}</strong><small>{thread.course?.title || 'Trao đổi lịch học'}</small><em>{latest?.text}</em>{getThreadTags(thread).length > 0 && <span className="conversation-item__tags">{getThreadTags(thread).map((tag) => <i key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</i>)}</span>}</span>{isUnread && <b className="conversation-item__unread" aria-label="Có tin nhắn chưa đọc" />}</button>;
+              return <button className={`conversation-item ${selectedThread?.key === thread.key ? 'is-selected' : ''} ${isUnread ? 'is-unread' : ''}`} key={thread.key} onClick={() => selectThread(thread)}><span className={`conversation-item__avatar ${isOnline(thread.contactId) ? 'is-online' : ''}`}>{thread.contactName.slice(0, 1)}</span><span className="conversation-item__copy"><strong>{thread.contactName}</strong>{thread.course?.title && <small>{thread.course.title}</small>}<em>{latest?.text}</em>{getThreadTags(thread).length > 0 && <span className="conversation-item__tags">{getThreadTags(thread).map((tag) => <i key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</i>)}</span>}</span>{isUnread && <b className="conversation-item__unread" aria-label="Có tin nhắn chưa đọc" />}</button>;
             }) : <div className="conversation-empty"><MessageCircle size={24} /><p>Chưa có cuộc trò chuyện nào.</p></div>}
           </div>
         </aside>
@@ -245,16 +316,23 @@ export function MessagesPage() {
               <span className={`chat-window__avatar ${isOnline(selectedThread.contactId) ? 'is-online' : ''}`}>{selectedThread.contactName.slice(0, 1)}</span>
               <div className="chat-window__contact">
                 <h2>{selectedThread.contactName}</h2>
-                <p>{selectedThread.course?.title || 'Trao đổi lịch học'}</p>
+                {selectedThread.course?.title && <p>{selectedThread.course.title}</p>}
                 {getThreadTags(selectedThread).length > 0 && <div className="chat-window__profile-tags">{getThreadTags(selectedThread).map((tag) => <span key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}</span>)}</div>}
               </div>
               <span className={`chat-window__status ${isOnline(selectedThread.contactId) ? 'is-online' : ''}`}>{isOnline(selectedThread.contactId) ? 'Đang hoạt động' : 'Ngoại tuyến'}</span>
-              <button type="button" className="chat-window__unread" onClick={markSelectedUnread}><MailOpen size={15} /> Đánh dấu chưa đọc</button>
+              <button type="button" className="chat-window__unread" onClick={markSelectedRead} disabled={!isThreadUnread(selectedThread)}><MailOpen size={15} /> Đánh dấu đã đọc</button>
             </header>
-            <div className="message-history" ref={messageHistoryRef}>{selectedThread.messages.map((message) => <article className={`chat-bubble ${message.senderId === user?.id || (!message.senderId && message.studentId === user?.id) ? 'is-own' : ''} ${highlightedMessageId === message.id ? 'is-highlighted' : ''}`} key={message.id} ref={(node) => { if (node) messageRefs.current.set(message.id, node); else messageRefs.current.delete(message.id); }} onMouseLeave={() => setOpenMessageMenu((current) => current === message.id ? null : current)} onTouchStart={() => startLongPress(message.id)} onTouchEnd={clearLongPress} onTouchCancel={clearLongPress} onTouchMove={clearLongPress}>{message.forwarded && <small className="chat-bubble__forwarded">Đã chuyển tiếp</small>}{message.replyTo && <button type="button" className="chat-bubble__quote" onClick={() => scrollToOriginalMessage(message.replyTo.id)} aria-label="Xem tin nhắn gốc"><strong>{message.replyTo.senderName}</strong><span>{message.replyTo.text}</span></button>}<p>{message.text}</p><div className="chat-bubble__meta"><time>{displayTime(message.createdAt)}</time><div className="chat-bubble__menu-wrap"><button type="button" className="chat-bubble__more" onClick={() => setOpenMessageMenu((current) => current === message.id ? null : message.id)} aria-label="Thao tác tin nhắn"><MoreHorizontal size={17} /></button>{openMessageMenu === message.id && <div className="chat-bubble__menu"><button type="button" onClick={() => { setReplyingTo(message); setOpenMessageMenu(null); }}><Reply size={14} /> Trả lời</button><button type="button" onClick={() => { setForwarding(message); setOpenMessageMenu(null); }}><Forward size={14} /> Chuyển tiếp</button></div>}</div></div></article>)}</div>
+            <div className="message-history" ref={messageHistoryRef}>{selectedThread.messages.map((message, index) => <div className="message-history__group" key={message.id}>{messageNeedsDayDivider(message.createdAt, selectedThread.messages[index - 1]?.createdAt) && <div className="message-day-divider"><span>{formatMessageDayDivider(message.createdAt)}</span></div>}<article className={`chat-bubble ${message.senderId === user?.id || (!message.senderId && message.studentId === user?.id) ? 'is-own' : ''} ${highlightedMessageId === message.id ? 'is-highlighted' : ''}`} ref={(node) => { if (node) messageRefs.current.set(message.id, node); else messageRefs.current.delete(message.id); }} onMouseLeave={() => setOpenMessageMenu((current) => current === message.id ? null : current)} onTouchStart={() => startLongPress(message.id)} onTouchEnd={clearLongPress} onTouchCancel={clearLongPress} onTouchMove={clearLongPress}>{message.forwarded && <small className="chat-bubble__forwarded">Đã chuyển tiếp</small>}{message.replyTo && <button type="button" className="chat-bubble__quote" onClick={() => scrollToOriginalMessage(message.replyTo.id)} aria-label="Xem tin nhắn gốc"><strong>{message.replyTo.senderName}</strong><span>{message.replyTo.text}</span></button>}<p>{message.text}</p><div className="chat-bubble__meta"><time>{formatMessageTime(message.createdAt)}</time><div className="chat-bubble__menu-wrap"><button type="button" className="chat-bubble__more" onClick={() => setOpenMessageMenu((current) => current === message.id ? null : message.id)} aria-label="Thao tác tin nhắn"><MoreHorizontal size={17} /></button>{openMessageMenu === message.id && <div className="chat-bubble__menu"><button type="button" onClick={() => { setReplyingTo(message); setOpenMessageMenu(null); }}><Reply size={14} /> Trả lời</button><button type="button" onClick={() => { setForwarding(message); setOpenMessageMenu(null); }}><Forward size={14} /> Chuyển tiếp</button></div>}</div></div><span className="chat-bubble__timestamp">{formatMessageTimestamp(message.createdAt)}</span></article></div>)}</div>
             {showTagCreator && <section className="chat-tag-creator"><form onSubmit={addTag}><label>Tạo thẻ mới<span className="tag-name-input"><input value={tagDraft} onChange={(event) => setTagDraft(event.target.value.slice(0, 25))} placeholder="Ví dụ: Cần tư vấn" maxLength="25" aria-describedby="tag-character-count" autoFocus /><small id="tag-character-count" className={tagDraft.length >= 25 ? 'is-limit' : ''}>{tagDraft.length}/25</small></span></label><fieldset><span className="tag-color-picker">{TAG_COLORS.map((color) => <button type="button" key={color.id} className={tagColor === color.value ? 'is-active' : ''} style={{ '--tag-color': color.value }} onClick={() => setTagColor(color.value)} aria-label={`Chọn màu ${color.label}`} />)}</span></fieldset><button type="submit" disabled={!tagDraft.trim()}>Tạo và gắn thẻ</button></form>{tagNotice && <p className="chat-tag-creator__notice">{tagNotice}</p>}{allTags.length > 0 && <div className="chat-tag-creator__library"><span>Thẻ đã tạo</span><div>{allTags.map((tag) => <span key={tag.id} style={{ '--tag-color': tag.color }}>{tag.name}<button type="button" onClick={() => deleteTag(tag.id)} aria-label={`Xóa thẻ ${tag.name}`} title={`Xóa thẻ ${tag.name}`}><X size={12} /></button></span>)}</div></div>}</section>}
             <nav className="chat-tag-bar" aria-label="Gắn thẻ"><span><Tag size={14} /> Gắn thẻ</span><div>{allTags.length ? allTags.map((tag) => { const isApplied = getThreadTags(selectedThread).some((item) => item.id === tag.id); return <button type="button" key={tag.id} className={isApplied ? 'is-applied' : ''} style={{ '--tag-color': tag.color }} onClick={() => toggleTag(tag)} aria-pressed={isApplied} title={isApplied ? `Bỏ thẻ ${tag.name}` : `Gắn thẻ ${tag.name}`}>{tag.name}{isApplied && <X size={12} />}</button>; }) : <small>Chưa có thẻ</small>}</div><button type="button" className="chat-tag-bar__create" onClick={() => setShowTagCreator((value) => !value)}><Plus size={14} /> {showTagCreator ? 'Đóng' : 'Tạo thẻ'}</button></nav>
-            <form className="chat-composer" onSubmit={send}>{replyingTo && <div className="chat-composer__reply"><span>Đang trả lời: {replyingTo.text}</span><button type="button" onClick={() => setReplyingTo(null)} aria-label="Hủy trả lời"><X size={15} /></button></div>}<div className="chat-composer__row"><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder="Soạn tin nhắn" rows="1" /><button type="submit" aria-label="Gửi tin nhắn"><Send size={18} /></button></div></form>
+            <form className="chat-composer" onSubmit={send}>
+              {replyingTo && <div className="chat-composer__reply"><span>Đang trả lời: {replyingTo.text}</span><button type="button" onClick={() => setReplyingTo(null)} aria-label="Hủy trả lời"><X size={15} /></button></div>}
+              {showTemplatePanel && <section className="message-template-panel" aria-label="Tin nhắn mẫu">
+                <header><div><FileText size={16} /><strong>Tin nhắn mẫu</strong></div><button type="button" onClick={() => { setShowTemplatePanel(false); resetTemplateEditor(); }} aria-label="Đóng tin nhắn mẫu"><X size={16} /></button></header>
+                {isTemplateEditorOpen ? <div className="message-template-editor"><label><span>Tên mẫu</span><input value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value.slice(0, 50))} placeholder="Ví dụ: Lời chào học viên" maxLength={50} autoFocus /></label><label><span>Nội dung</span><textarea value={templateText} onChange={(event) => setTemplateText(event.target.value.slice(0, 1000))} placeholder="Nhập nội dung muốn dùng lại..." rows={12} maxLength={1000} /></label>{templateNotice && <p role="alert">{templateNotice}</p>}<div><button type="button" onClick={resetTemplateEditor}>Hủy</button><button type="button" className="message-template-editor__save" onClick={saveTemplate}>{editingTemplateId ? 'Lưu thay đổi' : 'Lưu tin nhắn mẫu'}</button></div></div> : <><label className="message-template-search"><Search size={15} /><input value={templateQuery} onChange={(event) => setTemplateQuery(event.target.value)} placeholder="Tìm tin nhắn mẫu" type="search" /></label><div className="message-template-list">{filteredMessageTemplates.length ? filteredMessageTemplates.map((template) => <article key={template.id}><button type="button" className="message-template-list__use" onClick={() => insertTemplate(template)}><strong>{template.title}</strong><span>{template.text}</span></button><div><button type="button" onClick={() => openTemplateEditor(template)} aria-label={`Chỉnh sửa mẫu ${template.title}`}><Pencil size={14} /></button><button type="button" onClick={() => removeTemplate(template.id)} aria-label={`Xóa mẫu ${template.title}`}><Trash2 size={14} /></button></div></article>) : <p className="message-template-panel__empty">{messageTemplates.length ? 'Không tìm thấy tin nhắn mẫu phù hợp.' : 'Chưa có tin nhắn mẫu nào.'}</p>}</div><button type="button" className="message-template-panel__create" onClick={() => openTemplateEditor()}><Plus size={15} /> Tạo tin nhắn mẫu</button></>}
+              </section>}
+              <div className="chat-composer__row"><button type="button" className={`chat-composer__templates ${showTemplatePanel ? 'is-active' : ''}`} onClick={() => { setShowTemplatePanel((current) => !current); if (showTemplatePanel) resetTemplateEditor(); }} aria-expanded={showTemplatePanel}><BookmarkPlus size={17} /><span>Tin nhắn mẫu</span></button><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={submitOnPlainEnter} placeholder="Soạn tin nhắn" rows="1" /><button type="submit" aria-label="Gửi tin nhắn"><Send size={18} /></button></div>
+            </form>
             {forwarding && <div className="chat-forward" role="dialog" aria-modal="true" aria-label="Chuyển tiếp tin nhắn"><div className="chat-forward__panel"><header><strong>Chuyển tiếp tin nhắn</strong><button type="button" onClick={() => setForwarding(null)} aria-label="Đóng"><X size={17} /></button></header><p>{forwarding.text}</p><span>Chọn người đã từng nhắn tin</span><div>{threads.filter((thread) => thread.key !== selectedThread.key).length ? threads.filter((thread) => thread.key !== selectedThread.key).map((thread) => <button type="button" key={thread.key} onClick={() => forwardMessage(thread)}>{thread.contactName}</button>) : <small>Chưa có cuộc trò chuyện khác để chuyển tiếp.</small>}</div></div></div>}
           </> : <div className="chat-window__empty"><span><MessageCircle size={32} /></span><h2>Bắt đầu một cuộc trò chuyện</h2><p>Khi bạn đăng ký học một khóa học, lời nhắn sẽ xuất hiện tại đây.</p></div>}
         </main>
